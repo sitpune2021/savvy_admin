@@ -26,7 +26,7 @@
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Customer Zoho Id</label>
-                                        <input name="customer_zohi_id" type="text" class="form-control"
+                                        <input name="customer_zohi_id" type="text" class="form-control" placeholder="Enter Customer Zoho Id"
                                             value="{{ old('customer_zohi_id', $Customer->customer_zohi_id ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -54,7 +54,7 @@
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Name</label>
-                                        <input name="name" type="text" class="form-control"
+                                        <input name="name" type="text" class="form-control" placeholder="Enter Customer Name"
                                             value="{{ old('name', $Customer->name ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -62,7 +62,7 @@
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>E-mail</label>
-                                        <input name="email" type="email" class="form-control"
+                                        <input name="email" type="email" class="form-control" placeholder="Enter Customer E-mail"
                                             value="{{ old('email', $Customer->email ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -70,7 +70,7 @@
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Phone No</label>
-                                        <input name="phone_no" type="number" class="form-control"
+                                        <input name="phone_no" type="number" class="form-control" placeholder="Enter Customer Phone No"
                                             value="{{ old('phone_no', $Customer->phone_no ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -84,7 +84,7 @@
                                 <div class="col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Address</label>
-                                        <input name="billing_address" type="text" class="form-control"
+                                        <input name="billing_address" type="text" class="form-control" placeholder="Enter Billing Address"
                                             value="{{ old('billing_address', $Customer->billing_address ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -92,7 +92,7 @@
                                 <div class="col-lg-3 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Country</label>
-                                        <input name="billing_country" type="text" class="form-control"
+                                        <input name="billing_country" type="text" class="form-control" placeholder="Enter Billing Country"
                                             value="{{ old('billing_country', $Customer->billing_country ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -100,7 +100,7 @@
                                 <div class="col-lg-3 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>State</label>
-                                        <input name="billing_state" type="text" class="form-control"
+                                        <input name="billing_state" type="text" class="form-control" placeholder="Enter Billing State"
                                             value="{{ old('billing_state', $Customer->billing_state ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -109,7 +109,7 @@
                                 <div class="col-lg-3 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>City</label>
-                                        <input name="billing_city" type="text" class="form-control"
+                                        <input name="billing_city" type="text" class="form-control" placeholder="Enter Billing City"
                                             value="{{ old('billing_city', $Customer->billing_city ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -117,7 +117,7 @@
                                 <div class="col-lg-3 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Pin Code</label>
-                                        <input name="billing_pincode" type="number" class="form-control"
+                                        <input name="billing_pincode" type="number" class="form-control" placeholder="Enter Billing Pin Code"
                                             value="{{ old('billing_pincode', $Customer->billing_pincode ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -132,7 +132,7 @@
                                 <div class="col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Address</label>
-                                        <input name="shipping_address" type="text" class="form-control"
+                                        <input name="shipping_address" type="text" class="form-control" placeholder="Enter Shipping Address"
                                             value="{{ old('shipping_address', $Customer->shipping_address ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -140,7 +140,7 @@
                                 <div class="col-lg-3 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Country</label>
-                                        <input name="shipping_country" type="text" class="form-control"
+                                        <input name="shipping_country" type="text" class="form-control" placeholder="Enter Shipping Country"
                                             value="{{ old('shipping_country', $Customer->shipping_country ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -148,7 +148,7 @@
                                 <div class="col-lg-3 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>State</label>
-                                        <input name="shipping_state" type="text" class="form-control"
+                                        <input name="shipping_state" type="text" class="form-control" placeholder="Enter Shipping State"
                                             value="{{ old('shipping_state', $Customer->shipping_state ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -157,7 +157,7 @@
                                 <div class="col-lg-3 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>City</label>
-                                        <input name="shipping_city" type="text" class="form-control"
+                                        <input name="shipping_city" type="text" class="form-control" placeholder="Enter Shipping City"
                                             value="{{ old('shipping_city', $Customer->shipping_city ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -165,7 +165,7 @@
                                 <div class="col-lg-3 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Pin Code</label>
-                                        <input name="shipping_pincode" type="number" class="form-control"
+                                        <input name="shipping_pincode" type="number" class="form-control" placeholder="Enter Shipping Pin Code"
                                             value="{{ old('shipping_pincode', $Customer->shipping_pincode ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -179,7 +179,7 @@
                                 <div class=" col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Name</label>
-                                        <input name="contact_person" type="text" class="form-control"
+                                        <input name="contact_person" type="text" class="form-control" placeholder="Enter Contact Person Name"
                                             value="{{ old('contact_person', $Customer->contact_person ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -187,7 +187,7 @@
                                 <div class=" col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Phone</label>
-                                        <input name="contact_person_phone" type="text" class="form-control"
+                                        <input name="contact_person_phone" type="text" class="form-control" placeholder="Enter Contact Person Phone"
                                             value="{{ old('contact_person_phone', $Customer->contact_person_phone ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -238,7 +238,7 @@
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Quantity</label>
-                                        <input name="quantity" type="number" class="form-control"
+                                        <input name="quantity" type="number" class="form-control" placeholder="Enter Quantity"
                                             value="{{ old('quantity', $Customer->contracts[0]->quantity ?? 1) }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -247,7 +247,7 @@
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Price {{ '/-' }}</label>
-                                        <input name="price" type="number" class="form-control"
+                                        <input name="price" type="number" class="form-control" placeholder="Enter Price"
                                             value="{{ old('price', $Customer->contracts[0]->price ?? 1) }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -255,7 +255,7 @@
                                 <div class="col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Duration</label>
-                                        <input name="duration" type="number" class="form-control"
+                                        <input name="duration" type="number" class="form-control" placeholder="Enter Duration"
                                             value="{{ old('duration', $Customer->contracts[0]->duration ?? 1) }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -299,7 +299,7 @@
                                 <div class=" col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>delivery_time</label>
-                                        <input name="delivery_time" type="time" class="form-control"
+                                        <input name="delivery_time" type="time" class="form-control" placeholder="Enter Delivery Time"
                                             value="{{ old('delivery_time', !empty($Customer->contracts[0]->delivery_time) ? date('H:i', strtotime($Customer->contracts[0]->delivery_time)) : '08:00') }}"
                                             @if ($show) disabled @endif>
                                     </div>

@@ -43,16 +43,16 @@ class OrderController extends Controller
         $validator = Validator::make($request->all(), [
             'customer_id' => 'required|exists:customers,id',
             'driver_id' => 'required|exists:drivers,id', 
-            // 'develivered_qty' => 'nullable|integer|min:0',
-            // 'return_qty' => 'nullable|integer|min:0',
+            'develivered_qty' => 'nullable|integer|min:0',
+            'return_qty' => 'nullable|integer|min:0',
             // 'status' => 'nullable|in:pending,completed,cancelled',
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-            'price' => 'required|string|max:255',
+            // 'product_id' => 'required|exists:products,id',
+            // 'quantity' => 'required|integer|min:1',
+            // 'price' => 'required|string|max:255',
             // 'delivery_frequency' => 'required|string|max:255',
-            'delivery_time' => 'nullable|date_format:H:i',
-            'duration' => 'nullable|integer|min:1',
-            'duration_type' => 'nullable|string|in:days,weeks,months,years',
+            // 'delivery_time' => 'nullable|date_format:H:i',
+            // 'duration' => 'nullable|integer|min:1',
+            // 'duration_type' => 'nullable|string|in:days,weeks,months,years',
         ]);
     
         if ($validator->fails()) {
@@ -60,21 +60,21 @@ class OrderController extends Controller
         }
     
         try {
-            $contract = Contracts::create([
-                'customer_id' => $request->customer_id,
-                'product_id' => $request->product_id,
-                'quantity' => $request->quantity,
-                'price' => $request->price,
-                'delivery_time' => $request->delivery_time,
-                'duration' => $request->duration,
-                'duration_type' => $request->duration_type,
-            ]);
+            // $contract = Contracts::create([
+            //     'customer_id' => $request->customer_id,
+            //     'product_id' => $request->product_id,
+            //     'quantity' => $request->quantity,
+            //     'price' => $request->price,
+            //     'delivery_time' => $request->delivery_time,
+            //     'duration' => $request->duration,
+            //     'duration_type' => $request->duration_type,
+            // ]);
 
             Orders::create([
                 'customer_id' => $request->customer_id,
                 'driver_id' => $request->driver_id,
-                'develivered_qty' => $request->quantity,
-                'return_qty' => 0,
+                'develivered_qty' => $request->develivered_qty,
+                'return_qty' => $request->return_qty,
                 'status' => 'pending',
             ]);
             return response()->json([

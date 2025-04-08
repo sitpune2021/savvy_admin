@@ -45,7 +45,13 @@
                 <!-- Settings -->
                 <li class="menu-title"><span>Settings</span></li>
                 <li>
-                    <a href="login.html"><i data-feather="power"></i> <span>Logout</span></a>
+                    <a href="{{ route('logout') }}"
+                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                        <i data-feather="power"></i> <span>Logout</span>
+                    </a>
+                    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                        @csrf
+                    </form>
                 </li>
             </ul>
         </div>

@@ -26,7 +26,7 @@
                                 <div class="col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Name</label>
-                                        <input name="name" type="text" class="form-control"
+                                        <input name="name" type="text" class="form-control" placeholder="Enter name"
                                             value="{{ old('name', $product->name ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -35,7 +35,7 @@
                                 <div class="col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Code</label>
-                                        <input name="code" type="text" class="form-control"
+                                        <input name="code" type="text" class="form-control" placeholder="Enter code"
                                             value="{{ old('code', $product->code ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -44,7 +44,7 @@
                                 <div class="col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Price</label>
-                                        <input name="price" type="number" class="form-control"
+                                        <input name="price" type="number" class="form-control" placeholder="Enter price"
                                             value="{{ old('price', $product->price ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -54,7 +54,7 @@
                                     <div class="input-block mb-3">
                                         <label>Image</label>
                                         @if (!$show)
-                                            <input name="image" type="file" class="form-control"
+                                            <input name="image" type="file" class="form-control" placeholder="Enter image"
                                                 value="{{ old('image', $product->image ?? '') }}"
                                                 @if ($show) disabled @endif>
                                         @endif
@@ -80,7 +80,8 @@
                                 <div class="col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Description</label>
-                                        <textarea name="description" class="form-control" rows="3" @if ($show) disabled @endif>{{ old('description', $product->description ?? '') }}</textarea>
+                                        <textarea name="description" class="form-control" placeholder="Enter description"
+                                         rows="3" @if ($show) disabled @endif>{{ old('description', $product->description ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>

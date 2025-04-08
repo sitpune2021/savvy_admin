@@ -55,12 +55,12 @@
                                                                 <i class="far fa-edit me-2"></i>Edit
                                                             </a>
                                                         </li>
-                                                        <li>
+                                                        {{-- <li>
                                                             <a class="dropdown-item" href="javascript:void(0);"
                                                                 data-bs-toggle="modal" data-bs-target="#delete_modal">
                                                                 <i class="far fa-trash-alt me-2"></i>Delete
                                                             </a>
-                                                        </li>
+                                                        </li> --}}
                                                         <li>
                                                             <a class="dropdown-item"
                                                                 href="{{ route('product.show', $product->id) }}">

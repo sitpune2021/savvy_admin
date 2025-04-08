@@ -26,7 +26,7 @@
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Name</label>
-                                        <input name="name" type="text" class="form-control"
+                                        <input name="name" type="text" class="form-control" placeholder="Enter Name"
                                             value="{{ old('name', $Driver->name ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -34,7 +34,7 @@
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>E-mail</label>
-                                        <input name="email" type="email" class="form-control"
+                                        <input name="email" type="email" class="form-control" placeholder="Enter E-mail"
                                             value="{{ old('email', $Driver->email ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -42,7 +42,7 @@
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Phone No</label>
-                                        <input name="phone_no" type="number" class="form-control"
+                                        <input name="phone_no" type="number" class="form-control" placeholder="Enter  Phone No"
                                             value="{{ old('phone_no', $Driver->phone_no ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -56,7 +56,7 @@
                                 <div class="col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Address</label>
-                                        <input name="full_address" type="text" class="form-control"
+                                        <input name="full_address" type="text" class="form-control" placeholder="Enter Address"
                                             value="{{ old('full_address', $Driver->full_address ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -64,7 +64,7 @@
                                 <div class=" col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Country</label>
-                                        <input name="country" type="text" class="form-control"
+                                        <input name="country" type="text" class="form-control" placeholder="Enter Country"
                                             value="{{ old('country', $Driver->country ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -72,7 +72,7 @@
                                 <div class=" col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>State</label>
-                                        <input name="state" type="text" class="form-control"
+                                        <input name="state" type="text" class="form-control" placeholder="Enter State"
                                             value="{{ old('state', $Driver->state ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -81,7 +81,7 @@
                                 <div class=" col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>City</label>
-                                        <input name="city" type="text" class="form-control"
+                                        <input name="city" type="text" class="form-control" placeholder="Enter City"
                                             value="{{ old('city', $Driver->city ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -89,7 +89,7 @@
                                 <div class=" col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Pin Code</label>
-                                        <input name="pincode" type="number" class="form-control"
+                                        <input name="pincode" type="number" class="form-control" placeholder="Enter Pin Code"
                                             value="{{ old('pincode', $Driver->pincode ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -104,7 +104,7 @@
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>License No</label>
-                                        <input name="license_no" type="text" class="form-control"
+                                        <input name="license_no" type="text" class="form-control" placeholder="Enter License No"
                                             value="{{ old('license_no', $Driver->license_no ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -113,7 +113,7 @@
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Vehicle Name</label>
-                                        <input name="vehicle_name" type="text" class="form-control"
+                                        <input name="vehicle_name" type="text" class="form-control" placeholder="Enter Vehicle Name"
                                             value="{{ old('vehicle_name', $Driver->vehicle_name ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -122,7 +122,7 @@
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Vehicle No</label>
-                                        <input name="vehicle_no" type="text" class="form-control"
+                                        <input name="vehicle_no" type="text" class="form-control" placeholder="Enter Vehicle No"
                                             value="{{ old('vehicle_no', $Driver->vehicle_no ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -131,7 +131,7 @@
                                 <div class=" col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Pan Card</label>
-                                        <input name="pan_card" type="text" class="form-control"
+                                        <input name="pan_card" type="text" class="form-control" placeholder="Enter Pan Card"
                                             value="{{ old('pan_card', $Driver->pan_card ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -141,7 +141,7 @@
                                     <div class="input-block mb-3">
                                         <label>Pan Card FILE</label>
                                         @if (!$show)
-                                            <input name="pan_card_FILE" type="file" class="form-control"
+                                            <input name="pan_card_FILE" type="file" class="form-control"   placeholder="Enter Pan Card"
                                                 value="{{ old('pan_card_FILE', $Driver->pan_card_FILE ?? '') }}"
                                                 @if ($show) disabled @endif>
                                         @endif
@@ -160,7 +160,7 @@
                                 <div class=" col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Aadhar Card</label>
-                                        <input name="aadhar_card" type="text" class="form-control"
+                                        <input name="aadhar_card" type="text" class="form-control" placeholder="Enter Aadhar Card"
                                             value="{{ old('aadhar_card', $Driver->aadhar_card ?? '') }}"
                                             @if ($show) disabled @endif>
                                     </div>
@@ -170,7 +170,7 @@
                                     <div class="input-block mb-3">
                                         <label>Aadhar Card FILE</label>
                                         @if (!$show)
-                                            <input name="aadhar_card_FILE" type="file" class="form-control"
+                                            <input name="aadhar_card_FILE" type="file" class="form-control" placeholder="Enter Aadhar Card"
                                                 value="{{ old('aadhar_card_FILE', $Driver->aadhar_card_FILE ?? '') }}"
                                                 @if ($show) disabled @endif>
                                         @endif
