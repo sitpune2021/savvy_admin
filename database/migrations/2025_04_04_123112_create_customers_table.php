@@ -17,12 +17,12 @@ return new class extends Migration
             $table->unsignedBigInteger('plant_id')->nullable();
 
             $table->string('name');
-            $table->string('email')->unique();
-            $table->string('phone_no');
+            $table->string('email')->unique()->nullable();
+            $table->string('phone_no')->nullable();
 
             $table->string('billing_address');
             $table->string('billing_country');
-            $table->string('billing_state');
+            $table->string('billing_state')->nullable();
             $table->string('billing_city');
             $table->string('billing_pincode');
 

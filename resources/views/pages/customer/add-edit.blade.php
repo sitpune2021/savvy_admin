@@ -228,7 +228,8 @@
                                             <option value="">Select Product</option>
                                             @foreach ($products as $product)
                                                 <option value="{{ $product->id }}"
-                                                    {{ isset($Customer) && $Customer->contracts[0]->product_id == $product->id ? 'selected' : '' }}>
+                                                    {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->product_id == $product->id ? 'selected' : '' }}
+                                                    >
                                                     {{ $product->name }}</option>
                                             @endforeach
                                         </select>
@@ -265,16 +266,16 @@
                                         <label>Duration Type</label>
                                         <select class="select" name="duration_type"
                                             @if ($show) disabled @endif>
-                                            <option value="years" @if (isset($Customer) && $Customer->contracts[0]->duration_type == 'years') selected @endif>
+                                            <option value="years" @if (isset($Customer) &&  count($Customer->contracts) > 0 && $Customer->contracts[0]->duration_type == 'years') selected @endif>
                                                 Years
                                             </option>
-                                            <option value="months" @if (isset($Customer) && $Customer->contracts[0]->duration_type == 'months') selected @endif>
+                                            <option value="months" @if (isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->duration_type == 'months') selected @endif>
                                                 Months
                                             </option>
-                                            <option value="weeks" @if (isset($Customer) && $Customer->contracts[0]->duration_type == 'weeks') selected @endif>
+                                            <option value="weeks" @if (isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->duration_type == 'weeks') selected @endif>
                                                 Weeks
                                             </option>
-                                            <option value="days" @if (isset($Customer) && $Customer->contracts[0]->duration_type == 'days') selected @endif>
+                                            <option value="days" @if (isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->duration_type == 'days') selected @endif>
                                                 Days
                                             </option>
 
@@ -286,11 +287,11 @@
                                         <label>Delivery Frequency</label>
                                         <select class="select" name="delivery_frequency"
                                             @if ($show) disabled @endif>
-                                            <option value="daily" @if (isset($Customer) && $Customer->contracts[0]->delivery_frequency == 'daily') selected @endif>
+                                            <option value="daily" @if (isset($Customer) &&count($Customer->contracts) > 0 &&  $Customer->contracts[0]->delivery_frequency == 'daily') selected @endif>
                                                 Daily
                                             </option>
                                             <option value="alternate_day"
-                                                @if (isset($Customer) && $Customer->contracts[0]->delivery_frequency == 'alternate_day') selected @endif>
+                                                @if (isset($Customer) &&  count($Customer->contracts) > 0 && $Customer->contracts[0]->delivery_frequency == 'alternate_day') selected @endif>
                                                 Alternate Day
                                             </option>
                                         </select>

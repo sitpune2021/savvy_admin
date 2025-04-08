@@ -43,11 +43,11 @@ class CustomerController extends Controller
             'customer_zohi_id' => 'required|string|unique:customers',
             'plant_id' => 'required|exists:plants,id',
             'name' => 'required|string|max:255', 
-            'email' => 'required|email||unique:customers|max:255', 
-            'phone_no' => 'required|digits:10', // assuming 10 digit phone number
+            'email' => 'nullable|email||unique:customers|max:255', 
+            'phone_no' => 'nullable|digits:10', // assuming 10 digit phone number
             'billing_address' => 'required|string|max:255',
             'billing_country' => 'required|string|max:255',
-            'billing_state' => 'required|string|max:255',
+            'billing_state' => 'nullable|string|max:255',
             'billing_city' => 'required|string|max:255',
             'billing_pincode' => 'required', // assuming 6 digit postal code
             'shipping_address' => 'nullable|string|max:255',
@@ -144,11 +144,11 @@ class CustomerController extends Controller
             'customer_zohi_id' => 'required|string|unique:customers,customer_zohi_id,' . $id,
             'plant_id' => 'required|exists:plants,id',
             'name' => 'required|string|max:255', 
-            'email' => 'required|email|unique:customers,email,' . $id . '|max:255',
-            'phone_no' => 'required|digits:10',
+            'email' => 'nullable|email|unique:customers,email,' . $id . '|max:255',
+            'phone_no' => 'nullable|digits:10',
             'billing_address' => 'required|string|max:255',
             'billing_country' => 'required|string|max:255',
-            'billing_state' => 'required|string|max:255',
+            'billing_state' => 'nullable|string|max:255',
             'billing_city' => 'required|string|max:255',
             'billing_pincode' => 'required|digits:6',
             'shipping_address' => 'nullable|string|max:255',
@@ -181,6 +181,17 @@ class CustomerController extends Controller
             $contract = Contracts::where('customer_id', $id)->first();
             if ($contract) {
                 $contract->update([
+                    'product_id' => $request->product_id,
+                    'quantity' => $request->quantity,
+                    'price' => $request->price,
+                    'delivery_frequency' => $request->delivery_frequency,
+                    'delivery_time' => $request->delivery_time,
+                    'duration' => $request->duration,
+                    'duration_type' => $request->duration_type,
+                ]);
+            }else {
+                Contracts::create([
+                    'customer_id' => $id,
                     'product_id' => $request->product_id,
                     'quantity' => $request->quantity,
                     'price' => $request->price,

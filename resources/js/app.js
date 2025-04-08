@@ -901,7 +901,7 @@ feather.replace();
 function handleFormSubmit(formId, actionUrl, method = 'POST', successCallback = null, errorCallback = null) {
 	$(formId).on('submit', function (e) {
 		e.preventDefault();
-		
+
 		// Remove previous error messages
 		$(this).find('.is-invalid').removeClass('is-invalid');
 		$(this).find('.invalid-feedback').remove();
@@ -979,8 +979,11 @@ handleFormSubmit(
 	'POST', // default method
 	function (response) { // success callback
 		console.log('customer saved successfully:', response);
-		// window.location.href = window.Laravel.routeIndex;
-		window.location.href = '/order/' + response.order.id + '/assign-driver';
+		if (response.order) {
+			window.location.href = '/order/' + response.order.id + '/assign-driver';
+		} else {
+			window.location.href = window.Laravel.routeIndex;
+		}
 
 	},
 	function (xhr) { // error callback
