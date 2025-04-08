@@ -42,6 +42,12 @@ Route::get('/run-all-seeders', function () {
     return "All seeders have been run successfully! Output: " . nl2br($output);
 });
 
+Route::get('/storage-link', function () {
+    $exitCode = Artisan::call('storage:link');
+    $output = Artisan::output();
+    return "All seeders have been run successfully! Output: " . nl2br($output);
+});
+
 // Route::get('/create-controller', function () {
 //     $exitCode = Artisan::call('make:controller DriverController --resource');
 
