@@ -30,7 +30,7 @@ Route::get('/clear-cache', function () {
 Route::get('/migration', function () {
     try {
         Artisan::call('migrate:fresh');
-        return "Migration completed successfully!";
+        return "Migration completed successfully";
     } catch (\Exception $e) {
         return "Migration failed: " . $e->getMessage();
     }
