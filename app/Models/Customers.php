@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Contracts;
 
 
 class Customers extends Model
@@ -24,7 +25,24 @@ class Customers extends Model
         'shipping_state',
         'shipping_city',
         'shipping_pincode',
+        'contact_person',
+        'contact_person_phone',
+        'machine_deployed',
+        'machine_deployed_date',
+        'customer_zohi_id',
+        'plant_id',
     ];
-    protected $dates = ['deleted_at'];
 
+    // Define the relationship with the Contracts model
+    public function contracts()
+    {
+        return $this->hasMany(Contracts::class, 'customer_id');
+    }
+
+    public function plant()
+    {
+        return $this->belongsTo(Plant::class, 'plant_id');
+    }
+    
+    protected $dates = ['deleted_at'];
 }

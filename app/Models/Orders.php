@@ -11,13 +11,18 @@ use App\Models\Drivers;
 
 class Orders extends Model
 {
-    use HasFactory, SoftDeletes;
+    // use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'customer_id',
         'driver_id',
-        'quantity',
-        'order_details'
+        'status',
+        'develivered_qty',
+        'return_qty',
+        'delevered_card_img',
+        'return_card_img',
+
     ];
 
     public function customers()
@@ -30,5 +35,5 @@ class Orders extends Model
         return $this->belongsTo(Drivers::class, 'driver_id');
     }
 
-    protected $dates = ['deleted_at'];
+    // protected $dates = ['deleted_at'];
 }

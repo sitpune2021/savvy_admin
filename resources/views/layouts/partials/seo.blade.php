@@ -6,5 +6,4 @@
 <meta property="og:description" content="{{ $description ?? 'Default description' }}">
 <meta property="og:type" content="CRM">
 <meta property="og:url" content="{{ url()->current() }}">
-{{-- <meta property="og:image" content="{{ $image ?? asset('default-image.jpg') }}"> --}}
 <link rel="shortcut icon" href="{{ asset('img/favicon.png')}}">

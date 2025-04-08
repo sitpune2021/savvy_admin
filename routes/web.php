@@ -1,6 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
+use App\Http\Controllers\PlantController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\OrderController;
@@ -60,9 +63,12 @@ Auth::routes(['register' => false]);
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+    Route::resource('plant', PlantController::class);
+    Route::resource('product', ProductController::class);
     Route::resource('customer', CustomerController::class);
     Route::resource('driver', DriverController::class);
     Route::resource('order', OrderController::class);
+    Route::get('/order/{id}/assign-driver', [OrderController::class, 'assignDriver'])->name('order.assign-driver');
 
 
 });

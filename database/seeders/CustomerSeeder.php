@@ -28,11 +28,6 @@ class CustomerSeeder extends Seeder
             'shipping_state' => 'Account Holder Name',
             'shipping_city' => 'Account Number',
             'shipping_pincode' => 'IFSC',
-            'bank_name' => null,
-            'bank_branch' => null,
-            'holder_name' => null,
-            'account_no' => null,
-            'ifsc_code' => null,
         ]);
 
         Customers::create([
@@ -49,11 +44,6 @@ class CustomerSeeder extends Seeder
             'shipping_state' => 'NK',
             'shipping_city' => '132456879',
             'shipping_pincode' => 'IFTSC',
-            'bank_name' => null,
-            'bank_branch' => null,
-            'holder_name' => null,
-            'account_no' => null,
-            'ifsc_code' => null,
         ]);
 
         Customers::create([
@@ -70,11 +60,6 @@ class CustomerSeeder extends Seeder
             'shipping_state' => 'Account Holder Name',
             'shipping_city' => 'Account Number',
             'shipping_pincode' => 'IFSC',
-            'bank_name' => null,
-            'bank_branch' => null,
-            'holder_name' => null,
-            'account_no' => null,
-            'ifsc_code' => null,
         ]);
 
         Customers::create([
@@ -91,11 +76,6 @@ class CustomerSeeder extends Seeder
             'shipping_state' => 'NA',
             'shipping_city' => 'NA',
             'shipping_pincode' => 'NA',
-            'bank_name' => null,
-            'bank_branch' => null,
-            'holder_name' => null,
-            'account_no' => null,
-            'ifsc_code' => null,
         ]);
     }
 }

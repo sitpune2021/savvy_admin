@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @php
-    $title = 'Orders - ' . config('app.name');
-    $PageTitle = 'Orders List';
+    $title = 'Products - ' . config('app.name');
+    $PageTitle = 'Products List';
 @endphp
 
 @section('content')
@@ -11,30 +11,8 @@
             <h5>{{ $PageTitle }}</h5>
             <div class="list-btn">
                 <ul class="filter-list">
-                    {{-- <li>
-                        <a class="btn btn-filters w-auto popup-toggle" data-bs-toggle="tooltip"
-                            data-bs-placement="bottom" title="Filter"><span class="me-2"><img src="{{ asset('img/icons/filter-icon.svg')}}" alt="filter"></span>Filter </a>
-                    </li> --}}
-                    {{-- <li>
-                        <div class="dropdown dropdown-action" data-bs-toggle="tooltip" data-bs-placement="top" title="Download">
-                            <a href="#" class="btn-filters" data-bs-toggle="dropdown" aria-expanded="false"><span><i data-feather="download"></i></span></a>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <ul class="d-block">
-                                    <li>
-                                        <a class="d-flex align-items-center download-item" href="javascript:void(0);" download><i class="far fa-file-pdf me-2"></i>PDF</a>
-                                    </li>
-                                    <li>
-                                        <a class="d-flex align-items-center download-item" href="javascript:void(0);" download><i class="far fa-file-text me-2"></i>CVS</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>														
-                    </li> --}}
-                    {{-- <li>
-                        <a class="btn btn-import" href="javascript:void(0);"><span><i data-feather="check-square me-2"></i>Import Customer</span></a>
-                    </li> --}}
                     <li>
-                        <a class="btn btn-primary" href="{{ route('order.create') }}"><i class="fa fa-plus-circle me-2"
+                        <a class="btn btn-primary" href="{{ route('product.create') }}"><i class="fa fa-plus-circle me-2"
                                 aria-hidden="true"></i>Add</a>
                     </li>
                 </ul>
@@ -52,21 +30,17 @@
                             <thead class="thead-light">
                                 <tr>
                                     <th>#</th>
-                                    <th>Customer</th>
-                                    <th>Driver</th>
-                                    <th>Develivered Quantity</th>
-                                    <th>Return Quantity </th>
+                                    <th>Name</th>
+                                    <th>Code</th>
                                     <th class="no-sort">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($orders as $order)
+                                @foreach ($products as $product)
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $order->customers->name }}</td>
-                                        <td>{{ $order?->drivers?->name }}</td>
-                                        <td>{{ $order->develivered_qty }}</td>
-                                        <td>{{ $order->return_qty }}</td>
+                                        <td>{{ $product->name }}</td>
+                                        <td>{{ $product->code }}</td>
                                         <td class="d-flex align-items-center">
                                             <div class="dropdown dropdown-action">
                                                 <a href="#" class="btn-action-icon" data-bs-toggle="dropdown"
@@ -77,7 +51,7 @@
                                                     <ul>
                                                         <li>
                                                             <a class="dropdown-item"
-                                                                href="{{ route('order.edit', $order->id) }}">
+                                                                href="{{ route('product.edit', $product->id) }}">
                                                                 <i class="far fa-edit me-2"></i>Edit
                                                             </a>
                                                         </li>
@@ -89,7 +63,7 @@
                                                         </li>
                                                         <li>
                                                             <a class="dropdown-item"
-                                                                href="{{ route('order.show', $order->id) }}">
+                                                                href="{{ route('product.show', $product->id) }}">
                                                                 <i class="far fa-eye me-2"></i>View
                                                             </a>
                                                         </li>

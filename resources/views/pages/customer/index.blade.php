@@ -11,11 +11,11 @@
             <h5>{{ $PageTitle }}</h5>
             <div class="list-btn">
                 <ul class="filter-list">
-                    {{-- <li>
+                    <li>
                         <a class="btn btn-filters w-auto popup-toggle" data-bs-toggle="tooltip"
                             data-bs-placement="bottom" title="Filter"><span class="me-2"><img src="{{ asset('img/icons/filter-icon.svg')}}" alt="filter"></span>Filter </a>
-                    </li> --}}
-                    {{-- <li>
+                    </li>
+                    <li>
                         <div class="dropdown dropdown-action" data-bs-toggle="tooltip" data-bs-placement="top" title="Download">
                             <a href="#" class="btn-filters" data-bs-toggle="dropdown" aria-expanded="false"><span><i data-feather="download"></i></span></a>
                             <div class="dropdown-menu dropdown-menu-end">
@@ -29,10 +29,10 @@
                                 </ul>
                             </div>
                         </div>														
-                    </li> --}}
-                    {{-- <li>
+                    </li>
+                    <li>
                         <a class="btn btn-import" href="javascript:void(0);"><span><i data-feather="check-square me-2"></i>Import Customer</span></a>
-                    </li> --}}
+                    </li>
                     <li>
                         <a class="btn btn-primary" href="{{ route('customer.create') }}"><i class="fa fa-plus-circle me-2"
                                 aria-hidden="true"></i>Add</a>
@@ -60,7 +60,7 @@
                             <tbody>
                                 @foreach ($customers as $customer)
                                     <tr>
-                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $customer->customer_zohi_id }}</td>
                                         <td>{{ $customer->name }}</td>
                                         <td>{{ $customer->phone_no }}</td>
                                         <td class="d-flex align-items-center">

@@ -1,1 +1,13 @@
+
 @import './style.css';
+
+table.dataTable{
+    margin-bottom: 8px !important;
+}
+.dt-paging nav{
+    float: right !important;
+}
+
+:root{
+--bs-body-bg: #fff
+}

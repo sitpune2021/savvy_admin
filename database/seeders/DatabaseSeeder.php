@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('Test@123'),  // Password, hashed
         ]);
         
-        $this->call(CustomerSeeder::class);
-        $this->call(DriverSeeder::class);
+        // $this->call(CustomerSeeder::class);
+        // $this->call(DriverSeeder::class);
     }
 }

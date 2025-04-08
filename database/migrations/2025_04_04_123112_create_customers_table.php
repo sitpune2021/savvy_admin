@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
+            $table->string('customer_zohi_id')->unique();
+            $table->unsignedBigInteger('plant_id')->nullable();
+
             $table->string('name');
             $table->string('email')->unique();
             $table->string('phone_no');
@@ -29,14 +32,16 @@ return new class extends Migration
             $table->string('shipping_city')->nullable();
             $table->string('shipping_pincode')->nullable();
 
-            $table->string('bank_name')->nullable();
-            $table->string('bank_branch')->nullable();
-            $table->string('holder_name')->nullable();
-            $table->string('account_no')->nullable();
-            $table->string('ifsc_code')->nullable();
+            $table->string('contact_person')->nullable();
+            $table->string('contact_person_phone')->nullable();
 
-            $table->timestamps(); // created_at and updated_at columns
-            $table->softDeletes(); // Add the `deleted_at` column for soft deletes
+            $table->string('machine_deployed')->default('No');
+            $table->date('machine_deployed_date')->nullable();
+
+            $table->foreign('plant_id')->references('id')->on('plants')->onDelete('cascade');
+
+            $table->softDeletes();
+            $table->timestamps();
         });
     }
 
