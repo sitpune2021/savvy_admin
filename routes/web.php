@@ -27,20 +27,20 @@ Route::get('/clear-cache', function () {
     return "Cache cleared!";
 });
 
-// Route::get('/migration', function () {
-//     try {
-//         Artisan::call('migrate');
-//         return "Migration completed successfully!";
-//     } catch (\Exception $e) {
-//         return "Migration failed: " . $e->getMessage();
-//     }
-// });
+Route::get('/migration', function () {
+    try {
+        Artisan::call('migrate:fresh');
+        return "Migration completed successfully!";
+    } catch (\Exception $e) {
+        return "Migration failed: " . $e->getMessage();
+    }
+});
 
-// Route::get('/run-all-seeders', function () {
-//     $exitCode = Artisan::call('db:seed');
-//     $output = Artisan::output();
-//     return "All seeders have been run successfully! Output: " . nl2br($output);
-// });
+Route::get('/run-all-seeders', function () {
+    $exitCode = Artisan::call('db:seed');
+    $output = Artisan::output();
+    return "All seeders have been run successfully! Output: " . nl2br($output);
+});
 
 // Route::get('/create-controller', function () {
 //     $exitCode = Artisan::call('make:controller DriverController --resource');
