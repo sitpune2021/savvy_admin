@@ -1,59 +1,102 @@
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-inner slimscroll">
-        <div id="sidebar-menu" class="sidebar-menu">
-            <ul class="sidebar-vertical">
-                <!-- Main -->
-                <li class="menu-title"><span>Main</span></li>
-                <li>
-                    <a href="{{ url('/') }}" class=" {{ Request::is('/') ? 'active' : '' }}"><i
-                            data-feather="home"></i> <span>Dashboard</span></a>
-                </li>
+<div class="app-menu navbar-menu">
+    <!-- LOGO -->
+    <div class="navbar-brand-box">
+        <!-- Dark Logo-->
+        <a href="{{ url('/') }}" class="logo logo-dark">
+            <span class="logo-sm">
+                <img src="{{ asset('assets/images/logo-1.png') }}" alt="" height="22" />
 
-                <!-- Customers -->
-                <li class="menu-title"><span>Customers</span></li>
-                <li>
-                    <a href="{{ url('plant') }}" class="{{ Request::is('plant*') ? 'active' : '' }}"><i
-                            data-feather="users"></i> <span>Plants</span></a>
-                </li>
+            </span>
+            <span class="logo-lg">
+                <img src="{{ asset('assets/images/logo-1.png') }}" alt="" height="45" />
+            </span>
+        </a>
+        <!-- Light Logo-->
+        <a href="{{ url('/') }}" class="logo logo-light">
+            <span class="logo-sm">
+                <img src="{{ asset('assets/images/logo-1.png') }}" alt="" height="22" />
+            </span>
+            <span class="logo-lg">
+                <img src="{{ asset('assets/images/logo-1.png') }}" alt="" height="45" />
 
-                <li>
-                    <a href="{{ url('product') }}" class="{{ Request::is('product*') ? 'active' : '' }}"><i
-                            data-feather="users"></i> <span>Products</span></a>
-                </li>
+            </span>
+        </a>
+        <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover"
+            id="vertical-hover">
+            <i class="ri-record-circle-line"></i>
+        </button>
+    </div>
 
-
-
-                <li>
-                    <a href="{{ url('customer') }}" class="{{ Request::is('customer*') ? 'active' : '' }}"><i
-                            data-feather="users"></i> <span>Customers</span></a>
-                </li>
-                <li>
-                    <a href="{{ url('driver') }}" class="{{ Request::is('driver*') ? 'active' : '' }}"><i
-                            data-feather="truck"></i> <span>Drivers</span></a>
-                </li>
-                {{-- <li>
-                    <a href="{{ url('customer') }}" class="{{ Request::is('customer*') ? 'active' : '' }}" ><i data-feather="user"></i> <span>Venders</span></a>
-                </li> --}}
-
-                <!-- Purchases -->
-                <li class="menu-title"><span>Purchases</span></li>
-                <li>
-                    <a href="{{ url('order') }}" class="{{ Request::is('order*') ? 'active' : '' }}"><i
-                            data-feather="shopping-bag"></i> <span>Orders</span></a>
-                </li>
-
-                <!-- Settings -->
-                <li class="menu-title"><span>Settings</span></li>
-                <li>
-                    <a href="{{ route('logout') }}"
-                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                        <i data-feather="power"></i> <span>Logout</span>
+    <div id="scrollbar">
+        <div class="container-fluid">
+            <div id="two-column-menu"></div>
+            <ul class="navbar-nav" id="navbar-nav">
+                <li class="menu-title"><span data-key="t-menu">Menu</span></li>
+                <li class="nav-item">
+                    <a class="nav-link menu-link {{ Request::is('/') ? 'active' : '' }}" href="{{ url('/') }}">
+                        <i class="ri-dashboard-2-line"></i>
+                        <span data-key="t-dashboards">Dashboards</span>
                     </a>
-                    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                        @csrf
-                    </form>
                 </li>
+                <!-- end Dashboard Menu -->
+
+                <li class="menu-title">
+                    <i class="ri-more-fill"></i>
+                    <span data-key="t-pages">Customers</span>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link menu-link {{ Request::is('plant*') ? 'active' : '' }}"
+                        href="{{ url('plant') }}">
+                        <i class="ri-building-2-line"></i>
+                        <span data-key="t-dashboards">Plants</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link menu-link {{ Request::is('product*') ? 'active' : '' }}"
+                        href="{{ url('product') }}">
+                        <i class="ri-dashboard-2-line"></i>
+                        <span data-key="t-dashboards">Products</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link menu-link {{ Request::is('driver*') ? 'active' : '' }}"
+                        href="{{ url('driver') }}">
+                        <i class="ri-dashboard-2-line"></i>
+                        <span data-key="t-dashboards">Drivers</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link menu-link {{ Request::is('customer*') ? 'active' : '' }}"
+                        href="{{ url('customer') }}">
+                        <i class="ri-dashboard-2-line"></i>
+                        <span data-key="t-dashboards">Customers</span>
+                    </a>
+                </li>
+
+                <li class="menu-title">
+                    <i class="ri-more-fill"></i>
+                    <span data-key="t-pages">Purchases</span>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link menu-link {{ Request::is('order*') ? 'active' : '' }}"
+                        href="{{ url('order') }}">
+                        <i class="ri-dashboard-2-line"></i>
+                        <span data-key="t-dashboards">Orders</span>
+                    </a>
+                </li>
+
             </ul>
         </div>
+        <!-- Sidebar -->
     </div>
+
+    <div class="sidebar-background"></div>
 </div>
+<!-- Left Sidebar End -->
+<!-- Vertical Overlay-->
+<div class="vertical-overlay"></div>

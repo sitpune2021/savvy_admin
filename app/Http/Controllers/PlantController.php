@@ -15,8 +15,8 @@ class PlantController extends Controller
      */
     public function index()
     {
-        $drivers = Plant::all();
-        return view('pages.plant.index', compact('drivers'));
+        $Plants = Plant::all();
+        return view('pages.plant.index', compact('Plants'));
     }
 
     /**

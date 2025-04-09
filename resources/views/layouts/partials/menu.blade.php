@@ -1,88 +1,204 @@
-<div class="header header-one">
-    <a href="index.html"
-        class="d-inline-flex d-sm-inline-flex align-items-center d-md-inline-flex d-lg-none align-items-center device-logo">
-        <img src="{{ asset('img/logo.png') }}" class="img-fluid logo2" alt="Logo">
-    </a>
-    <div class="main-logo d-inline float-start d-lg-flex align-items-center d-none d-sm-none d-md-none">
-        <div class="logo-white">
-            <a href="index.html">
-                <img src="{{ asset('img/logo-full-white.png') }}" class="img-fluid logo-blue" alt="Logo">
-            </a>
-            <a href="index.html">
-                <img src="{{ asset('img/logo-small-white.png') }}" class="img-fluid logo-small" alt="Logo">
-            </a>
-        </div>
-        <div class="logo-color">
-            <a href="index.html">
-                <img src="{{ asset('img/logo.png') }}" class="img-fluid logo-blue" alt="Logo">
-            </a>
-            <a href="index.html">
-                <img src="{{ asset('img/logo-small.png') }}" class="img-fluid logo-small" alt="Logo">
-            </a>
-        </div>
-    </div>
-    <a href="javascript:void(0);" id="toggle_btn">
-        <span class="toggle-bars">
-            <span class="bar-icons"></span>
-            <span class="bar-icons"></span>
-            <span class="bar-icons"></span>
-            <span class="bar-icons"></span>
-        </span>
-    </a>
+<header id="page-topbar">
+    <div class="layout-width">
+        <div class="navbar-header">
+            <div class="d-flex">
+                <div class="navbar-brand-box horizontal-logo">
+                    <a href="{{ url('/') }}"class="logo logo-dark">
+                        <span class="logo-sm">
+                            <img src="{{ asset('/assets/images/logo-1.png') }}" alt="" height="22" />
+                        </span>
+                        <span class="logo-lg">
+                            <img src="{{ asset('/assets/images/logo-1.png') }}" alt="" height="17" />
+                        </span>
+                    </a>
+                    <a href="{{ url('/') }}"class="logo logo-light">
+                        <span class="logo-sm">
+                            <img src="{{ asset('/assets/images/logo-1.png') }}" alt="" height="22" />
+                        </span>
+                        <span class="logo-lg">
+                            <img src="{{ asset('/assets/images/logo-1.png') }}" alt="" height="17" />
+                        </span>
+                    </a>
+                </div>
+                <button type="button"
+                    class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger material-shadow-none"
+                    id="topnav-hamburger-icon">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
 
+                {{-- <form class="app-search d-none d-md-block">
+                    <div class="position-relative">
+                        <input type="text" class="form-control" placeholder="Search..." autocomplete="off"
+                            id="search-options" value="" />
+                        <span class="mdi mdi-magnify search-widget-icon"></span>
+                        <span class="mdi mdi-close-circle search-widget-icon search-widget-icon-close d-none"
+                            id="search-close-options"></span>
+                    </div>
+                    <div class="dropdown-menu dropdown-menu-lg" id="search-dropdown">
+                        <div data-simplebar style="max-height: 320px">
+                            <!-- item-->
+                            <div class="dropdown-header">
+                                <h6 class="text-overflow text-muted mb-0 text-uppercase">
+                                    Recent Searches
+                                </h6>
+                            </div>
 
-    <a class="mobile_btn" id="mobile_btn">
-        <i class="fas fa-bars"></i>
-    </a>
+                            <div class="dropdown-item bg-transparent text-wrap">
+                                <a href="{{ url('/') }}"class="btn btn-soft-secondary btn-sm rounded-pill">how
+                                    to setup <i class="mdi mdi-magnify ms-1"></i></a>
+                                <a href="{{ url('index.html') }}"
+                                    class="btn btn-soft-secondary btn-sm rounded-pill">buttons <i
+                                        class="mdi mdi-magnify ms-1"></i></a>
+                            </div>
+                            <!-- item-->
+                            <div class="dropdown-header mt-2">
+                                <h6 class="text-overflow text-muted mb-1 text-uppercase">
+                                    Pages
+                                </h6>
+                            </div>
 
-    <ul class="nav nav-tabs user-menu">
-        <li class="nav-item  has-arrow dropdown-heads ">
-            <a href="javascript:void(0);" class="win-maximize">
-                <i data-feather="maximize"></i>
-            </a>
-        </li>
-        <li class="nav-item dropdown">
-            <a href="javascript:void(0)" class="user-link  nav-link" data-bs-toggle="dropdown">
-                <span class="user-img">
-                    <img src="{{ asset('img/profiles/avatar-07.jpg') }}" alt="img" class="profilesidebar">
-                    <span class="animate-circle"></span>
-                </span>
-                <span class="user-content">
-                    <span class="user-details">{{ Auth::user()->role }}</span>
-                    <span class="user-name">{{ ucfirst(Auth::user()->name) }}</span>
-                </span>
-            </a>
-            <div class="dropdown-menu menu-drop-user">
-                <div class="profilemenu">
-                    {{-- <div class="subscription-menu">
-                        <ul>
-                            <li>
-                                <a class="dropdown-item" href="profile.html">Profile</a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="settings.html">Settings</a>
-                            </li>
-                        </ul>
-                    </div> --}}
-                    <div class="subscription-logout">
-                        <ul>
-                            <li class="pb-0">
-                                <a href="{{ route('logout') }}" class="dropdown-item"
-                                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                    Log Out
+                            <!-- item-->
+                            <a href="{{ url('javascript:void(0);') }}" class="dropdown-item notify-item">
+                                <i class="ri-bubble-chart-line align-middle fs-18 text-muted me-2"></i>
+                                <span>Analytics Dashboard</span>
+                            </a>
+
+                            <!-- item-->
+                            <a href="{{ url('javascript:void(0);') }}" class="dropdown-item notify-item">
+                                <i class="ri-lifebuoy-line align-middle fs-18 text-muted me-2"></i>
+                                <span>Help Center</span>
+                            </a>
+
+                            <!-- item-->
+                            <a href="{{ url('javascript:void(0);') }}" class="dropdown-item notify-item">
+                                <i class="ri-user-settings-line align-middle fs-18 text-muted me-2"></i>
+                                <span>My account settings</span>
+                            </a>
+
+                            <!-- item-->
+                            <div class="dropdown-header mt-2">
+                                <h6 class="text-overflow text-muted mb-2 text-uppercase">
+                                    Members
+                                </h6>
+                            </div>
+
+                            <div class="notification-list">
+                                <!-- item -->
+                                <a href="{{ url('javascript:void(0);') }}" class="dropdown-item notify-item py-2">
+                                    <div class="d-flex">
+                                        <img src="{{ asset('/assets/images/users/avatar-2.jpg') }}"
+                                            class="me-3 rounded-circle avatar-xs" alt="user-pic" />
+                                        <div class="flex-grow-1">
+                                            <h6 class="m-0">Angela Bernier</h6>
+                                            <span class="fs-11 mb-0 text-muted">Manager</span>
+                                        </div>
+                                    </div>
                                 </a>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST"
-                                    style="display: none;">
-                                    @csrf
-                                </form>
-                            </li>
-                        </ul>
+                                <!-- item -->
+                                <a href="{{ url('javascript:void(0);') }}" class="dropdown-item notify-item py-2">
+                                    <div class="d-flex">
+                                        <img src="{{ asset('/assets/images/users/avatar-3.jpg') }}"
+                                            class="me-3 rounded-circle avatar-xs" alt="user-pic" />
+                                        <div class="flex-grow-1">
+                                            <h6 class="m-0">David Grasso</h6>
+                                            <span class="fs-11 mb-0 text-muted">Web Designer</span>
+                                        </div>
+                                    </div>
+                                </a>
+                                <!-- item -->
+                                <a href="{{ url('javascript:void(0);') }}" class="dropdown-item notify-item py-2">
+                                    <div class="d-flex">
+                                        <img src="{{ asset('/assets/images/users/avatar-5.jpg') }}"
+                                            class="me-3 rounded-circle avatar-xs" alt="user-pic" />
+                                        <div class="flex-grow-1">
+                                            <h6 class="m-0">Mike Bunch</h6>
+                                            <span class="fs-11 mb-0 text-muted">React Developer</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="text-center pt-3 pb-1">
+                            <a href="{{ url('pages-search-results.html') }}" class="btn btn-primary btn-sm">View All
+                                Results <i class="ri-arrow-right-line ms-1"></i></a>
+                        </div>
+                    </div>
+                </form> --}}
+            </div>
+
+            <div class="d-flex align-items-center">
+                <div class="dropdown d-md-none topbar-head-dropdown header-item">
+                    <button type="button"
+                        class="btn btn-icon btn-topbar material-shadow-none btn-ghost-secondary rounded-circle"
+                        id="page-header-search-dropdown" data-bs-toggle="dropdown" aria-haspopup="true"
+                        aria-expanded="false">
+                        <i class="bx bx-search fs-22"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0"
+                        aria-labelledby="page-header-search-dropdown">
+                        <form class="p-3">
+                            <div class="form-group m-0">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="Search ..."
+                                        aria-label="Recipient's username" />
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="mdi mdi-magnify"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="ms-1 header-item d-none d-sm-flex">
+                    <button type="button"
+                        class="btn btn-icon btn-topbar material-shadow-none btn-ghost-secondary rounded-circle"
+                        data-toggle="fullscreen">
+                        <i class="bx bx-fullscreen fs-22"></i>
+                    </button>
+                </div>
+
+                <div class="dropdown ms-sm-3 header-item topbar-user">
+                    <button type="button" class="btn material-shadow-none" id="page-header-user-dropdown"
+                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="d-flex align-items-center">
+                            <img class="rounded-circle header-profile-user"
+                                src="{{ asset('/assets/images/users/avatar-1.jpg') }}" alt="Header Avatar" />
+                            <span class="text-start ms-xl-2">
+                                <span
+                                    class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">{{ ucfirst(Auth::user()->name) }}</span>
+                                <span
+                                    class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">{{ ucfirst(Auth::user()->role) }}</span>
+                            </span>
+                        </span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <h6 class="dropdown-header">Welcome {{ ucfirst(Auth::user()->name) }}</h6>
+                        <a class="dropdown-item" href="{{ url('pages-profile.html') }}"><i
+                                class="mdi mdi-account-circle text-muted fs-16 align-middle me-1"></i>
+                            <span class="align-middle">Profile</span></a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{{ url('pages-profile-settings.html') }}">
+                            <i class="mdi mdi-cog-outline text-muted fs-16 align-middle me-1"></i>
+                            <span class="align-middle">Settings</span></a>
+                            <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                <i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i>
+                                <span class="align-middle" data-key="t-logout">Logout</span>
+                            </a>
+                            
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                                @csrf
+                            </form>
+                            
+
                     </div>
                 </div>
             </div>
-        </li>
-
-    </ul>
-
-
-</div>
+        </div>
+    </div>
+</header>

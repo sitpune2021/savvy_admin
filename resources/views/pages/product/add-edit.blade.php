@@ -3,25 +3,63 @@
     $title = 'Products - ' . config('app.name');
     $PageTitle = isset($product) ? ($show ? 'View Product' : 'Edit Product') : 'Create Product';
 
-    // $breadcrumbs = [
-    //     ['title' => 'Home', 'url' => url('/')],
-    //     ['title' => 'Plants', 'url' => route('skills.index')],
-    //     ['title' => $PageTitle, 'url' => null], // Current page without URL
-    // ];
-
+    $breadcrumbs = [
+        ['name' => 'Home', 'url' => url('/')],
+        ['name' => 'Products List', 'url' => url('/product')],
+        ['name' => $PageTitle, 'url' => ''],
+    ];
 @endphp
+@push('styles')
+    <link href="{{ asset('/assets/libs/quill/quill.core.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('/assets/libs/quill/quill.bubble.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('/assets/libs/quill/quill.snow.css') }}" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+@endpush
+@push('scripts')
+    <script src="{{ asset('/assets/libs/quill/quill.min.js') }}"></script>
+    <script src="{{ asset('/assets/js/pages/form-editor.init.js') }}"></script>
+
+    <!--jquery cdn-->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <!--select2 cdn-->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script src="{{ asset('/assets/js/pages/select2.init.js') }}"></script>
+
+    <script src="{{ asset('/assets/js/app.js') }}"></script>
+@endpush
+
 @section('content')
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0">{{ $PageTitle }}</h4>
+
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        @foreach ($breadcrumbs as $breadcrumb)
+                            <li class="breadcrumb-item">
+                                @if (isset($breadcrumb['url']))
+                                    <a href="{{ $breadcrumb['url'] }}">{{ $breadcrumb['name'] }}</a>
+                                @else
+                                    {{ $breadcrumb['name'] }}
+                                @endif
+                            </li>
+                        @endforeach
+                    </ol>
+                </div>
+
+            </div>
+        </div>
+    </div>
     <div class="card mb-0">
         <div class="card-body">
-            <div class="content-page-header">
-                <h5>{{ $PageTitle }}</h5>
-            </div>
             <form id="productForm" enctype="multipart/form-data">
                 <input type="hidden" id="id" name="id" value="{{ $product->id ?? null }}">
                 <div class="row">
                     <div class="col-md-12">
                         <div class="form-group-item">
-                            <h5 class="form-title">Basic Details</h5>
                             <div class="row align-item-center">
                                 <div class="col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
@@ -75,13 +113,12 @@
                         </div>
 
                         <div class="form-group-item">
-                            <h5 class="form-title">Description</h5>
                             <div class="row align-item-center">
-                                <div class="col-md-6 col-sm-12">
+                                <div class="col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Description</label>
-                                        <textarea name="description" class="form-control" placeholder="Enter description"
-                                         rows="3" @if ($show) disabled @endif>{{ old('description', $product->description ?? '') }}</textarea>
+                                        <textarea name="description" class="form-control snow-editor" rows="10" placeholder="Enter description"
+                                          @if ($show) disabled @endif>{{ old('description', $product->description ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>

@@ -9,13 +9,58 @@
                 : 'Edit Order')
             : 'Create Order');
 
+    $breadcrumbs = [
+        ['name' => 'Home', 'url' => url('/')],
+        ['name' => 'Order List', 'url' => url('/order')],
+        ['name' => $PageTitle, 'url' => ''],
+    ];
 @endphp
+@push('styles')
+    <link href="{{ asset('/assets/libs/quill/quill.core.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('/assets/libs/quill/quill.bubble.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('/assets/libs/quill/quill.snow.css') }}" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+@endpush
+@push('scripts')
+    <script src="{{ asset('/assets/libs/quill/quill.min.js') }}"></script>
+    <script src="{{ asset('/assets/js/pages/form-editor.init.js') }}"></script>
+
+    <!--jquery cdn-->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <!--select2 cdn-->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script src="{{ asset('/assets/js/pages/select2.init.js') }}"></script>
+
+    <script src="{{ asset('/assets/js/app.js') }}"></script>
+@endpush
+
 @section('content')
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0">{{ $PageTitle }}</h4>
+
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        @foreach ($breadcrumbs as $breadcrumb)
+                            <li class="breadcrumb-item">
+                                @if (isset($breadcrumb['url']))
+                                    <a href="{{ $breadcrumb['url'] }}">{{ $breadcrumb['name'] }}</a>
+                                @else
+                                    {{ $breadcrumb['name'] }}
+                                @endif
+                            </li>
+                        @endforeach
+                    </ol>
+                </div>
+
+            </div>
+        </div>
+    </div>
     <div class="card mb-0">
         <div class="card-body">
-            <div class="content-page-header">
-                <h5>{{ $PageTitle }}</h5>
-            </div>
             <form id="orderForm" enctype="multipart/form-data">
                 <input type="hidden" id="id" name="id" value="{{ $Order->id ?? null }}">
                 <div class="row">
@@ -25,34 +70,26 @@
                                 <div class=" col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label for="customer_id">Select Customer</label>
-                                        <ul class="form-group-plus css-equal-heights">
-                                            <li>
-                                                @if (isset($assign))
-                                                    <input type="hidden" name="customer_id"
-                                                        value="{{ $Order->customer_id ?? null }}">
-                                                    <input type="hidden" name="develivered_qty"
-                                                        value="{{ $Order->develivered_qty ?? null }}">
-                                                    <input type="hidden" name="return_qty"
-                                                        value="{{ $Order->return_qty ?? null }}">
-                                                    <input type="hidden" name="status"
-                                                        value="{{ $Order->status ?? null }}">
-                                                @endif
-                                                <select class="select" name="customer_id"
-                                                    @if ($show) disabled @endif
-                                                    @if (isset($assign)) disabled @endif>
-                                                    <option>Choose Customer</option>
-                                                    @foreach ($customers as $customer)
-                                                        <option value="{{ $customer->id }}"
-                                                            @if (isset($Order) && $Order->customer_id == $customer->id) selected @endif>
-                                                            {{ $customer->name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </li>
-                                            <li>
-                                                <a class="btn btn-primary form-plus-btn" href="{{ route('customer.create') }}"><i
-                                                        class="fas fa-plus-circle"></i></a>
-                                            </li>
+                                        @if (isset($assign))
+                                            <input type="hidden" name="customer_id"
+                                                value="{{ $Order->customer_id ?? null }}">
+                                            <input type="hidden" name="develivered_qty"
+                                                value="{{ $Order->develivered_qty ?? null }}">
+                                            <input type="hidden" name="return_qty"
+                                                value="{{ $Order->return_qty ?? null }}">
+                                            <input type="hidden" name="status" value="{{ $Order->status ?? null }}">
+                                        @endif
+                                        <select class="select js-example-basic-single" name="customer_id"
+                                            @if ($show) disabled @endif
+                                            @if (isset($assign)) disabled @endif>
+                                            <option>Choose Customer</option>
+                                            @foreach ($customers as $customer)
+                                                <option value="{{ $customer->id }}"
+                                                    @if (isset($Order) && $Order->customer_id == $customer->id) selected @endif>
+                                                    {{ $customer->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
                                         </ul>
                                     </div>
                                 </div>
@@ -60,9 +97,7 @@
                                 <div class="col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label for="driver_id">Select Driver</label>
-                                        <ul class="form-group-plus css-equal-heights">
-                                        <li>
-                                        <select class="select"
+                                        <select class="select js-example-basic-single"
                                             name="driver_id"@if ($show) disabled @endif>
                                             <option>Choose Driver</option>
                                             @foreach ($drivers as $driver)
@@ -72,32 +107,27 @@
                                                 </option>
                                             @endforeach
                                         </select>
-                                        </li>
-                                        <li>    
-                                            <a class="btn btn-primary form-plus-btn" href="{{ route('driver.create') }}"><i class="fas fa-plus-circle"></i></a>
-                                        </li>
-                                    </ul>												
                                     </div>
                                 </div>
                                 {{-- @if (isset($Order)) --}}
-                                    <div class="col-md-6 col-sm-12">
-                                        <div class="input-block mb-3">
-                                            <label>Delivered Quantity</label>
-                                            <input name="develivered_qty" type="number" class="form-control"
-                                                value="{{ old('develivered_qty', $Order->develivered_qty ?? 1) }}"
-                                                @if ($show) disabled @endif required
-                                                @if (isset($assign)) disabled @endif>
-                                        </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Delivered Quantity</label>
+                                        <input name="develivered_qty" type="number" class="form-control"
+                                            value="{{ old('develivered_qty', $Order->develivered_qty ?? 1) }}"
+                                            @if ($show) disabled @endif required
+                                            @if (isset($assign)) disabled @endif>
                                     </div>
-                                    <div class="col-md-6 col-sm-12">
-                                        <div class="input-block mb-3">
-                                            <label>Return Quantity</label>
-                                            <input name="return_qty" type="number" class="form-control"
-                                                value="{{ old('return_qty', $Order->return_qty ?? 0) }}"
-                                                @if ($show) disabled @endif required
-                                                @if (isset($assign)) disabled @endif>
-                                        </div>
-                                    </div>
+                                </div>
+                                {{-- <div class="col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Return Quantity</label> --}}
+                                        <input name="return_qty" type="hidden" class="form-control"
+                                            value="{{ old('return_qty', $Order->return_qty ?? 0) }}"
+                                            @if ($show) disabled @endif required
+                                            @if (isset($assign)) disabled @endif>
+                                    {{-- </div>
+                                </div> --}}
                                 {{-- @endif --}}
                             </div>
                         </div>
@@ -199,5 +229,4 @@
             routeIndex: "{{ route('order.index') }}"
         };
     </script>
-
 @endsection
