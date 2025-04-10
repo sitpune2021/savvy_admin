@@ -356,7 +356,7 @@
                         </div>
                     </div>
 
-                    <div class="text-end">
+                    <div class="text-end m-3 mt-0">
                         <button type="button" class="btn btn-primary cancel me-2"
                             onclick="window.location='{{ route('customer.index') }}'">Cancel</button>
                         @if (!$show)
