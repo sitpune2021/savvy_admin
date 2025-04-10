@@ -153,6 +153,19 @@ handleFormSubmit(
 	}
 );
 
+handleFormSubmit(
+	'#routeForm', // form ID
+	'/route', // URL to send data to
+	'POST', // default method
+	function (response) { // success callback
+		console.log('route saved successfully:', response);
+		window.location.href = window.Laravel.routeIndex;
+	},
+	function (xhr) { // error callback
+		console.log('Error occurred:', xhr);
+	}
+);
+
 
 $('input, select, textarea').on('focus', function () {
 	$(this).removeClass('is-invalid');

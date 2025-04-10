@@ -7,6 +7,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\RouteController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -29,7 +30,7 @@ Route::get('/clear-cache', function () {
 
 Route::get('/migration', function () {
     try {
-        Artisan::call('migrate:fresh');
+        Artisan::call('migrate');
         return "Migration completed successfully";
     } catch (\Exception $e) {
         return "Migration failed: " . $e->getMessage();
@@ -70,6 +71,7 @@ Auth::routes(['register' => false]);
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::resource('plant', PlantController::class);
+    Route::resource('route', RouteController::class);
     Route::resource('product', ProductController::class);
     Route::resource('customer', CustomerController::class);
     Route::resource('driver', DriverController::class);

@@ -62,6 +62,14 @@
                 </li>
 
                 <li class="nav-item">
+                    <a class="nav-link menu-link {{ Request::is('route*') ? 'active' : '' }}"
+                        href="{{ url('route') }}">
+                        <i class="ri-building-2-line"></i>
+                        <span data-key="t-dashboards">Routes</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a class="nav-link menu-link {{ Request::is('driver*') ? 'active' : '' }}"
                         href="{{ url('driver') }}">
                         <i class="ri-dashboard-2-line"></i>
