@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use App\Models\Drivers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 
 class AuthController extends Controller
