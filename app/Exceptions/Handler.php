@@ -49,7 +49,7 @@ class Handler extends ExceptionHandler
 
     public function unauthenticated($request, AuthenticationException $exception)
     {
-        if ($request->expectsJson()) {
+        if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json([
                 'message' => 'Unauthenticated. Please login first.'
             ], 401);
