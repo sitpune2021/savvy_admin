@@ -64,7 +64,10 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'OTP sent to WhatsApp'
+            'message' => 'OTP sent to WhatsApp',
+            'data' => [
+                'phone_no' => $request->phone_no,
+            ]
         ], 200);
     }
 
