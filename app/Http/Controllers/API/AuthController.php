@@ -37,7 +37,6 @@ class AuthController extends Controller
 
     public function sendOtp(Request $request)
     {
-        // Step 1: Validate phone number input
         $validator = Validator::make($request->all(), [
             'phone_no' => 'required|digits:10'
         ]);
@@ -46,29 +45,27 @@ class AuthController extends Controller
             return response()->json(['error' => $validator->errors()], 422);
         }
 
-        // Step 2: Check if driver exists (do not create)
         $driver = Drivers::where('phone_no', $request->phone_no)->first();
         if (!$driver) {
             return response()->json(['error' => 'Driver not found'], 404);
         }
 
-        // Step 3: Revoke all existing tokens
         $driver->tokens->each(function ($token) {
             $token->delete();
         });
 
-        // Step 4: Generate OTP and update in DB
         $otp = rand(100000, 999999);
         $driver->update([
             'otp' => $otp,
             'otp_expires_at' => Carbon::now()->addMinutes(5)
         ]);
 
-        // Step 5: Send OTP via WhatsApp (custom method)
         $this->sendWhatsAppOtp($request->phone_no, $otp);
 
-        // Step 6: Return success response
-        return response()->json(['message' => 'OTP sent to WhatsApp']);
+        return response()->json([
+            'status' => true,
+            'message' => 'OTP sent to WhatsApp'
+        ], 200);
     }
 
     public function verifyOtp(Request $request)
@@ -91,7 +88,6 @@ class AuthController extends Controller
             return response()->json(['error' => 'Invalid or expired OTP'], 401);
         }
 
-        // Clear OTP after success
         $driver->update([
             'otp' => null,
             'otp_expires_at' => null
@@ -100,7 +96,6 @@ class AuthController extends Controller
         $driver->tokens->each(function ($token) {
             $token->delete();
         });
-        // Generate Sanctum token
         $token = $driver->createToken('driver_token')->plainTextToken;
 
         return response()->json([
