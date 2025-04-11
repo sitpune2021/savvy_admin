@@ -38,8 +38,8 @@ class PlantController extends Controller
             'address' => 'required|string|max:255',
             'manager' => 'required|string|max:255',
             'location' => 'required|string|max:255',
-            'pincode' => 'required|string|max:20',
-            'details' => 'required|string|max:255',
+            'pincode' => 'required|string|min:6|max:20',
+            'details' => 'nullable|string|max:255',
         ]);
 
     
@@ -93,8 +93,8 @@ class PlantController extends Controller
             'address' => 'required|string|max:255',
             'manager' => 'required|string|max:255',
             'location' => 'required|string|max:255',
-            'pincode' => 'required|string|max:20',
-            'details' => 'required|string|max:255',
+            'pincode' => 'required|string|min:6|max:20',
+            'details' => 'nullable|string|max:255',
         ]);
         
         if ($validator->fails()) {

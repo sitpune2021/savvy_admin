@@ -51,6 +51,7 @@ class Handler extends ExceptionHandler
     {
         if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json([
+                'status' => false,
                 'message' => 'Unauthenticated. Please login first.'
             ], 401);
         }

@@ -63,10 +63,10 @@ class OrderController extends Controller
     
             if ($orders->isEmpty()) {
                 return response()->json([
-                    'status' => false,
+                    'status' => true,
                     'message' => 'No orders found for the given status.',
                     'data' => []
-                ], 404);
+                ], 200);
             }
     
             $transformedOrders = $orders->map(function ($order) {
