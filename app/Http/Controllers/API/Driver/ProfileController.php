@@ -127,13 +127,18 @@ class ProfileController extends Controller
             $Driver->update($request->except('aadhar_card_FILE', 'pan_card_FILE'));
         
             return response()->json([
+                'status' => true,
                 'message' => 'Driver updated successfully!',
             ]);
         
         } catch (ModelNotFoundException $e) {
-            return response()->json(['error' => 'Driver not found.'], 404);
+            return response()->json([
+                'status' => false,
+                'error' => 'Driver not found.'], 404);
         } catch (Exception $e) {
-            return response()->json(['error' => 'An error occurred while updating the Driver: ' . $e->getMessage()], 500);
+            return response()->json([
+                'status' => false,
+                'error' => 'An error occurred while updating the Driver: ' . $e->getMessage()], 500);
         }
     }
 
@@ -152,15 +157,18 @@ class ProfileController extends Controller
             }
                 $driver->delete();
                 return response()->json([
+                    'status' => true,
                     'message' => 'Driver  deleted successfully.',
                 ], 200);
         } catch (ModelNotFoundException $e) {
                 return response()->json([
+                    'status' => false,
                     'error' => 'Driver not found.',
                     'message' => $e->getMessage(),
                 ], 404); 
         } catch (Exception $e) {
                 return response()->json([
+                    'status' => false,
                     'error' => 'An error occurred while deleting the  Driver.',
                     'message' => $e->getMessage(),
                 ], 500);

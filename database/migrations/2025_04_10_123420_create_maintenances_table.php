@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('description')->nullable();
             $table->string('amount');
             $table->string('image')->nullable();
+            $table->string('status')->default('pending')->enum(['pending','approved','rejected']);
+            $table->string('date')->nullable();
             $table->foreign('driver_id')->references('id')->on('drivers')->onDelete('cascade');
             $table->softDeletes();
             $table->timestamps();

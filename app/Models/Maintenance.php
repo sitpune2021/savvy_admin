@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Drivers;
 
 class Maintenance extends Model
 {
@@ -16,6 +17,11 @@ class Maintenance extends Model
         'amount',
         'image',
     ];
+
+    public function driver()
+    {
+        return $this->belongsTo(Drivers::class, 'driver_id');
+    }
 
     protected $dates = ['deleted_at'];
 }

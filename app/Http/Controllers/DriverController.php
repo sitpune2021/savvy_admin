@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Drivers;
+use App\Models\Routes;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Exception;
@@ -25,8 +26,9 @@ class DriverController extends Controller
      */
     public function create()
     {
-        $show = false;        
-        return view('pages.driver.add-edit',compact('show'));
+        $show = false;  
+        $routes = Routes::all();
+        return view('pages.driver.add-edit',compact('show', 'routes'));      
     }
 
     /**
@@ -35,6 +37,7 @@ class DriverController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'route_id' => 'required|exists:routes,id',
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:drivers,email',
             'phone_no' => 'required|string|max:20',
@@ -42,7 +45,7 @@ class DriverController extends Controller
             'country' => 'required|string|max:255',
             'state' => 'required|string|max:255',
             'city' => 'required|string|max:255',
-            'pincode' => 'required|string|max:20',
+            'pincode' => 'required|string|min:6|max:20',
             'license_no' => 'nullable|string|max:255',
             'vehicle_no' => 'nullable|string|max:255',
             'vehicle_name' => 'nullable|string|max:255',
@@ -92,7 +95,8 @@ class DriverController extends Controller
     {
         $show = true;
         $Driver = Drivers::findOrFail($id);
-        return view('pages.driver.add-edit',compact('show', 'Driver'));
+        $routes = Routes::all();
+        return view('pages.driver.add-edit',compact('show', 'Driver', 'routes'));
     }
 
     /**
@@ -103,7 +107,8 @@ class DriverController extends Controller
         try {
             $show = false;
             $Driver = Drivers::findOrFail($id);
-            return view('pages.driver.add-edit',compact('show', 'Driver'));
+            $routes = Routes::all();
+            return view('pages.driver.add-edit',compact('show', 'Driver', 'routes'));
         } catch (ModelNotFoundException $e) {
             return back()->withErrors(['error' => 'Driver not found.']);
         } catch (Exception $e) {
@@ -117,6 +122,7 @@ class DriverController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
+            'route_id' => 'required|exists:routes,id',
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:drivers,email,' . $id,
             'phone_no' => 'required|string|max:20',
@@ -124,7 +130,7 @@ class DriverController extends Controller
             'country' => 'required|string|max:255',
             'state' => 'required|string|max:255',
             'city' => 'required|string|max:255',
-            'pincode' => 'required|string|max:20',
+            'pincode' => 'required|string|min:6|max:20',
             'license_no' => 'nullable|string|max:255',
             'vehicle_no' => 'nullable|string|max:255',
             'vehicle_name' => 'nullable|string|max:255',

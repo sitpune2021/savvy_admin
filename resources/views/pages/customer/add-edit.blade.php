@@ -43,8 +43,7 @@
             </div>
         </div>
     </div>
-    {{-- <div class="card mb-0">
-        <div class="card-body"> --}}
+
     <form id="customerForm" enctype="multipart/form-data">
         <input type="hidden" id="id" name="id" value="{{ $Customer->id ?? null }}">
         <div class="row">
@@ -158,111 +157,79 @@
                         </div>
                     </div>
                 </div>
-
-
-                <div class="form-group-item card">
-                    <div class="card-header">
-                        <h5 class="form-title">Shipping Address</h5>
-                    </div>
-                    <div class="row align-item-center  card-body">
-                        <div class="col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Address</label>
-                                <input name="shipping_address" type="text" class="form-control"
-                                    placeholder="Enter Shipping Address"
-                                    value="{{ old('shipping_address', $Customer->shipping_address ?? '') }}"
-                                    @if ($show) disabled @endif>
+                @if (!isset($Customer))
+                    <div id="shipping_address_div">
+                        <div class="form-group-item card address-block">
+                            <div class="card-header d-flex justify-content-between align-items-center add-remove">
+                                <h5 class="form-title">Shipping Address</h5>
+                                <button type="button" class="btn btn-sm btn-success" id="add-address">
+                                    + Add Location
+                                </button>
                             </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Country</label>
-                                <input name="shipping_country" type="text" class="form-control"
-                                    placeholder="Enter Shipping Country"
-                                    value="{{ old('shipping_country', $Customer->shipping_country ?? '') }}"
-                                    @if ($show) disabled @endif>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>State</label>
-                                <input name="shipping_state" type="text" class="form-control"
-                                    placeholder="Enter Shipping State"
-                                    value="{{ old('shipping_state', $Customer->shipping_state ?? '') }}"
-                                    @if ($show) disabled @endif>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-3 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>City</label>
-                                <input name="shipping_city" type="text" class="form-control"
-                                    placeholder="Enter Shipping City"
-                                    value="{{ old('shipping_city', $Customer->shipping_city ?? '') }}"
-                                    @if ($show) disabled @endif>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Pin Code</label>
-                                <input name="shipping_pincode" type="number" class="form-control"
-                                    placeholder="Enter Shipping Pin Code"
-                                    value="{{ old('shipping_pincode', $Customer->shipping_pincode ?? '') }}"
-                                    @if ($show) disabled @endif>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group-item card">
-                    <div class="card-header">
-                        <h5 class="form-title">Contact Person</h5>
-                    </div>
-                    <div class="row align-item-center  card-body">
-                        <div class=" col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Name</label>
-                                <input name="contact_person" type="text" class="form-control"
-                                    placeholder="Enter Name"
-                                    value="{{ old('contact_person', $Customer->contact_person ?? '') }}"
-                                    @if ($show) disabled @endif>
-                            </div>
-                        </div>
-                        <div class=" col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Mobile No</label>
-                                <input name="contact_person_phone" type="text" class="form-control"
-                                    placeholder="Enter Mobile No"
-                                    value="{{ old('contact_person_phone', $Customer->contact_person_phone ?? '') }}"
-                                    @if ($show) disabled @endif>
+                            <div class="row align-item-center card-body">
+                                <div class="col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Address</label>
+                                        <input name="shipping[0][shipping_address]" type="text" class="form-control"
+                                            placeholder="Enter Shipping Address">
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Country</label>
+                                        <input name="shipping[0][shipping_country]" type="text" class="form-control"
+                                            placeholder="Enter Shipping Country">
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>State</label>
+                                        <input name="shipping[0][shipping_state]" type="text" class="form-control"
+                                            placeholder="Enter Shipping State">
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>City</label>
+                                        <input name="shipping[0][shipping_city]" type="text" class="form-control"
+                                            placeholder="Enter Shipping City">
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Pin Code</label>
+                                        <input name="shipping[0][shipping_pincode]" type="number" class="form-control"
+                                            placeholder="Enter Shipping Pin Code">
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Name</label>
+                                        <input name="shipping[0][contact_person]" type="text" class="form-control"
+                                            placeholder="Enter Name">
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Mobile No</label>
+                                        <input name="shipping[0][contact_person_phone]" type="text"
+                                            class="form-control" placeholder="Enter Mobile No">
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Deployed</label>
+                                        <select class="select js-example-basic-single"
+                                            name="shipping[0][machine_deployed]">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
-
-                <div class="form-group-item card">
-                    <div class="card-header">
-                        <h5 class="form-title">Machine Details</h5>
-                    </div>
-                    <div class="row align-item-center  card-body">
-                        <div class=" col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Deployed</label>
-                                <select class="select js-example-basic-single" name="machine_deployed"
-                                    @if ($show) disabled @endif>
-                                    <option value="Yes" @if (isset($Customer) && $Customer->machine_deployed == 'Yes') selected @endif>
-                                        Yes
-                                    </option>
-                                    <option value="No" @if (isset($Customer) && $Customer->machine_deployed == 'No') selected @endif>
-                                        No
-                                    </option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+                @endif
 
                 <div class="form-group-item card mb-2">
                     <div class="card-header">
@@ -365,10 +332,81 @@
                         @endif
                     </div>
                 </div>
+
             </div>
+        </div>
     </form>
-    {{-- </div>
-    </div> --}}
+    @if (isset($Customer) && $Customer->shippingAddresses->count() > 0)
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group-item card">
+                    <div class="card-header d-flex justify-content-between align-items-center add-remove">
+                        <h5 class="form-title">Shipping Address</h5>
+                        @if (!$show)
+                        <button type="button" class="btn btn-sm btn-success" id="add-address-edit">
+                            + Add Location
+                        </button>
+                        @endif
+                    </div>
+                    <div class="row align-item-center card-body">
+                        <div class="table-responsive mt-4 mt-xl-0">
+                            <table class="table table-striped table-nowrap align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Address</th>
+                                        <th>Person</th>
+                                        <th>No.</th>
+                                        @if (!$show)
+                                        <th>Action</th>
+                                        @endif
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($Customer->shippingAddresses as $index => $shippingAddress)
+                                        <tr data-index="{{ $index }}">
+                                            <td class="fw-medium">{{ $index + 1 }}</td>
+                                            <td>{{ $shippingAddress->shipping_address }}</td>
+                                            <td>{{ $shippingAddress->contact_person }}</td>
+                                            <td>{{ $shippingAddress->contact_person_phone }}</td>
+                                            @if (!$show)
+                                            <td>
+                                                <div class="hstack gap-3 flex-wrap">
+                                                    <a href="javascript:void(0);" class="link-success fs-15 edit-address"
+                                                        data-address='@json($shippingAddress)'>
+                                                        <i class="ri-edit-2-line"></i>
+                                                    </a>
+                                                    <a href="javascript:void(0);"
+                                                        class="link-danger fs-15 remove-address">
+                                                        <i class="ri-delete-bin-line"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                            @endif
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @if (!$show)
+        <form id="shippingForm" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col-md-12">
+                    <div id="address-container">
+                        {{-- Dynamic address blocks injected here --}}
+                    </div>
+                </div>
+            </div>
+        </form>
+        @endif
+    @endif
+
+
+
     <script>
         window.Laravel = {
             routeIndex: "{{ route('customer.index') }}"

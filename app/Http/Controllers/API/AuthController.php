@@ -51,7 +51,7 @@ class AuthController extends Controller
             $otp = rand(100000, 999999);
             $driver->update([
                 'otp' => $otp,
-                'otp_expires_at' => Carbon::now()->addMinutes(5)
+                'otp_expires_at' => Carbon::now()->addMinutes(10)
             ]);
     
             // Send OTP
@@ -71,6 +71,7 @@ class AuthController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'An unexpected error occurred. Please try again later.',
+                'error' => $e->getMessage()
             ], 500);
         }
     }

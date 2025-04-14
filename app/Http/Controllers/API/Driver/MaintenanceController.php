@@ -19,8 +19,6 @@ class MaintenanceController extends Controller
         try {
             $driverId = $request->driver_id;
             $type = $request->type;
-
-
             if (!$driverId) {
                 return response()->json([
                     'status' => false,
@@ -29,7 +27,7 @@ class MaintenanceController extends Controller
             }
 
             // Assuming you have a Maintenance model and a relationship set up
-            $maintenanceRecords = Maintenance::where('driver_id', $driverId)->get();
+            $maintenanceRecords = Maintenance::where('driver_id', $driverId)->with('driver')->get();
             if ($type) {
                 $maintenanceRecords = $maintenanceRecords->where('type', $type);
             }

@@ -9,6 +9,10 @@ use App\Models\Drivers;
 use App\Models\Orders;
 use App\Models\Product;
 use App\Models\Contracts;
+use App\Models\Routes;
+use App\Models\ShippingAddress;
+use Illuminate\Support\Facades\DB;
+
 use Exception;
 
 class OrderController extends Controller
@@ -29,10 +33,11 @@ class OrderController extends Controller
     public function create()
     {
         $show = false;
-        $customers= Customers::all();
-        $drivers= Drivers::all();
-        $products= Product::all();
-        return view('pages.order.add-edit',compact('show', 'customers' , 'drivers', 'products'));
+        $customers= Customers::whereHas('contracts')->whereHas('shippingAddresses')->with('contracts.product', 'shippingAddresses')->get();
+        $contracts = Contracts::all();
+        $shippingAddresses = ShippingAddress::all();
+        $routes = Routes::whereHas('drivers')->get();
+        return view('pages.order.add-edit',compact('show', 'customers' , 'routes', 'contracts', 'shippingAddresses'));
     }
 
     /**
@@ -42,17 +47,10 @@ class OrderController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'customer_id' => 'required|exists:customers,id',
-            'driver_id' => 'required|exists:drivers,id', 
+            'contract_id' => 'nullable|exists:contracts,id',
+            'shipping_id' => 'nullable|exists:shipping_addresses,id',
+            'route_id' => 'nullable|exists:routes,id',
             'develivered_qty' => 'nullable|integer|min:0',
-            'return_qty' => 'nullable|integer|min:0',
-            // 'status' => 'nullable|in:pending,completed,cancelled',
-            // 'product_id' => 'required|exists:products,id',
-            // 'quantity' => 'required|integer|min:1',
-            // 'price' => 'required|string|max:255',
-            // 'delivery_frequency' => 'required|string|max:255',
-            // 'delivery_time' => 'nullable|date_format:H:i',
-            // 'duration' => 'nullable|integer|min:1',
-            // 'duration_type' => 'nullable|string|in:days,weeks,months,years',
         ]);
     
         if ($validator->fails()) {
@@ -60,19 +58,14 @@ class OrderController extends Controller
         }
     
         try {
-            // $contract = Contracts::create([
-            //     'customer_id' => $request->customer_id,
-            //     'product_id' => $request->product_id,
-            //     'quantity' => $request->quantity,
-            //     'price' => $request->price,
-            //     'delivery_time' => $request->delivery_time,
-            //     'duration' => $request->duration,
-            //     'duration_type' => $request->duration_type,
-            // ]);
+            $driver = Drivers::where('route_id', $request->route_id)->first();
 
             Orders::create([
                 'customer_id' => $request->customer_id,
-                'driver_id' => $request->driver_id,
+                'contract_id' => $request->contract_id,
+                'shipping_id' => $request->shipping_id,
+                'route_id' => $request->route_id,
+                'driver_id' => $driver->id,
                 'develivered_qty' => $request->develivered_qty,
                 'return_qty' => $request->return_qty,
                 'status' => 'pending',
@@ -92,9 +85,11 @@ class OrderController extends Controller
     {
         $show = true;
         $Order = Orders::findOrFail($id);
-        $customers= Customers::all();
-        $drivers= Drivers::all();
-        return view('pages.order.add-edit',compact('show', 'customers' , 'drivers', 'Order'));
+        $customers= Customers::whereHas('contracts')->whereHas('shippingAddresses')->with('contracts.product', 'shippingAddresses')->get();
+        $routes = Routes::whereHas('drivers')->get();
+        $contracts = Contracts::all();
+        $shippingAddresses = ShippingAddress::all();
+        return view('pages.order.add-edit',compact('show', 'customers' , 'Order', 'routes', 'contracts', 'shippingAddresses'));
     }
 
     /**
@@ -105,9 +100,11 @@ class OrderController extends Controller
         try {
             $show = false;
             $Order = Orders::findOrFail($id);
-            $customers= Customers::all();
-            $drivers= Drivers::all();
-            return view('pages.order.add-edit',compact('show', 'customers' , 'drivers', 'Order'));
+            $customers= Customers::whereHas('contracts')->whereHas('shippingAddresses')->with('contracts.product', 'shippingAddresses')->get();
+            $routes = Routes::whereHas('drivers')->get();
+            $contracts = Contracts::all();
+        $shippingAddresses = ShippingAddress::all();
+            return view('pages.order.add-edit',compact('show', 'customers' , 'Order', 'routes', 'contracts', 'shippingAddresses'));
         } catch (ModelNotFoundException $e) {
             return back()->withErrors(['error' => 'Orders not found.']);
         } catch (Exception $e) {
@@ -122,10 +119,10 @@ class OrderController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'customer_id' => 'required|exists:customers,id',
-            'driver_id' => 'required|exists:drivers,id', 
+            'contract_id' => 'nullable|exists:contracts,id',
+            'shipping_id' => 'nullable|exists:shipping_addresses,id',
+            'route_id' => 'nullable|exists:routes,id',
             'develivered_qty' => 'nullable|integer|min:0',
-            'return_qty' => 'nullable|integer|min:0',
-            'status' => 'required|in:pending,completed,cancelled',  
         ]);
         
         if ($validator->fails()) {
@@ -134,7 +131,17 @@ class OrderController extends Controller
         
         try {
             $order = Orders::findOrFail($id);
-            $order->update($request->all());
+            $driver = Drivers::where('route_id', $request->route_id)->first();
+            $order->update([
+                'customer_id' => $request->customer_id,
+                'contract_id' => $request->contract_id,
+                'shipping_id' => $request->shipping_id,
+                'route_id' => $request->route_id,
+                'driver_id' => $driver->id,
+                'develivered_qty' => $request->develivered_qty,
+                'return_qty' => $request->return_qty,
+                'status' => 'pending',
+            ]);
             return response()->json([
                 'message' => 'Order updated successfully!',
             ]);
@@ -183,4 +190,38 @@ class OrderController extends Controller
             return back()->withErrors(['error' => 'An error occurred while fetching the Orders for editing: ' . $e->getMessage()]);
         }
     }
+
+    public function storeRoute(Request $request)
+    {
+        $validator = Validator::make($request->all(), [   
+        'order.*.shipping_id' => 'required|integer|exists:shipping_addresses,id',
+        'order.*.route_id' => 'required|integer|exists:routes,id',
+        ], [
+            'order.*.shipping_id.required' => 'Shipping ID is required for each order.',
+            'order.*.route_id.required' => 'Route ID is required for each order.',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        try {
+            foreach ($request->order as $orderData) {
+                $order = Orders::findOrFail($orderData['id']);
+                $driver_id = Drivers::where('route_id', $orderData['route_id'])->first();
+
+                $order->update([
+                    'shipping_id' => $orderData['shipping_id'],
+                    'route_id' => $orderData['route_id'],
+                    'driver_id' => $driver_id->id ?? null,
+                ]);
+            }
+            return response()->json([
+                'message' => 'Orders updated successfully!',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+
 }

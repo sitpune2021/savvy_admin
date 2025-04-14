@@ -129,7 +129,7 @@ class OrderController extends Controller
                 'message' => 'Driver ID is required.',
             ], 422);
         }
-        $order = Orders::where('driver_id', $driverId)->find($id);
+        $order = Orders::where('driver_id', $driverId)->with('shipping')->find($id);
         if (!$order) {
             return response()->json([
                 'status' => false,
@@ -162,47 +162,19 @@ class OrderController extends Controller
             'develivered_qty' => 'required|integer|min:0',
             'return_qty' => 'required|integer|min:0',
             'status' => 'required|in:pending,completed,cancelled',  
-        ]);
-        
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-        
-        try {
-            $order = Orders::findOrFail($id);
-            $order->update($request->all());
-            return response()->json([
-                'message' => 'Order updated successfully!',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
-
-    public function updateCard(Request $request, string $id)
-    {
-        $validator = Validator::make($request->all(), [
             'delevered_card_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'return_card_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
         
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()], 422);
         }
         
         try {
             $order = Orders::findOrFail($id);
             $order->update($request->except('delevered_card_img', 'return_card_img'));
-
-        
             // Handle Pan Card Upload
             if ($request->hasFile('delevered_card_img')) {
                 if ($order->delevered_card_img) {
@@ -226,13 +198,23 @@ class OrderController extends Controller
             }
         
             $order->update($request->except('return_card_img', 'delevered_card_img'));
-
             return response()->json([
                 'status' => true,
-                'message' => 'Order Card updated successfully!',
+                'message' => 'Order updated successfully!',
             ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json([
+                'status' => false,
+                'error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        //
+    }
+
 }

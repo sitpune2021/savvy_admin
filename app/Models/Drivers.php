@@ -15,6 +15,7 @@ class Drivers extends Authenticatable
     use HasApiTokens, HasFactory , SoftDeletes;
 
         protected $fillable = [
+            'route_id',
             'name',
             'email',
             'phone_no',
@@ -32,6 +33,12 @@ class Drivers extends Authenticatable
             'aadhar_card_FILE',
             'otp', 'otp_expires_at',
         ];
+
+    public function routes()
+    {
+        return $this->belongsTo(Routes::class, 'route_id');
+    }
+
     
 
     protected $dates = ['deleted_at'];

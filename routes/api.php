@@ -27,7 +27,7 @@ Route::middleware('auth:driver_api')->group(function () {
     Route::resource('order', OrderController::class)->except([
         'create','store', 'edit', 'destroy'
     ]);
-    Route::post('order_card/{id}', [OrderController::class, 'updateCard']);
+    Route::post('order_update/{id}', [OrderController::class, 'update']);
     Route::resource('profile', ProfileController::class)->except([
         'create', 'edit', 'index', 'store'
     ]);

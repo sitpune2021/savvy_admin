@@ -9,6 +9,10 @@ use App\Models\Contracts;
 use App\Models\Plant;
 use App\Models\Product;
 use App\Models\Orders;
+use App\Models\ShippingAddress;
+use App\Models\Drivers;
+use App\Models\Routes;
+use Illuminate\Support\Facades\DB;
 use Exception;
 
 class CustomerController extends Controller
@@ -43,22 +47,23 @@ class CustomerController extends Controller
             'customer_zohi_id' => 'required|string|unique:customers',
             'plant_id' => 'required|exists:plants,id',
             'name' => 'required|string|max:255', 
-            'email' => 'nullable|email||unique:customers|max:255', 
-            'phone_no' => 'nullable|digits:10', // assuming 10 digit phone number
+            'email' => 'nullable|email|unique:customers,email|max:255', 
+            'phone_no' => 'nullable|digits:10',
             'billing_address' => 'required|string|max:255',
             'billing_country' => 'required|string|max:255',
             'billing_state' => 'nullable|string|max:255',
             'billing_city' => 'required|string|max:255',
-            'billing_pincode' => 'required', // assuming 6 digit postal code
-            'shipping_address' => 'nullable|string|max:255',
-            'shipping_country' => 'nullable|string|max:255',
-            'shipping_state' => 'nullable|string|max:255',
-            'shipping_city' => 'nullable|string|max:255',
-            'shipping_pincode' => 'nullable', // assuming 6 digit postal code
-            'contact_person' => 'required|string|max:255',
-            'contact_person_phone' => 'required|digits:10', // assuming 10 digit phone number
-            'machine_deployed' => 'nullable|string|max:255',
-            'machine_deployed_date' => 'nullable|date',
+            'billing_pincode' => 'required',
+
+            'shipping.*.shipping_address' => 'required|string|max:255',
+            'shipping.*.shipping_country' => 'required|string|max:255',
+            'shipping.*.shipping_state' => 'nullable|string|max:255',
+            'shipping.*.shipping_city' => 'required|string|max:255',
+            'shipping.*.shipping_pincode' => 'required|digits:6',
+            'shipping.*.contact_person' => 'required|string|max:255',
+            'shipping.*.contact_person_phone' => 'required|digits:10',
+            'shipping.*.machine_deployed' => 'nullable|string|max:255',
+
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
             'price' => 'required|string|max:255',
@@ -66,16 +71,52 @@ class CustomerController extends Controller
             'delivery_time' => 'nullable|date_format:H:i',
             'duration' => 'nullable|integer|min:1',
             'duration_type' => 'nullable|string|in:days,weeks,months,years',
+        ],
+        [
+            'shipping.*.shipping_address.required' => 'The shipping address is required.',
+            'shipping.*.shipping_address.string' => 'The shipping address must be a string.',
+            'shipping.*.shipping_address.max' => 'The shipping address may not be greater than 255 characters.',
+    
+            'shipping.*.shipping_country.required' => 'The shipping country is required.',
+            'shipping.*.shipping_country.string' => 'The shipping country must be a string.',
+            'shipping.*.shipping_country.max' => 'The shipping country may not be greater than 255 characters.',
+        
+            'shipping.*.shipping_state.string' => 'The shipping state must be a string.',
+            'shipping.*.shipping_state.max' => 'The shipping state may not be greater than 255 characters.',
+        
+            'shipping.*.shipping_city.required' => 'The shipping city is required.',
+            'shipping.*.shipping_city.string' => 'The shipping city must be a string.',
+            'shipping.*.shipping_city.max' => 'The shipping city may not be greater than 255 characters.',
+        
+            'shipping.*.shipping_pincode.required' => 'The shipping pincode is required.',
+            'shipping.*.shipping_pincode.digits' => 'The shipping pincode must be exactly 6 digits.',
+        
+            'shipping.*.contact_person.required' => 'The contact person is required.',
+            'shipping.*.contact_person.string' => 'The contact person must be a string.',
+            'shipping.*.contact_person.max' => 'The contact person name may not be greater than 255 characters.',
+        
+            'shipping.*.contact_person_phone.required' => 'The contact person\'s phone number is required.',
+            'shipping.*.contact_person_phone.digits' => 'The contact person\'s phone number must be exactly 10 digits.',
+        
+            'shipping.*.machine_deployed.string' => 'The machine deployed field must be a string.',
+            'shipping.*.machine_deployed.max' => 'The machine deployed field may not be greater than 255 characters.',
         ]);
 
-    
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-    
+
+        DB::beginTransaction();
+
         try {
-            
-            $customer = Customers::create($request->all());
+            // Create Customer
+            $customerData = $request->only([
+                'customer_zohi_id', 'plant_id', 'name', 'email', 'phone_no',
+                'billing_address', 'billing_country', 'billing_state', 'billing_city', 'billing_pincode'
+            ]);
+            $customer = Customers::create($customerData);
+
+            // Create Contract
             $contract = Contracts::create([
                 'customer_id' => $customer->id,
                 'product_id' => $request->product_id,
@@ -86,32 +127,46 @@ class CustomerController extends Controller
                 'duration' => $request->duration,
                 'duration_type' => $request->duration_type,
             ]);
-            
+
+            $orders = [];
+
+            // Create Shipping Addresses and Orders
+            foreach ($request->shipping as $shippingData) {
+                $shippingData['customer_id'] = $customer->id;
+                $shipping = ShippingAddress::create($shippingData);
+
                 $order = Orders::create([
                     'customer_id' => $customer->id,
+                    'contract_id' => $contract->id,
+                    'shipping_id' => $shipping->id,
                     'status' => 'pending',
-                    'develivered_qty' => $contract->quantity,
+                    'delivered_qty' => $contract->quantity, // corrected spelling
                     'return_qty' => 0,
                 ]);
 
+                $orders[] = $order;
+            }
+
+            DB::commit();
+
             return response()->json([
                 'message' => 'Customer created successfully!',
-                'customer' => $customer,
-                'order' => $order,
-
+                'customer_id' => $customer->id,
             ]);
+
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            DB::rollBack();
+            return response()->json(['error' => 'Something went wrong.', 'details' => $e->getMessage()], 500);
         }
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified resource..
      */
     public function show(string $id)
     {
         $show = true;
-        $Customer = Customers::with('contracts')->findOrFail($id);
+        $Customer = Customers::with('contracts', 'shippingAddresses')->findOrFail($id);
         $plants = Plant::all();
         $products = Product::all();
         return view('pages.customer.add-edit',compact('show', 'Customer', 'plants', 'products'));
@@ -124,7 +179,7 @@ class CustomerController extends Controller
     {
         try {
             $show = false;
-            $Customer = Customers::findOrFail($id);
+            $Customer = Customers::with('contracts', 'shippingAddresses')->findOrFail($id);
             $plants = Plant::all();
             $products = Product::all();
             return view('pages.customer.add-edit',compact('show', 'Customer', 'plants', 'products'));
@@ -151,15 +206,6 @@ class CustomerController extends Controller
             'billing_state' => 'nullable|string|max:255',
             'billing_city' => 'required|string|max:255',
             'billing_pincode' => 'required|digits:6',
-            'shipping_address' => 'nullable|string|max:255',
-            'shipping_country' => 'nullable|string|max:255',
-            'shipping_state' => 'nullable|string|max:255',
-            'shipping_city' => 'nullable|string|max:255',
-            'shipping_pincode' => 'nullable|digits:6',
-            'contact_person' => 'required|string|max:255',
-            'contact_person_phone' => 'required|digits:10',
-            'machine_deployed' => 'nullable|string|max:255',
-            'machine_deployed_date' => 'nullable|date',
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
             'price' => 'required|string|max:255',
@@ -204,7 +250,7 @@ class CustomerController extends Controller
         
             return response()->json([
                 'message' => 'Customer updated successfully!',
-            ]);
+            ],200);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -237,5 +283,105 @@ class CustomerController extends Controller
                 'message' => $e->getMessage(),
             ], 500); 
         }
+    }
+
+    public function assignRoute(Request $request, $id)
+    {
+        $customer = Customers::with('shippingAddresses', 'orders')->findOrFail($id);
+        $shippingAddresses = $customer->shippingAddresses;
+        $orders = $customer->orders;
+        $drivers =  Drivers::all();
+        $routes = Routes::all();
+        $assign = true;
+        $show = false;
+        return view('pages.customer.assign-route', compact('customer', 'shippingAddresses', 'drivers', 'routes', 'assign', 'show', 'orders'));
+    }
+
+    public function storeUpdateShippingAddress(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'shipping.*.shipping_address' => 'required|string|max:255',
+            'shipping.*.shipping_country' => 'required|string|max:255',
+            'shipping.*.shipping_state' => 'nullable|string|max:255',
+            'shipping.*.shipping_city' => 'required|string|max:255',
+            'shipping.*.shipping_pincode' => 'required|digits:6',
+            'shipping.*.contact_person' => 'required|string|max:255',
+            'shipping.*.contact_person_phone' => 'required|digits:10',
+            'shipping.*.machine_deployed' => 'nullable|string|max:255',
+        ], 
+        [
+            'shipping.*.shipping_address.required' => 'The shipping address is required.',
+            'shipping.*.shipping_address.string' => 'The shipping address must be a string.',
+            'shipping.*.shipping_address.max' => 'The shipping address may not be greater than 255 characters.',
+    
+            'shipping.*.shipping_country.required' => 'The shipping country is required.',
+            'shipping.*.shipping_country.string' => 'The shipping country must be a string.',
+            'shipping.*.shipping_country.max' => 'The shipping country may not be greater than 255 characters.',
+        
+            'shipping.*.shipping_state.string' => 'The shipping state must be a string.',
+            'shipping.*.shipping_state.max' => 'The shipping state may not be greater than 255 characters.',
+        
+            'shipping.*.shipping_city.required' => 'The shipping city is required.',
+            'shipping.*.shipping_city.string' => 'The shipping city must be a string.',
+            'shipping.*.shipping_city.max' => 'The shipping city may not be greater than 255 characters.',
+        
+            'shipping.*.shipping_pincode.required' => 'The shipping pincode is required.',
+            'shipping.*.shipping_pincode.digits' => 'The shipping pincode must be exactly 6 digits.',
+        
+            'shipping.*.contact_person.required' => 'The contact person is required.',
+            'shipping.*.contact_person.string' => 'The contact person must be a string.',
+            'shipping.*.contact_person.max' => 'The contact person name may not be greater than 255 characters.',
+        
+            'shipping.*.contact_person_phone.required' => 'The contact person\'s phone number is required.',
+            'shipping.*.contact_person_phone.digits' => 'The contact person\'s phone number must be exactly 10 digits.',
+        
+            'shipping.*.machine_deployed.string' => 'The machine deployed field must be a string.',
+            'shipping.*.machine_deployed.max' => 'The machine deployed field may not be greater than 255 characters.',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $customer = Customers::findOrFail($id);
+    
+            $orders = [];
+            foreach ($request->shipping as $shippingData) {
+                if (!empty($shippingData['id'])) {
+                    $address = ShippingAddress::findOrFail($shippingData['id']);
+                    $address->update($shippingData);
+                } else {
+                    $shippingData['customer_id'] = $customer->id;
+                    $address = ShippingAddress::create($shippingData);
+    
+                    $contract = $customer->contracts()->first();
+                    if ($contract) {
+                        $order = Orders::create([
+                            'customer_id' => $customer->id,
+                            'contract_id' => $contract->id,
+                            'shipping_id' => $address->id,
+                            'status' => 'pending',
+                            'delivered_qty' => $contract->quantity,
+                            'return_qty' => 0,
+                        ]);
+                        $orders[] = $order;
+                    }
+                }
+            }
+    
+            DB::commit();
+            return response()->json([
+                'message' => 'Shipping addresses updated successfully!',
+                'orders_created' => $orders,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Something went wrong.',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+
     }
 }

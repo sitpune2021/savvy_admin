@@ -99,19 +99,10 @@
                                         <td>{{ $order->develivered_qty }}</td>
                                         {{-- <td>{{ $order->return_qty }}</td> --}}
                                         <td>
-                                            <div class="dropdown">
-                                                <a href="#" role="button" id="dropdownMenuLink1"
-                                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="ri-more-2-fill"></i>
-                                                </a>
-
-                                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink1">
-                                                    <li><a class="dropdown-item"
-                                                            href="{{ route('order.show', $order->id) }}">View</a></li>
-                                                    <li><a class="dropdown-item"
-                                                            href="{{ route('order.edit', $order->id) }}">Edit</a></li>
-                                                    <li><a class="dropdown-item" href="#">Delete</a></li>
-                                                </ul>
+                                            <div class="hstack gap-3 flex-wrap">
+                                                <a href="{{ route('order.edit', $order->id) }}" class="link-success fs-15"><i class="ri-edit-2-line"></i></a>
+                                                <a href="{{ route('order.show', $order->id) }}" class="link-primary fs-15"><i class="ri-eye-2-line"></i></a>
+                                                <a href="javascript:void(0);" class="link-danger fs-15"><i class="ri-delete-bin-line"></i></a>
                                             </div>
                                         </td>
                                     </tr>

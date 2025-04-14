@@ -25,7 +25,12 @@ class Contracts extends Model
 
     public function customer()
     {
-        return $this->belongsTo(Customers::class, 'customer_id');
+        return $this->hasMany(Customers::class, 'customer_id');
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
     }
 
     protected $dates = ['deleted_at'];

@@ -77,6 +77,11 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('driver', DriverController::class);
     Route::resource('order', OrderController::class);
     Route::get('/order/{id}/assign-driver', [OrderController::class, 'assignDriver'])->name('order.assign-driver');
+    Route::get('customer/{id}/assign-route', [CustomerController::class, 'assignRoute'])->name('customer.assign-route');
+    Route::put('customer/{id}/shipping-address', [CustomerController::class, 'storeUpdateShippingAddress'])->name('customer.store-update-shipping-address');
+    Route::post('assign-route', [OrderController::class, 'storeRoute'])->name('order.store-route');
+
+
 
 
 });
