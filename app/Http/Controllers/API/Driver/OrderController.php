@@ -187,8 +187,7 @@ class OrderController extends Controller
             $order->update($request->except('delevered_card_img', 'return_card_img'));
     
             // Handle Delivered Card Upload
-            dd($request->hasFile('delevered_card_img'));
-            dd($request->hasFile('return_card_img'));
+            dd($request->hasFile('delevered_card_img'), $request->hasFile('return_card_img'));
 
 
             if ($request->hasFile('delevered_card_img')) {
