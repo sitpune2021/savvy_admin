@@ -86,7 +86,7 @@ function handleFormSubmit(formId, actionUrl, method = 'POST', subPath = {}, succ
 				} else {
 					console.log(xhr);
 					if (typeof errorCallback === 'function') {
-						errorCallback(xhr);
+						showErrorAlert(xhr.responseJSON.error);
 					} else {
 						alert('An error occurred. Please try again.');
 					}
@@ -95,6 +95,53 @@ function handleFormSubmit(formId, actionUrl, method = 'POST', subPath = {}, succ
 		});
 	});
 }
+
+function showErrorAlert(message) {
+	const alertHTML = `
+        <div class="alert alert-danger alert-dismissible"
+             role="alert"
+             style="
+                position: fixed;
+                top: 80px;
+                right: 25px;
+				z-index: 1055;
+                max-width: 400px;
+                transform: translateX(100%);
+                transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+             ">
+            <i class="ri-error-warning-line me-2" style="font-size: 18px; vertical-align: middle; color: #dc3545;"></i>
+            <strong>Error:</strong> ${message}
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close"
+                    ></button>
+        </div>
+    `;
+
+	// Insert into DOM
+	document.body.insertAdjacentHTML('beforeend', alertHTML);
+
+	// Get the latest alert
+	const alert = document.querySelectorAll('.alert-dismissible.alert-danger');
+	const thisAlert = alert[alert.length - 1];
+
+	// Trigger slide-in animation
+	requestAnimationFrame(() => {
+		thisAlert.style.transform = 'translateX(0)';
+		thisAlert.style.opacity = '1';
+	});
+
+	// Auto-dismiss after 5 seconds
+	setTimeout(() => {
+		thisAlert.style.transform = 'translateX(100%)';
+		thisAlert.style.opacity = '0';
+		setTimeout(() => thisAlert.remove(), 500); // wait for animation
+	}, 5000);
+}
+
+
+
 
 handleFormSubmit(
 	'#orderForm',
@@ -119,7 +166,9 @@ handleFormSubmit(
 		if (response.customer_id) {
 			window.location.href = '/customer/' + response.customer_id + '/assign-route';
 		}
-		window.location.href = window.Laravel.routeIndex;
+		else {
+			// window.location.href = window.Laravel.routeIndex;
+		}
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -132,7 +181,6 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-		console.log('driver saved successfully:', response);
 		window.location.href = window.Laravel.routeIndex;
 	},
 	function (xhr) { // error callback
@@ -146,7 +194,6 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-		console.log('plant saved successfully:', response);
 		window.location.href = window.Laravel.routeIndex;
 	},
 	function (xhr) { // error callback
@@ -160,7 +207,6 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-		console.log('product saved successfully:', response);
 		window.location.href = window.Laravel.routeIndex;
 	},
 	function (xhr) { // error callback
@@ -174,7 +220,6 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-		console.log('route saved successfully:', response);
 		window.location.href = window.Laravel.routeIndex;
 	},
 	function (xhr) { // error callback
@@ -188,7 +233,6 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-		console.log('route saved successfully:', response);
 		window.location.href = window.Laravel.routeIndex;
 	},
 	function (xhr) { // error callback
@@ -205,8 +249,12 @@ handleFormSubmit(
 		method: 'Put',
 	},
 	function (response) { // success callback
-		console.log('route saved successfully:', response);
-		window.location.href = window.Laravel.routeIndex;
+		if (response.customer_id) {
+			window.location.href = '/customer/' + response.customer_id + '/assign-route';
+		}
+		else {
+			window.location.href = window.Laravel.routeIndex;
+		}
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -403,7 +451,7 @@ $(document).ready(function () {
 	console.log('selectedContractId', selectedContractId);
 	console.log('selectedShippingId', selectedShippingId);
 	console.log('selectedCustomerId', selectedCustomerId);
-	
+
 
 	function populateContracts(contracts, selectedId) {
 		$('#contract-select').html('<option value="">Choose Contract</option>');
@@ -411,7 +459,7 @@ $(document).ready(function () {
 		contracts.forEach(contract => {
 			const isSelected = contract.id == selectedId ? 'selected' : '';
 			console.log('contract', contract.id, selectedId);
-			
+
 			const productName = contract.product?.name || 'N/A';
 			$('#contract-select').append(`
 				<option value="${contract.id}" data-qty="${contract.quantity}" ${isSelected}>
@@ -445,11 +493,11 @@ $(document).ready(function () {
 		const selected = $(this).find(':selected');
 		const contracts = selected.data('contracts') || [];
 		console.log('contracts', contracts);
-		
+
 		const shippings = selected.data('shippings') || [];
 		const contractIdToSelect = $(this).val() == selectedCustomerId ? selectedContractId : null;
 		const shippingIdToSelect = $(this).val() == selectedCustomerId ? selectedShippingId : null;
-		
+
 		populateContracts(contracts, contractIdToSelect);
 		populateShippings(shippings, shippingIdToSelect);
 

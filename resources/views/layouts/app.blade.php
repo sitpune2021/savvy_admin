@@ -13,6 +13,14 @@
         'keywords' => $keywords ?? null,
         'image' => $image ?? null,
     ])
+    <style>
+        .fixed-alert {
+            left: 50%;
+            width: auto;
+            max-width: 80%;
+            z-index: 1055;
+        }
+    </style>
     @stack('styles')
     @include('layouts.partials.head')
 </head>

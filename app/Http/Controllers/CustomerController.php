@@ -247,10 +247,18 @@ class CustomerController extends Controller
                     'duration_type' => $request->duration_type,
                 ]);
             }
+            $shippingAddress = ShippingAddress::where('customer_id', $id)->get();
+            if (count($shippingAddress) == 0) {
+                return response()->json([
+                    'error' => 'No shipping address found for this customer, please add a shipping address.',
+                ], 404);
+            } else {
+                return response()->json([
+                    'message' => 'Customer updated successfully!',
+                ], 200);
+            }
+            
         
-            return response()->json([
-                'message' => 'Customer updated successfully!',
-            ],200);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -291,7 +299,7 @@ class CustomerController extends Controller
         $shippingAddresses = $customer->shippingAddresses;
         $orders = $customer->orders;
         $drivers =  Drivers::all();
-        $routes = Routes::all();
+        $routes = Routes::whereHas('drivers')->get();
         $assign = true;
         $show = false;
         return view('pages.customer.assign-route', compact('customer', 'shippingAddresses', 'drivers', 'routes', 'assign', 'show', 'orders'));
@@ -345,7 +353,6 @@ class CustomerController extends Controller
         DB::beginTransaction();
         try {
             $customer = Customers::findOrFail($id);
-    
             $orders = [];
             foreach ($request->shipping as $shippingData) {
                 if (!empty($shippingData['id'])) {
@@ -367,6 +374,9 @@ class CustomerController extends Controller
                         ]);
                         $orders[] = $order;
                     }
+                    else {
+                        return response()->json(['error' => 'No contract found for this customer.'], 404);
+                    }
                 }
             }
     
@@ -374,6 +384,7 @@ class CustomerController extends Controller
             return response()->json([
                 'message' => 'Shipping addresses updated successfully!',
                 'orders_created' => $orders,
+                'customer_id' => $customer->id,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

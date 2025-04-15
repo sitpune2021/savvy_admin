@@ -26,28 +26,49 @@ class MaintenanceController extends Controller
                 ], 422);
             }
 
-            // Assuming you have a Maintenance model and a relationship set up
+            $title = $type === 'fuel' ? 'Fuel' : 'Maintenance';
             $maintenanceRecords = Maintenance::where('driver_id', $driverId)->with('driver')->get();
+
             if ($type) {
                 $maintenanceRecords = $maintenanceRecords->where('type', $type);
             }
+
             if ($maintenanceRecords->isEmpty()) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'No maintenance records found for this driver.',
+                    'message' => `No $title records found for this driver.`,
                 ], 404);
+            }
+
+            foreach ($maintenanceRecords as $record) {
+                $record->vehicle_no = $record->driver->vehicle_no;
+
+                if ($record->type === 'fuel') {
+                    // Multiple images (assuming stored as JSON in `image` column or as array)
+                    $images = is_array($record->image) ? $record->image : json_decode($record->image, true);
+                    if (is_array($images)) {
+                        foreach ($images as $index => $imgPath) {
+                            $record->{'image_' . ($index + 1)} = url('storage/' . $imgPath);
+                        }
+                    }
+                    unset($record->image);
+                } else {
+                    // Single image for non-fuel types
+                    $record->image = $record->image ? url('storage/' . $record->image) : null;
+                }
             }
 
             return response()->json([
                 'status' => true,
-                'message' => 'Maintenance records retrieved successfully.',
+                'message' => `$title records retrieved successfully.`,
                 'data' => $maintenanceRecords
             ], 200);
+
         }
         catch (Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => 'Failed to retrieve maintenance records: '.$e->getMessage(),
+                'message' => 'Failed to retrieve records: '.$e->getMessage(),
             ], 500);
         }
     }

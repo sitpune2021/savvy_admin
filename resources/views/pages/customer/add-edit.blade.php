@@ -336,7 +336,7 @@
             </div>
         </div>
     </form>
-    @if (isset($Customer) && $Customer->shippingAddresses->count() > 0)
+    @if (isset($Customer))
         <div class="row">
             <div class="col-md-12">
                 <div class="form-group-item card">

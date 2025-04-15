@@ -142,8 +142,6 @@
         </div>
     </div>
     <script>
-        console.log('{{ $Order }}');
-        
         window.orderData = {
             contractId: "{{ $Order->contract_id ?? '' }}",
             shippingId: "{{ $Order->shipping_id ?? '' }}",
