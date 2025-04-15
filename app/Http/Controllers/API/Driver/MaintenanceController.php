@@ -53,7 +53,7 @@ class MaintenanceController extends Controller
                 // Only handle if it's an array
                 if (is_array($images)) {
                     foreach ($images as $key => $imgPath) {
-                        $record->$key = $imgPath ? url('storage/' . $imgPath) : null;
+                        $record->$key = $imgPath ? url('storage/'.$type.'/'. $imgPath) : null;
                     }
                 }
         
@@ -108,21 +108,21 @@ class MaintenanceController extends Controller
             $data = $request->all();
             $imagePaths = []; // Initialize an empty array to store image paths
     
-            // If the 'fuel' type, handle 'bill' image
-            if ($request->type == 'fuel' && $request->hasFile('images.bill')) {
+            // If the 'other' type, handle 'bill' image
+            if ($request->type == 'other' && $request->hasFile('images.bill')) {
                 $billImage = $request->file('images.bill');
                 $billImageName = Str::random(10) . '.' . $billImage->getClientOriginalExtension();
-                $billImage->storeAs('public/fuel/', $billImageName); // Store in fuel directory
+                $billImage->storeAs('public/other/', $billImageName); // Store in other directory
                 $imagePaths['bill'] = $billImageName; // Save the image file name
             }
     
-            // If the 'other' type, handle 'metercopy' and 'recipt' images
-            if ($request->type == 'other') {
+            // If the 'fuel' type, handle 'metercopy' and 'recipt' images
+            if ($request->type == 'fuel') {
                 // Handle metercopy image
                 if ($request->hasFile('images.metercopy')) {
                     $metercopyImage = $request->file('images.metercopy');
                     $metercopyImageName = Str::random(10) . '.' . $metercopyImage->getClientOriginalExtension();
-                    $metercopyImage->storeAs('public/other/', $metercopyImageName); // Store in other directory
+                    $metercopyImage->storeAs('public/fuel/', $metercopyImageName); // Store in fuel directory
                     $imagePaths['metercopy'] = $metercopyImageName;
                 }
     
@@ -130,7 +130,7 @@ class MaintenanceController extends Controller
                 if ($request->hasFile('images.recipt')) {
                     $reciptImage = $request->file('images.recipt');
                     $reciptImageName = Str::random(10) . '.' . $reciptImage->getClientOriginalExtension();
-                    $reciptImage->storeAs('public/other/', $reciptImageName); // Store in other directory
+                    $reciptImage->storeAs('public/fuel/', $reciptImageName); // Store in fuel directory
                     $imagePaths['recipt'] = $reciptImageName;
                 }
             }

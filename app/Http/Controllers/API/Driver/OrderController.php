@@ -210,7 +210,6 @@ class OrderController extends Controller
                 $order->return_card_img = $aadharCardFile;
             }
     
-            // Save changes including file names
             $order->save();
     
             return response()->json([
