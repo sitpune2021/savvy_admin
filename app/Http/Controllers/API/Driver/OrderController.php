@@ -171,8 +171,8 @@ class OrderController extends Controller
             'develivered_qty' => 'required|integer|min:0',
             'return_qty' => 'required|integer|min:0',
             'status' => 'required|in:pending,completed,cancelled',  
-            'delevered_card_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'return_card_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'delevered_card_img' => 'nullable',
+            'return_card_img' => 'nullable'
         ]);
     
         if ($validator->fails()) {
@@ -187,7 +187,7 @@ class OrderController extends Controller
             $order->update($request->except('delevered_card_img', 'return_card_img'));
     
             // Handle Delivered Card Upload
-            dd($request->hasFile('delevered_card_img'), $request->hasFile('return_card_img'));
+            // dd($request->hasFile('delevered_card_img'), $request->hasFile('return_card_img'));
 
 
             if ($request->hasFile('delevered_card_img')) {
