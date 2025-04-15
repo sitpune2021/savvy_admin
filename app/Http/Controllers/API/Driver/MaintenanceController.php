@@ -46,15 +46,15 @@ class MaintenanceController extends Controller
         
             foreach ($maintenanceRecords as $record) {
                 $record->vehicle_no = $record->driver->vehicle_no;
-                $images = is_array($record->image) ? $record->image : json_decode($record->image, true);
-                if (is_array($images)) {
-                    foreach ($images as $key => $imgPath) {
-                        $record->$key = $imgPath ? url('storage/'.$type.'/'. $imgPath) : null;
-                    }
-                }
+                // $images = is_array($record->image) ? $record->image : json_decode($record->image, true);
+                // if (is_array($images)) {
+                //     foreach ($images as $key => $imgPath) {
+                //         $record->$key = $imgPath ? url('storage/'.$type.'/'. $imgPath) : null;
+                //     }
+                // }
         
                 // Optionally remove original image column
-                unset($record->image);
+                // unset($record->image);
                 unset($record->driver); // if you don't want to expose the full driver model
             }
         
@@ -94,6 +94,7 @@ class MaintenanceController extends Controller
             'images.bill' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // for fuel
             'images.metercopy' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // for other
             'images.recipt' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // for other
+            'date' => 'required',
         ]);
     
         if ($validator->fails()) {
@@ -105,7 +106,7 @@ class MaintenanceController extends Controller
             $imagePaths = []; // Initialize an empty array to store image paths
     
             // If the 'other' type, handle 'bill' image
-            dd($request->hasFile('images.bill'));
+            // dd($request->hasFile('images.bill'));
             if ($request->type == 'other' && $request->hasFile('images.bill')) {
                 $billImage = $request->file('images.bill');
                 $billImageName = Str::random(10) . '.' . $billImage->getClientOriginalExtension();

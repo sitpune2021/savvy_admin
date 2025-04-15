@@ -48,7 +48,9 @@ class OrderController extends Controller
         $validator = Validator::make($request->all(), [
             'customer_id' => 'required|exists:customers,id',
             'contract_id' => 'nullable|exists:contracts,id',
-            'shipping_id' => 'nullable|exists:shipping_addresses,id',
+            'shipping_id' => 'required|array',
+            'shipping_id.*' => 'exists:shipping_addresses,id',
+            // 'shipping_id' => 'nullable|exists:shipping_addresses,id',
             'route_id' => 'nullable|exists:routes,id',
             'develivered_qty' => 'nullable|integer|min:0',
         ]);
@@ -59,17 +61,18 @@ class OrderController extends Controller
     
         try {
             $driver = Drivers::where('route_id', $request->route_id)->first();
-
-            Orders::create([
-                'customer_id' => $request->customer_id,
-                'contract_id' => $request->contract_id,
-                'shipping_id' => $request->shipping_id,
-                'route_id' => $request->route_id,
-                'driver_id' => $driver->id,
-                'develivered_qty' => $request->develivered_qty,
-                'return_qty' => $request->return_qty,
-                'status' => 'pending',
-            ]);
+            foreach ($request->shipping_id as $shippingId) {
+                Orders::create([
+                    'customer_id' => $request->customer_id,
+                    'contract_id' => $request->contract_id,
+                    'shipping_id' => $shippingId,
+                    'route_id' => $request->route_id,
+                    'driver_id' => $driver?->id,
+                    'develivered_qty' => $request->develivered_qty,
+                    'return_qty' => $request->return_qty,
+                    'status' => 'pending',
+                ]);
+            }
             return response()->json([
                 'message' => 'Order created successfully!',
             ]);
