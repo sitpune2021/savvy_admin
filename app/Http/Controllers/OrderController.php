@@ -208,7 +208,6 @@ class OrderController extends Controller
             foreach ($request->order as $orderData) {
                 $order = Orders::findOrFail($orderData['id']);
                 $driver_id = Drivers::where('route_id', $orderData['route_id'])->first();
-
                 $order->update([
                     'shipping_id' => $orderData['shipping_id'],
                     'route_id' => $orderData['route_id'],

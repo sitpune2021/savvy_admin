@@ -133,14 +133,14 @@ class CustomerController extends Controller
             // Create Shipping Addresses and Orders
             foreach ($request->shipping as $shippingData) {
                 $shippingData['customer_id'] = $customer->id;
-                $shipping = ShippingAddress::create($shippingData);
 
+                $shipping = ShippingAddress::create($shippingData);
                 $order = Orders::create([
                     'customer_id' => $customer->id,
                     'contract_id' => $contract->id,
                     'shipping_id' => $shipping->id,
                     'status' => 'pending',
-                    'delivered_qty' => $contract->quantity, // corrected spelling
+                    'develivered_qty' => $contract->quantity, // corrected spelling
                     'return_qty' => 0,
                 ]);
 
@@ -369,7 +369,7 @@ class CustomerController extends Controller
                             'contract_id' => $contract->id,
                             'shipping_id' => $address->id,
                             'status' => 'pending',
-                            'delivered_qty' => $contract->quantity,
+                            'develivered_qty' => $contract->quantity,
                             'return_qty' => 0,
                         ]);
                         $orders[] = $order;
