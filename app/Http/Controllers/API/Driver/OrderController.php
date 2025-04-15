@@ -188,6 +188,9 @@ class OrderController extends Controller
     
             // Handle Delivered Card Upload
             dd($request->hasFile('delevered_card_img'));
+            dd($request->hasFile('return_card_img'));
+
+
             if ($request->hasFile('delevered_card_img')) {
                 if ($order->delevered_card_img) {
                     Storage::delete('public/OrderCard/' . $order->delevered_card_img);
