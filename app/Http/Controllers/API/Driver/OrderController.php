@@ -56,7 +56,7 @@ class OrderController extends Controller
         }
     
         if ($status) {
-            $ordersQuery = Orders::where('driver_id', $driverId)->with(['customers:id,name']);
+            $ordersQuery = Orders::where('driver_id', $driverId)->with(['customers:id,name', 'shipping:id,shipping_address']);
     
             if ($status !== 'all') {
                 $ordersQuery->where('status', $status);
@@ -79,11 +79,17 @@ class OrderController extends Controller
                     'customer_name' => optional($order->customers)->name,
                     'contract_id' => $order->contract_id,
                     'driver_id' => $order->driver_id,
+                    'shipping_id' => $order->shipping_id,
+                    'shipping_address' => optional($order->shipping)->shipping_address,
                     'status' => $order->status,
                     'develivered_qty' => $order->develivered_qty,
                     'return_qty' => $order->return_qty,
-                    'delevered_card_img' => $order->delevered_card_img,
-                    'return_card_img' => $order->return_card_img,
+                    'delevered_card_img' => $order->delevered_card_img 
+                    ? asset('storage/OrderCard/' . $order->delevered_card_img) 
+                    : null,
+                    'return_card_img' => $order->return_card_img 
+                    ? asset('storage/OrderCard/' . $order->return_card_img) 
+                    : null,
                     'deleted_at' => $order->deleted_at,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
@@ -168,39 +174,45 @@ class OrderController extends Controller
             'delevered_card_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'return_card_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-        
+    
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'errors' => $validator->errors()], 422);
+                'errors' => $validator->errors()
+            ], 422);
         }
-        
+    
         try {
             $order = Orders::findOrFail($id);
             $order->update($request->except('delevered_card_img', 'return_card_img'));
-            // Handle Pan Card Upload
+    
+            // Handle Delivered Card Upload
             if ($request->hasFile('delevered_card_img')) {
                 if ($order->delevered_card_img) {
-                    Storage::delete('public/OrderCard/' . $order->delevered_card_img); // Corrected $jobPost to $Driver
+                    Storage::delete('public/OrderCard/' . $order->delevered_card_img);
                 }
+    
                 $panCard = $request->file('delevered_card_img');
                 $panCardFile = Str::random(10) . '.' . $panCard->getClientOriginalExtension();
                 $panCard->storeAs('public/OrderCard', $panCardFile);
                 $order->delevered_card_img = $panCardFile;
             }
-        
-            // Handle Aadhar Card Upload
+    
+            // Handle Return Card Upload
             if ($request->hasFile('return_card_img')) {
                 if ($order->return_card_img) {
-                    Storage::delete('public/OrderCard/' . $order->return_card_img); // Corrected $jobPost to $Driver
+                    Storage::delete('public/OrderCard/' . $order->return_card_img);
                 }
+    
                 $aadharCard = $request->file('return_card_img');
                 $aadharCardFile = Str::random(10) . '.' . $aadharCard->getClientOriginalExtension();
                 $aadharCard->storeAs('public/OrderCard', $aadharCardFile);
                 $order->return_card_img = $aadharCardFile;
             }
-        
-            $order->update($request->except('return_card_img', 'delevered_card_img'));
+    
+            // Save changes including file names
+            $order->save();
+    
             return response()->json([
                 'status' => true,
                 'message' => 'Order updated successfully!',
@@ -208,9 +220,11 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
-                'error' => $e->getMessage()], 500);
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
+    
 
     /**
      * Remove the specified resource from storage.
