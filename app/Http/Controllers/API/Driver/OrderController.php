@@ -187,6 +187,7 @@ class OrderController extends Controller
             $order->update($request->except('delevered_card_img', 'return_card_img'));
     
             // Handle Delivered Card Upload
+            dd($request->hasFile('delevered_card_img'), $request->hasFile('return_card_img'));
 
 
             if ($request->hasFile('delevered_card_img')) {
@@ -197,8 +198,6 @@ class OrderController extends Controller
                 $panCard = $request->file('delevered_card_img');
                 $panCardFile = Str::random(10) . '.' . $panCard->getClientOriginalExtension();
                 $panCard->storeAs('public/OrderCard', $panCardFile);
-                // dd($order->delevered_card_img, $panCardFile);
-
                 $order->delevered_card_img = $panCardFile;
             }
     
