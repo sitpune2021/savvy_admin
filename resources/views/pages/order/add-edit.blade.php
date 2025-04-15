@@ -95,7 +95,7 @@
                                     <div class="input-block mb-3">
                                         <label for="shipping_id">Select shipping</label>
                                         <select id="shipping-select" class="select js-example-basic-single"
-                                            name="shipping_id" @if ($show) disabled @endif>
+                                            name="shipping_id" @if ($show) disabled @endif multiple>
                                             <option value="">Choose Shipping</option>
                                         </select>
                                     </div>

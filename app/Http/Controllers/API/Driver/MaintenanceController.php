@@ -46,11 +46,7 @@ class MaintenanceController extends Controller
         
             foreach ($maintenanceRecords as $record) {
                 $record->vehicle_no = $record->driver->vehicle_no;
-        
-                // Decode the images (JSON to array)
                 $images = is_array($record->image) ? $record->image : json_decode($record->image, true);
-        
-                // Only handle if it's an array
                 if (is_array($images)) {
                     foreach ($images as $key => $imgPath) {
                         $record->$key = $imgPath ? url('storage/'.$type.'/'. $imgPath) : null;
@@ -109,6 +105,7 @@ class MaintenanceController extends Controller
             $imagePaths = []; // Initialize an empty array to store image paths
     
             // If the 'other' type, handle 'bill' image
+            dd($request->hasFile('images.bill'));
             if ($request->type == 'other' && $request->hasFile('images.bill')) {
                 $billImage = $request->file('images.bill');
                 $billImageName = Str::random(10) . '.' . $billImage->getClientOriginalExtension();

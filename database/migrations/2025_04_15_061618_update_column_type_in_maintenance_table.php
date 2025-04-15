@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::table('maintenances', function (Blueprint $table) {
             $table->json('image')->nullable()->change();
-            
         });
     }
 
@@ -23,8 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('maintenances', function (Blueprint $table) {
-            $table->string('image')->nullable();
-            
+            $table->string('image')->nullable()->change();
         });
     }
 };

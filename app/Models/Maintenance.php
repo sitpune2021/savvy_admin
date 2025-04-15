@@ -17,7 +17,7 @@ class Maintenance extends Model
         'amount',
         'image',
         'status',
-        'date'
+        'date',
     ];
 
     public function driver()

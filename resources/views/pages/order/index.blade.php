@@ -3,6 +3,12 @@
     $title = 'Orders - ' . config('app.name');
     $PageTitle = 'Orders List';
     $breadcrumbs = [['name' => 'Home', 'url' => url('/')], ['name' => $PageTitle, 'url' => '']];
+    $statusClasses = [
+        'cancelled' => 'bg-danger-subtle text-danger',
+        'pending' => 'bg-warning-subtle text-warning',
+        'completed' => 'bg-success-subtle text-success',
+        'in_progress' => 'bg-info-subtle text-info',
+    ];
 @endphp
 
 @push('styles')
@@ -56,14 +62,6 @@
             <div class="row g-2">
                 <div class="col-sm-auto ms-auto">
                     <div class="list-grid-nav hstack gap-1">
-                        {{-- <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink1">
-                        <li><a class="dropdown-item" href="#">All</a></li>
-                        <li><a class="dropdown-item" href="#">Last Week</a></li>
-                        <li>
-                            <a class="dropdown-item" href="#">Last Month</a>
-                        </li>
-                        <li><a class="dropdown-item" href="#">Last Year</a></li>
-                    </ul> --}}
                         <a class="btn btn-success" href="{{ route('order.create') }}">
                             <i class="ri-add-fill me-1 align-bottom"></i> Add
                             Order
@@ -87,6 +85,7 @@
                                     <th>Driver</th>
                                     <th>Develivered Quantity</th>
                                     {{-- <th>Return Quantity </th> --}}
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -99,10 +98,17 @@
                                         <td>{{ $order->develivered_qty }}</td>
                                         {{-- <td>{{ $order->return_qty }}</td> --}}
                                         <td>
+                                            <span
+                                                class="badge {{ $statusClasses[$order->status] ?? 'bg-secondary-subtle text-secondary' }} p-2">
+                                                {{ ucfirst(str_replace('_', ' ', $order->status)) }}
+                                            </span>
+                                        </td>
+                                        <td>
                                             <div class="hstack gap-3 flex-wrap">
-                                                <a href="{{ route('order.edit', $order->id) }}" class="link-success fs-15"><i class="ri-edit-2-line"></i></a>
-                                                <a href="{{ route('order.show', $order->id) }}" class="link-primary fs-15"><i class="ri-eye-2-line"></i></a>
-                                                <a href="javascript:void(0);" class="link-danger fs-15"><i class="ri-delete-bin-line"></i></a>
+                                                {{-- <a href="{{ route('order.edit', $order->id) }}" class="link-success fs-15"><i class="ri-edit-2-line"></i></a> --}}
+                                                <a href="{{ route('order.show', $order->id) }}"
+                                                    class="link-primary fs-15"><i class="ri-eye-line"></i></a>
+                                                {{-- <a href="javascript:void(0);" class="link-danger fs-15"><i class="ri-delete-bin-line"></i></a> --}}
                                             </div>
                                         </td>
                                     </tr>
