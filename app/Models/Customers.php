@@ -24,7 +24,6 @@ class Customers extends Model
         'billing_city',
         'billing_pincode',
         'customer_zohi_id',
-        'plant_id',
     ];
 
     // Define the relationship with the Contracts model

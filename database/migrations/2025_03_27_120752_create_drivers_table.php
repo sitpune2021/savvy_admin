@@ -32,8 +32,10 @@ return new class extends Migration
 
             $table->string('pan_card_FILE')->nullable();
             $table->string('aadhar_card_FILE')->nullable();
-            $table->timestamps();
+            $table->string('otp')->nullable();
+            $table->timestamp('otp_expires_at')->nullable();
             $table->softDeletes();
+            $table->timestamps();
 
         });
     }

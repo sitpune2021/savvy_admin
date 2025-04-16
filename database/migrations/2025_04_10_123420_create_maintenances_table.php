@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('type')->enum(['fule','other']);
             $table->string('description')->nullable();
             $table->string('amount');
-            $table->string('image')->nullable();
+            $table->text('image')->nullable();
             $table->string('status')->default('pending')->enum(['pending','approved','rejected']);
             $table->string('date')->nullable();
             $table->foreign('driver_id')->references('id')->on('drivers')->onDelete('cascade');

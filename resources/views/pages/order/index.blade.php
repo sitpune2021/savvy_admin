@@ -86,6 +86,7 @@
                                     <th>Develivered Quantity</th>
                                     {{-- <th>Return Quantity </th> --}}
                                     <th>Status</th>
+                                    <th>Date</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -103,6 +104,7 @@
                                                 {{ ucfirst(str_replace('_', ' ', $order->status)) }}
                                             </span>
                                         </td>
+                                        <td>{{ $order->created_at->format('Y-m-d')}}</td>
                                         <td>
                                             <div class="hstack gap-3 flex-wrap">
                                                 {{-- <a href="{{ route('order.edit', $order->id) }}" class="link-success fs-15"><i class="ri-edit-2-line"></i></a> --}}

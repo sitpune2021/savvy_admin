@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('contract_id')->nullable();
             $table->unsignedBigInteger('driver_id')->nullable();
 
-            $table->enum('status', ['pending', 'in_progress', 'completed', 'cancelled'])->default('pending');
+            $table->enum('status', ['pending', 'completed'])->default('pending');
             $table->string('develivered_qty')->default('0')->nullable();
             $table->string('return_qty')->default('0')->nullable();
 

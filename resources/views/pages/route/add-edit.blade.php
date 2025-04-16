@@ -9,6 +9,9 @@
     ];
 @endphp
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+@endpush
 @push('scripts')
     <script src="{{ asset('/assets/js/app.js') }}"></script>
 @endpush
@@ -44,6 +47,20 @@
                     <div class="col-md-12">
                         <div class="form-group-item">
                             <div class="row align-item-center">
+                                <div class="col-lg-4 col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Plant</label>
+                                        <select class="select js-example-basic-single" name="plant_id" id="plant_id"
+                                            @if ($show) disabled @endif>
+                                            <option value="">Select Plant</option>
+                                            @foreach ($plants as $plant)
+                                                <option value="{{ $plant->id }}"
+                                                    {{ isset($Route) && $Route->plant_id == $plant->id ? 'selected' : '' }}>
+                                                    {{ $plant->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Name</label>

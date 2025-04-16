@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Drivers;
 use App\Models\Routes;
+use App\Models\Plant;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Exception;
@@ -27,8 +28,9 @@ class DriverController extends Controller
     public function create()
     {
         $show = false;  
-        $routes = Routes::all();
-        return view('pages.driver.add-edit',compact('show', 'routes'));      
+        $routes = Routes::with('plant')->get();
+        $plants = Plant::all();
+        return view('pages.driver.add-edit',compact('show', 'routes', 'plants'));      
     }
 
     /**
@@ -38,6 +40,8 @@ class DriverController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'route_id' => 'required|exists:routes,id',
+            'plant_id' => 'required|exists:plants,id',
+            'route_path' => 'nullable',
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:drivers,email',
             'phone_no' => 'required|string|max:20',
@@ -79,12 +83,12 @@ class DriverController extends Controller
             $data = $request->all();
             $data['pan_card_FILE'] = $pan_card_FILE;
             $data['aadhar_card_FILE'] = $aadhar_card_FILE;
-
             Drivers::create($data);
-            
-            return redirect()->route('drivers.index')->with('success', 'Driver added successfully.');
-        } catch (Exception $e) {
-            return redirect()->back()->with('error', 'Failed to add driver: '.$e->getMessage());
+            return response()->json([
+                'message' => 'Driver created successfully!',
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
@@ -96,7 +100,8 @@ class DriverController extends Controller
         $show = true;
         $Driver = Drivers::findOrFail($id);
         $routes = Routes::all();
-        return view('pages.driver.add-edit',compact('show', 'Driver', 'routes'));
+        $plants = Plant::all();
+        return view('pages.driver.add-edit',compact('show', 'Driver', 'routes', 'plants'));
     }
 
     /**
@@ -108,7 +113,8 @@ class DriverController extends Controller
             $show = false;
             $Driver = Drivers::findOrFail($id);
             $routes = Routes::all();
-            return view('pages.driver.add-edit',compact('show', 'Driver', 'routes'));
+            $plants = Plant::all();
+            return view('pages.driver.add-edit',compact('show', 'Driver', 'routes', 'plants'));
         } catch (ModelNotFoundException $e) {
             return back()->withErrors(['error' => 'Driver not found.']);
         } catch (Exception $e) {

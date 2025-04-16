@@ -13,6 +13,9 @@ class ShippingAddress extends Model
     use HasFactory;
     protected $fillable = [
         'customer_id',
+        'plant_id',
+        'route_id',
+        'driver_id',
         'shipping_address',
         'shipping_country',
         'shipping_state',
@@ -23,6 +26,7 @@ class ShippingAddress extends Model
         'machine_deployed',
         'machine_deployed_date'
     ];
+
     public function Customers()
     {
         return $this->hasMany(Customers::class, 'customer_id');

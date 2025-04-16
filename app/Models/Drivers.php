@@ -16,6 +16,8 @@ class Drivers extends Authenticatable
 
         protected $fillable = [
             'route_id',
+            'plant_id',
+            'route_path',
             'name',
             'email',
             'phone_no',

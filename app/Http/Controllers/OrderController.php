@@ -50,7 +50,6 @@ class OrderController extends Controller
             'contract_id' => 'nullable|exists:contracts,id',
             'shipping_id' => 'required|array',
             'shipping_id.*' => 'exists:shipping_addresses,id',
-            // 'shipping_id' => 'nullable|exists:shipping_addresses,id',
             'route_id' => 'nullable|exists:routes,id',
             'develivered_qty' => 'nullable|integer|min:0',
         ]);

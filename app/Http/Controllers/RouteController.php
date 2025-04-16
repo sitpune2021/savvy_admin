@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Models\Routes;
+use App\Models\Plant;
 use Illuminate\Support\Facades\Storage;
 use Exception;
 
@@ -25,8 +26,9 @@ class RouteController extends Controller
      */
     public function create()
     {
-        $show = false;        
-        return view('pages.route.add-edit',compact('show'));
+        $show = false;   
+        $plants = Plant::all();     
+        return view('pages.route.add-edit',compact('show' , 'plants'));
     }
 
     /**
@@ -37,6 +39,8 @@ class RouteController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'path' => 'required|string|max:255',
+            'plant_id' => 'required|exists:plants,id',
+
         ]);
 
     
@@ -60,7 +64,8 @@ class RouteController extends Controller
     {
         $show = true;
         $Route = Routes::findOrFail($id);
-        return view('pages.route.add-edit',compact('show', 'Route'));
+        $plants = Plant::all();
+        return view('pages.route.add-edit',compact('show', 'Route', 'plants'));
     }
 
     /**
@@ -71,7 +76,8 @@ class RouteController extends Controller
         try {
             $show = false;
             $Route = Routes::findOrFail($id);
-            return view('pages.route.add-edit',compact('show', 'Route'));
+            $plants = Plant::all();
+            return view('pages.route.add-edit',compact('show', 'Route', 'plants'));
         } catch (ModelNotFoundException $e) {
             return back()->withErrors(['error' => 'Route not found.']);
         } catch (Exception $e) {
@@ -87,6 +93,8 @@ class RouteController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'path' => 'required|string|max:255',
+            'plant_id' => 'required|exists:plants,id',
+
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);

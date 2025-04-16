@@ -14,7 +14,10 @@ return new class extends Migration
         Schema::create('shipping_addresses', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('customer_id')->nullable();
-            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
+            $table->unsignedBigInteger('plant_id')->nullable();
+            $table->unsignedBigInteger('route_id')->nullable();
+            $table->unsignedBigInteger('driver_id')->nullable();
+
             $table->string('shipping_address')->nullable();
             $table->string('shipping_country')->nullable();
             $table->string('shipping_state')->nullable();
@@ -26,6 +29,13 @@ return new class extends Migration
 
             $table->string('machine_deployed')->default('No');
             $table->date('machine_deployed_date')->nullable();
+            
+            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
+            $table->foreign('route_id')->references('id')->on('routes')->onDelete('cascade');
+            $table->foreign('plant_id')->references('id')->on('plants')->onDelete('cascade');
+            $table->foreign('driver_id')->references('id')->on('drivers')->onDelete('cascade');
+
+            $table->softDeletes();
             $table->timestamps();
         });
     }

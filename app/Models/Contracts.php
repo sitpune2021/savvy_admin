@@ -12,15 +12,19 @@ class Contracts extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'type',
         'customer_id',
         'product_id',
         'quantity',
         'price',
-        'delivery_frequency',
-        'delivery_time',
+        'frequency',
+        'frequency_count',
         'duration',
         'duration_type',
         'status',
+        'days',
+
+        
     ];
 
     public function customer()

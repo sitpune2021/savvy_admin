@@ -60,7 +60,7 @@
                     <div class="col-md-12">
                         <div class="form-group-item">
                             <div class="row align-item-center">
-                                <div class="col-md-6 col-sm-12">
+                                <div class="col-md-4 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Name</label>
                                         <input name="name" type="text" class="form-control" placeholder="Enter Name"
@@ -68,7 +68,7 @@
                                             @if ($show) disabled @endif>
                                     </div>
                                 </div>
-                                <div class="col-md-6 col-sm-12">
+                                <div class="col-md-4 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>E-mail</label>
                                         <input name="email" type="email" class="form-control" placeholder="Enter E-mail"
@@ -76,7 +76,7 @@
                                             @if ($show) disabled @endif>
                                     </div>
                                 </div>
-                                <div class="col-md-6 col-sm-12">
+                                <div class="col-md-4 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Phone No</label>
                                         <input name="phone_no" type="number" class="form-control"
@@ -85,20 +85,30 @@
                                             @if ($show) disabled @endif>
                                     </div>
                                 </div>
+                                <div class="col-lg-6 col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Plant</label>
+                                        <select class="select js-example-basic-single" name="plant_id" id="plant_id" @if ($show) disabled @endif>
+                                            <option value="">Select Plant</option>
+                                            @foreach ($plants as $plant)
+                                                <option value="{{ $plant->id }}"
+                                                    {{ (isset($Route) && $Route->plant_id == $plant->id) || $plant->id == 1 ? 'selected' : '' }}>
+                                                    {{ $plant->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
                                 <div class="col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Routes</label>
-                                        <select name="route_id" class="select js-example-basic-single"
-                                            @if ($show) disabled @endif>
-                                            @foreach ($routes as $route)
-                                                <option value="{{ $route->id }}"
-                                                    {{ isset($Driver) && $Driver->route_id == $route->id ? 'selected' : '' }}>
-                                                    {{ $route->name }}</option>
-                                            @endforeach
+                                        <select name="route_id" class="select js-example-basic-single" id="route_id" @if ($show) disabled @endif>
+                                            <!-- This will be populated dynamically by jQuery -->
+                                            <option value="">Select Route</option>
                                         </select>
-
                                     </div>
                                 </div>
+                                <input type="hidden" id="route_path" name="route_path">
                             </div>
                         </div>
 
@@ -266,6 +276,7 @@
         </div>
     </div>
     <script>
+        window.routeData = @json($routes);
         window.Laravel = {
             routeIndex: "{{ route('driver.index') }}"
         };

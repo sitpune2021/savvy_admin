@@ -163,12 +163,7 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-		if (response.customer_id) {
-			window.location.href = '/customer/' + response.customer_id + '/assign-route';
-		}
-		else {
-			// window.location.href = window.Laravel.routeIndex;
-		}
+		window.location.href = window.Laravel.routeIndex;
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -249,12 +244,12 @@ handleFormSubmit(
 		method: 'Put',
 	},
 	function (response) { // success callback
-		if (response.customer_id) {
-			window.location.href = '/customer/' + response.customer_id + '/assign-route';
-		}
-		else {
+		// if (response.customer_id) {
+		// 	window.location.href = '/customer/' + response.customer_id + '/assign-route';
+		// }
+		// else {
 			window.location.href = window.Laravel.routeIndex;
-		}
+		// }
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -278,33 +273,7 @@ $(document).ready(function () {
 	let addressIndex = 1;
 
 	// ========== Utility Functions ==========
-	function generateSelect2($container, name, selectedValue = "") {
-		const options = ['Yes', 'No'].map(val =>
-			`<option value="${val}" ${selectedValue === val ? 'selected' : ''}>${val}</option>`
-		).join('');
 
-		const $select = $(`<select class="select js-example-basic-single form-control" name="${name}">${options}</select>`);
-		$container.html($select);
-		$select.select2();
-	}
-
-	function clearInputs($block) {
-		$block.find('input').val('');
-		$block.find('select').each(function () {
-			const name = $(this).attr('name');
-			generateSelect2($(this).parent(), name);
-		});
-	}
-
-	function updateInputNames($block, index) {
-		$block.find('input, select').each(function () {
-			const name = $(this).attr('name');
-			if (name) {
-				const updated = name.replace(/shipping\[\d+\]/, `shipping[${index}]`);
-				$(this).attr('name', updated);
-			}
-		});
-	}
 
 	function manageButtonBlock() {
 		$('.address-buttons').remove();
@@ -323,13 +292,40 @@ $(document).ready(function () {
 		`;
 	}
 
-	function generateAddressBlock(index, data = {}) {
-		const deployed = data.machine_deployed || '';
+	function generateAddressBlock(index, data = {}, isEdit = false) {
+		const deployedSelect = $(`
+			<select class="select js-example-basic-single form-control" name="shipping[${index}][machine_deployed]">
+				<option value="Yes" ${data.machine_deployed === 'Yes' ? 'selected' : ''}>Yes</option>
+				<option value="No" ${data.machine_deployed === 'No' ? 'selected' : ''}>No</option>
+			</select>
+		`);
+
+		const plantSelect = $(`
+			<select class="select js-example-basic-single form-control" name="shipping[${index}][plant_id]" id="plant_id_${index}" ${window.show ? 'disabled' : ''}>
+				<option value="">Select Plant</option>
+				${window.plants.map(plant => `
+					<option value="${plant.id}" ${data.plant_id === plant.id ? 'selected' : ''}>${plant.name}</option>
+				`).join('')}
+			</select>
+		`);
+
+		const routeSelect = $(`
+			<select name="shipping[${index}][route_id]" class="select js-example-basic-single form-control" id="route_id_${index}" ${window.show ? 'disabled' : ''}>
+				<option value="">Select Route</option>
+			</select>
+		`);
+
+		const driverSelect = $(`
+			<select name="shipping[${index}][driver_id]" class="select js-example-basic-single form-control" id="driver_id_${index}" ${window.show ? 'disabled' : ''}>
+				<option value="">Select Driver</option>
+			</select>
+		`);
+
 		const block = $(`
 			<div class="form-group-item card address-block">
 				<div class="card-header d-flex justify-content-between align-items-center add-remove">
-					<h5 class="form-title">${data.id ? 'Edit' : 'Create'} Shipping Address</h5>
-					<button type="button" class="btn btn-sm btn-danger remove-address-edit">Remove</button>
+					<h5 class="form-title">${isEdit ? (data.id ? 'Edit' : 'Create') : ''} Shipping Address</h5>
+					<button type="button" class="btn btn-sm btn-danger ${isEdit ? 'remove-address-edit' : 'remove-address'}">Remove</button>
 				</div>
 				<div class="row align-item-center card-body">
 					<input type="hidden" name="shipping[${index}][id]" value="${data.id || ''}">
@@ -368,45 +364,59 @@ $(document).ready(function () {
 								placeholder="Enter Shipping Pin Code" value="${data.shipping_pincode || ''}">
 						</div>
 					</div>
-					<div class="col-md-6 col-sm-12">
+					<div class="col-lg-4 col-md-6 col-sm-12" id="plant_select">
+						<div class="input-block mb-3 plant-container">
+							<label>Plant</label>
+						</div>
+					</div>
+					<div class="col-md-4 col-sm-12" id="route_select">
+						<div class="input-block mb-3 route-container">
+							<label>Routes</label>
+						</div>
+					</div>
+					<div class="col-md-4 col-sm-12" id="driver_select">
+						<div class="input-block mb-3 driver-container">
+							<label>Drivers</label>
+						</div>
+					</div>
+					<div class="col-md-4 col-sm-12">
 						<div class="input-block mb-3">
 							<label>Name</label>
 							<input name="shipping[${index}][contact_person]" type="text" class="form-control"
 								placeholder="Enter Name" value="${data.contact_person || ''}">
 						</div>
 					</div>
-					<div class="col-md-6 col-sm-12">
+					<div class="col-md-4 col-sm-12">
 						<div class="input-block mb-3">
 							<label>Mobile No</label>
-							<input name="shipping[${index}][contact_person_phone]" type="text"
-								class="form-control" placeholder="Enter Mobile No" value="${data.contact_person_phone || ''}">
+							<input name="shipping[${index}][contact_person_phone]" type="text" class="form-control"
+								placeholder="Enter Mobile No" value="${data.contact_person_phone || ''}">
 						</div>
 					</div>
-					<div class="col-md-6 col-sm-12">
-						<div class="input-block mb-3">
+					<div class="col-md-4 col-sm-12" id="machine_select">
+						<div class="input-block mb-3 deployed-container">
 							<label>Deployed</label>
-							<div class="select-wrapper"></div>
 						</div>
 					</div>
 				</div>
 			</div>
 		`);
 
-		const $selectWrapper = block.find('.select-wrapper');
-		const name = `shipping[${index}][machine_deployed]`;
-		generateSelect2($selectWrapper, name, deployed);
+		// Append selects to their containers
+		block.find('.deployed-container').append(deployedSelect);
+		block.find('.plant-container').append(plantSelect);
+		block.find('.route-container').append(routeSelect);
+		block.find('.driver-container').append(driverSelect);
+
+		// Initialize Select2
+		block.find('select.select').select2();
 
 		return block;
 	}
 
 	$('#add-address').on('click', function () {
-		const $original = $('#shipping_address_div .address-block:first').clone();
-		$original.find('#add-address').remove();
-		clearInputs($original);
-		updateInputNames($original, addressIndex);
-		$original.children().first().append('<button type="button" class="btn btn-sm btn-danger remove-address">Remove</button>');
-		$('#shipping_address_div').append($original);
-		addressIndex++;
+		const block = generateAddressBlock(addressIndex++, true);
+		$('#shipping_address_div').append(block);
 	});
 
 	$(document).on('click', '.remove-address', function () {
@@ -416,7 +426,7 @@ $(document).ready(function () {
 	});
 
 	$('#add-address-edit').on('click', function () {
-		const block = generateAddressBlock(addressIndex++);
+		const block = generateAddressBlock(addressIndex++, false);
 		$('#address-container').append(block);
 		manageButtonBlock();
 	});
@@ -444,13 +454,12 @@ $(document).ready(function () {
 		$('#address-container').empty();
 	});
 });
+
+
 $(document).ready(function () {
 	const selectedContractId = window.orderData?.contractId || '';
 	const selectedShippingId = window.orderData?.shippingId || '';
 	const selectedCustomerId = window.orderData?.customerId || '';
-	console.log('selectedContractId', selectedContractId);
-	console.log('selectedShippingId', selectedShippingId);
-	console.log('selectedCustomerId', selectedCustomerId);
 
 
 	function populateContracts(contracts, selectedId) {
@@ -492,7 +501,6 @@ $(document).ready(function () {
 	$('#customer-select').on('change', function () {
 		const selected = $(this).find(':selected');
 		const contracts = selected.data('contracts') || [];
-		console.log('contracts', contracts);
 
 		const shippings = selected.data('shippings') || [];
 		const contractIdToSelect = $(this).val() == selectedCustomerId ? selectedContractId : null;
@@ -517,6 +525,140 @@ $(document).ready(function () {
 		$('#customer-select').val(selectedCustomerId).trigger('change');
 	}
 });
+
+$(document).ready(function () {
+
+	function getIndexFromId(id, base) {
+		const match = id.match(new RegExp(`^${base}_(\\d+)$`));
+		return match ? match[1] : null;
+	}
+
+	function buildSelector(baseId, index) {
+		return index !== null ? `#${baseId}_${index}` : `#${baseId}`;
+	}
+
+	function updateRoutes(plantId, index = null) {
+		const routes = window.routeData || [];
+		updateDrivers('', '', index);
+
+		const filteredRoutes = routes.filter(route => route.plant_id == plantId);
+		const $routeSelect = $(buildSelector('route_id', index));
+		$routeSelect.find('option:not(:first)').remove();
+
+		filteredRoutes.forEach(route => {
+			const locations = route.path.replace(/\|/g, ',').split(',').map(loc => loc.trim());
+			locations.forEach(location => {
+				$routeSelect.append(
+					`<option value="${route.id}" data-route-id="${route.id}" data-location="${location}">${route.name} - ${location}</option>`
+				);
+			});
+		});
+
+		const $plant = $(buildSelector('plant_id', index));
+		if ($plant.val() && $routeSelect.find('option').length > 1) {
+			const firstVal = $routeSelect.find('option:first').val();
+			$routeSelect.val(firstVal);
+			updateDrivers(firstVal, '', index);
+		}
+	}
+
+	function updateDrivers(routeId, routePath, index = null) {
+		const drivers = window.driverData || [];
+		const filteredDrivers = drivers.filter(driver => driver.route_id == routeId && driver.route_path == routePath);
+		const $driverSelect = $(buildSelector('driver_id', index));
+		$driverSelect.find('option:not(:first)').remove();
+
+		filteredDrivers.forEach(driver => {
+			$driverSelect.append(`<option value="${driver.id}" data-driver-id="${driver.id}">${driver.name}</option>`);
+		});
+
+		const $route = $(buildSelector('route_id', index));
+		if ($route.val() && $driverSelect.find('option').length > 1) {
+			$driverSelect.val($driverSelect.find('option:first').val());
+		}
+	}
+
+	// Static initialization for first/default plant
+	const initialPlantId = $('#plant_id').val();
+	if (initialPlantId) {
+		updateRoutes(initialPlantId, null);
+	}
+
+	// Delegated change event for ALL plant_id (static and dynamic)
+	$(document).on('change', '[id^=plant_id]', function () {
+		const id = $(this).attr('id');
+		const index = getIndexFromId(id, 'plant_id');
+		const selectedPlantId = $(this).val();
+		updateRoutes(selectedPlantId, index);
+	});
+
+	// Delegated change event for ALL route_id (static and dynamic)
+	$(document).on('change', '[id^=route_id]', function () {
+		const id = $(this).attr('id');
+		const index = getIndexFromId(id, 'route_id');
+		const selectedOption = $(this).find('option:selected');
+		const location = selectedOption.data('location');
+		const routePath = location;
+		const selectedRouteId = $(this).val();
+
+		updateDrivers(selectedRouteId, routePath, index);
+
+		// Update route_path input if exists
+		const $routePathInput = $(buildSelector('route_path', index));
+		if ($routePathInput.length) {
+			$routePathInput.val(routePath);
+		}
+	});
+});
+
+
+$(document).ready(function () {
+	// Toggle the days block based on the frequency
+	function toggleDaysBlock() {
+		var frequency = $('#frequency').val();
+		if (frequency === 'weekly') {
+			$('#daysBlock').show();
+		} else {
+			$('#daysBlock').hide();
+		}
+	}
+
+	// Update the placeholder for Frequency Count based on the frequency
+	function updateFrequencyCountPlaceholder() {
+		var frequency = $('#frequency').val();
+		var $frequencyCountInput = $('#frequencyCountBlock input');
+		switch (frequency) {
+			case 'daily':
+				$frequencyCountInput.attr('placeholder', 'How many days per week?');
+				break;
+			case 'alternate_day':
+				$frequencyCountInput.attr('placeholder', 'Every other day');
+				break;
+			case 'weekly':
+				$frequencyCountInput.attr('placeholder', 'How many deliveries per week?');
+				break;
+			case 'twice_per_week':
+				$frequencyCountInput.attr('placeholder', 'Twice a week');
+				break;
+			case 'random':
+				$frequencyCountInput.attr('placeholder', 'Random frequency count');
+				break;
+			default:
+				$frequencyCountInput.attr('placeholder', 'Enter Frequency Count');
+		}
+	}
+
+	// Initialize on page load
+	toggleDaysBlock(); // Show/hide days dropdown
+	updateFrequencyCountPlaceholder(); // Update placeholder for frequency count
+
+	// When the frequency changes, adjust the form
+	$('#frequency').change(function () {
+		toggleDaysBlock();
+		updateFrequencyCountPlaceholder();
+	});
+});
+
 
 
 

@@ -83,6 +83,7 @@
                             <thead class="thead-light">
                                 <tr>
                                     <th>#</th>
+                                    <th>Plant</th>
                                     <th>Name</th>
                                     <th>Path</th>
                                     <th>Actions</th>
@@ -92,6 +93,7 @@
                                 @foreach ($routes as $route)
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $route->plant->name }}</td>
                                         <td>{{ $route->name }}</td>
                                         <td>{{ $route->path }}</td>
                                         <td>

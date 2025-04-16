@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('routes', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('plant_id')->nullable();
             $table->string('name');
             $table->string('path');
+            $table->foreign('plant_id')->references('id')->on('plants')->onDelete('cascade');
             $table->softDeletes();
             $table->timestamps();
         });

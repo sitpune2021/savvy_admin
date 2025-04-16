@@ -29,8 +29,6 @@ class Orders extends Model
         'delevered_card_img',
         'return_card_img',
     ];
-
-    
    
 
 

@@ -35,7 +35,9 @@ class CustomerController extends Controller
         $show = false;
         $plants = Plant::all();
         $products = Product::all();
-        return view('pages.customer.add-edit',compact('show', 'plants', 'products'));
+        $routes = Routes::with('plant')->whereHas('drivers')->get();
+        $drivers = Drivers::with('routes')->get();
+        return view('pages.customer.add-edit',compact('show', 'plants', 'products', 'routes', 'drivers'));
     }
 
     /**
@@ -45,7 +47,6 @@ class CustomerController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'customer_zohi_id' => 'required|string|unique:customers',
-            'plant_id' => 'required|exists:plants,id',
             'name' => 'required|string|max:255', 
             'email' => 'nullable|email|unique:customers,email|max:255', 
             'phone_no' => 'nullable|digits:10',
@@ -55,6 +56,9 @@ class CustomerController extends Controller
             'billing_city' => 'required|string|max:255',
             'billing_pincode' => 'required',
 
+            'shipping.*.plant_id' => 'required|exists:plants,id',
+            'shipping.*.route_id' => 'required|exists:routes,id',
+            'shipping.*.driver_id' => 'required|exists:drivers,id',
             'shipping.*.shipping_address' => 'required|string|max:255',
             'shipping.*.shipping_country' => 'required|string|max:255',
             'shipping.*.shipping_state' => 'nullable|string|max:255',
@@ -63,16 +67,28 @@ class CustomerController extends Controller
             'shipping.*.contact_person' => 'required|string|max:255',
             'shipping.*.contact_person_phone' => 'required|digits:10',
             'shipping.*.machine_deployed' => 'nullable|string|max:255',
+            
 
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
             'price' => 'required|string|max:255',
-            'delivery_frequency' => 'required|string|max:255',
-            'delivery_time' => 'nullable|date_format:H:i',
             'duration' => 'nullable|integer|min:1',
             'duration_type' => 'nullable|string|in:days,weeks,months,years',
+            'frequency' => 'required|string|in:daily,alternate_day,weekly,monthly',
+            'frequency_count' => 'nullable|integer|min:1',
+            'days' => 'nullable|array',
+            'days.*' => 'in:sunday,monday,tuesday,wednesday,thursday,friday,saturday',
         ],
         [
+            'days.*.in' => 'The selected day is invalid.',
+            
+            'shipping.*.plant_id.required' => 'The plant ID is required.',
+            'shipping.*.plant_id.exists' => 'The selected plant ID is invalid.',
+            'shipping.*.route_id.required' => 'The route ID is required.',
+            'shipping.*.route_id.exists' => 'The selected route ID is invalid.',
+            'shipping.*.driver_id.required' => 'The driver ID is required.',
+            'shipping.*.driver_id.exists' => 'The selected driver ID is invalid.',
+
             'shipping.*.shipping_address.required' => 'The shipping address is required.',
             'shipping.*.shipping_address.string' => 'The shipping address must be a string.',
             'shipping.*.shipping_address.max' => 'The shipping address may not be greater than 255 characters.',
@@ -101,9 +117,29 @@ class CustomerController extends Controller
             'shipping.*.machine_deployed.string' => 'The machine deployed field must be a string.',
             'shipping.*.machine_deployed.max' => 'The machine deployed field may not be greater than 255 characters.',
         ]);
-
+        
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $days = $request->input('days');
+            $frequencyCount = $request->input('frequency_count');
+            $frequency = $request->input('frequency');
+        
+            // Only apply this rule if days is an array and frequency_count is provided
+            if (
+                $frequency !== 'daily' &&
+                is_array($days) &&
+                !empty($frequencyCount) &&
+                $frequencyCount > count($days)
+            ) {
+                $validator->errors()->add(
+                    'frequency_count',
+                    'Frequency count cannot be greater than the number of selected days.'
+                );
+            }
+        if($request->frequency_count > $request->days){
+            return response()->json(['error' => 'Frequency count cannot be greater than the number of days.'], 422);
         }
 
         DB::beginTransaction();
@@ -118,40 +154,39 @@ class CustomerController extends Controller
 
             // Create Contract
             $contract = Contracts::create([
-                'customer_id' => $customer->id,
-                'product_id' => $request->product_id,
-                'quantity' => $request->quantity,
-                'price' => $request->price,
-                'delivery_frequency' => $request->delivery_frequency,
-                'delivery_time' => $request->delivery_time,
-                'duration' => $request->duration,
-                'duration_type' => $request->duration_type,
+                'customer_id'      => $customer->id,
+                'product_id'       => $request->product_id,
+                'quantity'         => $request->quantity,
+                'price'            => $request->price,
+                'duration'         => $request->duration,
+                'duration_type'    => $request->duration_type,
+                'frequency'        => $request->frequency,
+                'frequency_count'  => $request->frequency_count,
+                'days' => $request->has('days') ? implode('|', $request->days) : null,
+                'status'           => 'active',
             ]);
+            
 
             $orders = [];
 
-            // Create Shipping Addresses and Orders
             foreach ($request->shipping as $shippingData) {
                 $shippingData['customer_id'] = $customer->id;
-
                 $shipping = ShippingAddress::create($shippingData);
                 $order = Orders::create([
                     'customer_id' => $customer->id,
                     'contract_id' => $contract->id,
+                    'driver_id' => $shipping->driver_id,
                     'shipping_id' => $shipping->id,
+                    'route_id' => $shipping->route_id,
                     'status' => 'pending',
                     'develivered_qty' => $contract->quantity, // corrected spelling
                     'return_qty' => 0,
                 ]);
-
                 $orders[] = $order;
             }
-
             DB::commit();
-
             return response()->json([
                 'message' => 'Customer created successfully!',
-                'customer_id' => $customer->id,
             ]);
 
         } catch (\Exception $e) {
@@ -169,7 +204,9 @@ class CustomerController extends Controller
         $Customer = Customers::with('contracts', 'shippingAddresses')->findOrFail($id);
         $plants = Plant::all();
         $products = Product::all();
-        return view('pages.customer.add-edit',compact('show', 'Customer', 'plants', 'products'));
+        $routes = Routes::with('plant')->whereHas('drivers')->get();
+        $drivers = Drivers::with('routes')->get();
+        return view('pages.customer.add-edit',compact('show', 'Customer', 'plants', 'products', 'routes', 'drivers'));
     }
 
     /**
@@ -182,7 +219,9 @@ class CustomerController extends Controller
             $Customer = Customers::with('contracts', 'shippingAddresses')->findOrFail($id);
             $plants = Plant::all();
             $products = Product::all();
-            return view('pages.customer.add-edit',compact('show', 'Customer', 'plants', 'products'));
+            $routes = Routes::with('plant')->whereHas('drivers')->get();
+            $drivers = Drivers::with('routes')->get();
+            return view('pages.customer.add-edit',compact('show', 'Customer', 'plants', 'products', 'routes', 'drivers'));
         } catch (ModelNotFoundException $e) {
             return back()->withErrors(['error' => 'Customer not found.']);
         } catch (Exception $e) {
@@ -197,7 +236,6 @@ class CustomerController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'customer_zohi_id' => 'required|string|unique:customers,customer_zohi_id,' . $id,
-            'plant_id' => 'required|exists:plants,id',
             'name' => 'required|string|max:255', 
             'email' => 'nullable|email|unique:customers,email,' . $id . '|max:255',
             'phone_no' => 'nullable|digits:10',
@@ -206,13 +244,18 @@ class CustomerController extends Controller
             'billing_state' => 'nullable|string|max:255',
             'billing_city' => 'required|string|max:255',
             'billing_pincode' => 'required|digits:6',
+            
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
             'price' => 'required|string|max:255',
-            'delivery_frequency' => 'required|string|max:255',
-            'delivery_time' => 'nullable|date_format:H:i',
             'duration' => 'nullable|integer|min:1',
             'duration_type' => 'nullable|string|in:days,weeks,months,years',
+            'frequency' => 'required|string|in:daily,alternate_day,weekly,monthly',
+            'frequency_count' => 'nullable|integer|min:1',
+            'days' => 'nullable|array',
+            'days.*' => 'in:sunday,monday,tuesday,wednesday,thursday,friday,saturday',
+        ], [
+            'days.in' => 'The selected days are invalid.',
         ]);
 
     
@@ -220,31 +263,55 @@ class CustomerController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
         try {
+            $days = $request->input('days');
+            $frequencyCount = $request->input('frequency_count');
+            $frequency = $request->input('frequency');
+        
+            // Only apply this rule if days is an array and frequency_count is provided
+            if (
+                $frequency !== 'daily' &&
+                is_array($days) &&
+                !empty($frequencyCount) &&
+                $frequencyCount > count($days)
+            ) {
+                $validator->errors()->add(
+                    'frequency_count',
+                    'Frequency count cannot be greater than the number of selected days.'
+                );
+            }
+            if($request->frequency_count > $request->days){
+                return response()->json(['error' => 'Frequency count cannot be greater than the number of days.'], 422);
+            }
+
             $customer = Customers::findOrFail($id);
             $customer->update($request->all());
 
-            // Update the contract details
             $contract = Contracts::where('customer_id', $id)->first();
             if ($contract) {
                 $contract->update([
-                    'product_id' => $request->product_id,
-                    'quantity' => $request->quantity,
-                    'price' => $request->price,
-                    'delivery_frequency' => $request->delivery_frequency,
-                    'delivery_time' => $request->delivery_time,
-                    'duration' => $request->duration,
-                    'duration_type' => $request->duration_type,
+                    'customer_id'      => $customer->id,
+                    'product_id'       => $request->product_id,
+                    'quantity'         => $request->quantity,
+                    'price'            => $request->price,
+                    'duration'         => $request->duration,
+                    'duration_type'    => $request->duration_type,
+                    'frequency'        => $request->frequency,
+                    'frequency_count'  => $request->frequency_count,
+                    'days' => $request->has('days') ? implode('|', $request->days) : null,
+                    'status'           => 'active',
                 ]);
             }else {
                 Contracts::create([
-                    'customer_id' => $id,
-                    'product_id' => $request->product_id,
-                    'quantity' => $request->quantity,
-                    'price' => $request->price,
-                    'delivery_frequency' => $request->delivery_frequency,
-                    'delivery_time' => $request->delivery_time,
-                    'duration' => $request->duration,
-                    'duration_type' => $request->duration_type,
+                    'customer_id'      => $customer->id,
+                    'product_id'       => $request->product_id,
+                    'quantity'         => $request->quantity,
+                    'price'            => $request->price,
+                    'duration'         => $request->duration,
+                    'duration_type'    => $request->duration_type,
+                    'frequency'        => $request->frequency,
+                    'frequency_count'  => $request->frequency_count,
+                    'days' => $request->has('days') ? implode('|', $request->days) : null,
+                    'status'           => 'active',
                 ]);
             }
             $shippingAddress = ShippingAddress::where('customer_id', $id)->get();
@@ -293,21 +360,12 @@ class CustomerController extends Controller
         }
     }
 
-    public function assignRoute(Request $request, $id)
-    {
-        $customer = Customers::with('shippingAddresses', 'orders')->findOrFail($id);
-        $shippingAddresses = $customer->shippingAddresses;
-        $orders = $customer->orders;
-        $drivers =  Drivers::all();
-        $routes = Routes::whereHas('drivers')->get();
-        $assign = true;
-        $show = false;
-        return view('pages.customer.assign-route', compact('customer', 'shippingAddresses', 'drivers', 'routes', 'assign', 'show', 'orders'));
-    }
-
     public function storeUpdateShippingAddress(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
+            'shipping.*.plant_id' => 'required|exists:plants,id',
+            'shipping.*.route_id' => 'required|exists:routes,id',
+            'shipping.*.driver_id' => 'required|exists:drivers,id',
             'shipping.*.shipping_address' => 'required|string|max:255',
             'shipping.*.shipping_country' => 'required|string|max:255',
             'shipping.*.shipping_state' => 'nullable|string|max:255',
@@ -318,6 +376,13 @@ class CustomerController extends Controller
             'shipping.*.machine_deployed' => 'nullable|string|max:255',
         ], 
         [
+            'shipping.*.plant_id.required' => 'The plant ID is required.',
+            'shipping.*.plant_id.exists' => 'The selected plant ID is invalid.',
+            'shipping.*.route_id.required' => 'The route ID is required.',
+            'shipping.*.route_id.exists' => 'The selected route ID is invalid.',
+            'shipping.*.driver_id.required' => 'The driver ID is required.',
+            'shipping.*.driver_id.exists' => 'The selected driver ID is invalid.',
+
             'shipping.*.shipping_address.required' => 'The shipping address is required.',
             'shipping.*.shipping_address.string' => 'The shipping address must be a string.',
             'shipping.*.shipping_address.max' => 'The shipping address may not be greater than 255 characters.',
@@ -361,15 +426,24 @@ class CustomerController extends Controller
                 } else {
                     $shippingData['customer_id'] = $customer->id;
                     $address = ShippingAddress::create($shippingData);
-    
                     $contract = $customer->contracts()->first();
                     if ($contract) {
+                        // $order = Orders::create([
+                        //     'customer_id' => $customer->id,
+                        //     'contract_id' => $contract->id,
+                        //     'shipping_id' => $address->id,
+                        //     'status' => 'pending',
+                        //     'develivered_qty' => $contract->quantity,
+                        //     'return_qty' => 0,
+                        // ]);
                         $order = Orders::create([
                             'customer_id' => $customer->id,
                             'contract_id' => $contract->id,
+                            'driver_id' => $address->driver_id,
                             'shipping_id' => $address->id,
+                            'route_id' => $address->route_id,
                             'status' => 'pending',
-                            'develivered_qty' => $contract->quantity,
+                            'develivered_qty' => $contract->quantity, // corrected spelling
                             'return_qty' => 0,
                         ]);
                         $orders[] = $order;
@@ -384,7 +458,6 @@ class CustomerController extends Controller
             return response()->json([
                 'message' => 'Shipping addresses updated successfully!',
                 'orders_created' => $orders,
-                'customer_id' => $customer->id,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
