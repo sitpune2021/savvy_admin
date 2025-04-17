@@ -101,7 +101,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-6 col-sm-12">
+                                {{-- <div class="col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label for="route_id">Select Route</label>
                                         <select class="select js-example-basic-single"
@@ -115,7 +115,7 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                </div>
+                                </div> --}}
                                 <div class="col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Delivered Quantity</label>

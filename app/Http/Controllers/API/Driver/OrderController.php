@@ -36,11 +36,16 @@ class OrderController extends Controller
     
             $baseQuery = Orders::where('driver_id', $driverId);
             $todayQuery = (clone $baseQuery)->whereDate('created_at', $today);
-    
+
+            $totalContractQuantityToday = $todayQuery->with('contract')->get()->sum(function ($order) {
+                return optional($order->contract)->quantity;
+            });
             $statuses = ['pending', 'completed', 'in_progress', 'cancelled'];
             $data = [
                 'all_orders' => $baseQuery->count(),
                 'todays_orders' => $todayQuery->count(),
+                'total_delivery_count' => $totalContractQuantityToday,
+                'total_deliverd_count' => $baseQuery->sum('develivered_qty'),
             ];
     
             foreach ($statuses as $status) {
@@ -187,7 +192,7 @@ class OrderController extends Controller
             $order->update($request->except('delevered_card_img', 'return_card_img'));
     
             // Handle Delivered Card Upload
-            dd($request->hasFile('delevered_card_img'), $request->hasFile('return_card_img'));
+            // dd($request->hasFile('delevered_card_img'), $request->hasFile('return_card_img'));
 
 
             if ($request->hasFile('delevered_card_img')) {
