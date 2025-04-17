@@ -59,7 +59,7 @@ class OrderController extends Controller
     
         try {
             foreach ($request->shipping_id as $shippingId) {
-            $shipping = ShippingAddress::whereIn('id', $shippingId)->get();
+            $shipping = ShippingAddress::where('id', $shippingId)->first();
                 Orders::create([
                     'customer_id' => $request->customer_id,
                     'contract_id' => $request->contract_id,
