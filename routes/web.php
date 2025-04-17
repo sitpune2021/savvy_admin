@@ -37,6 +37,17 @@ Route::get('/migration', function () {
     }
 });
 
+Route::get('/migration_fresh', function () {
+    try {
+        Artisan::call('migrate:fresh');
+        Artisan::call('migrate --seed');
+        Artisan::call('db:seed');
+        return "Migration completed successfully";
+    } catch (\Exception $e) {
+        return "Migration failed: " . $e->getMessage();
+    }
+});
+
 Route::get('/run-all-seeders', function () {
     $exitCode = Artisan::call('db:seed');
     $output = Artisan::output();
