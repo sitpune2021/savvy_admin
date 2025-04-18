@@ -452,6 +452,8 @@
         window.plants = @json($plants);
         window.routeData = @json($routes);
         window.driverData = @json($drivers);
+        window.locationData = true;
+
         window.Laravel = {
             routeIndex: "{{ route('customer.index') }}"
         };

@@ -19,9 +19,10 @@ use App\Http\Controllers\API\Driver\MaintenanceController;
 */
 
 // Route::post('login', [App\Http\Controllers\API\AuthController::class, 'login'])->name('login');
-// Route::post('login', [AuthController::class, 'login'])->name('login');
+Route::post('login', [AuthController::class, 'login'])->name('login');
 Route::post('send-otp', [AuthController::class, 'sendOtp']);
 Route::post('verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:driver_api');
 
 Route::middleware('auth:driver_api')->group(function () {
     Route::resource('order', OrderController::class)->except([

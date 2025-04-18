@@ -92,7 +92,7 @@
                                             <option value="">Select Plant</option>
                                             @foreach ($plants as $plant)
                                                 <option value="{{ $plant->id }}"
-                                                    {{ (isset($Route) && $Route->plant_id == $plant->id) || $plant->id == 1 ? 'selected' : '' }}>
+                                                    {{ (isset($Driver) && $Driver->plant_id == $plant->id) || $plant->id == 1 ? 'selected' : '' }}>
                                                     {{ $plant->name }}
                                                 </option>
                                             @endforeach
@@ -277,6 +277,9 @@
     </div>
     <script>
         window.routeData = @json($routes);
+        window.locationData = false;
+        window.selectedRouteId = {{ isset($Driver) ? $Driver->route_id : 'null' }};
+        window.selectedRoutePath = {!! isset($Driver) ? json_encode($Driver->route_path) : 'null' !!};
         window.Laravel = {
             routeIndex: "{{ route('driver.index') }}"
         };

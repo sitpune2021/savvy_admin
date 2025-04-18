@@ -45,7 +45,7 @@ class OrderController extends Controller
                 'all_orders' => $baseQuery->count(),
                 'todays_orders' => $todayQuery->count(),
                 'total_delivery_count' => $totalContractQuantityToday,
-                'total_deliverd_count' => $baseQuery->sum('develivered_qty'),
+                'total_deliverd_count' => $baseQuery->sum('return_qty'),
             ];
     
             foreach ($statuses as $status) {
@@ -90,10 +90,10 @@ class OrderController extends Controller
                     'develivered_qty' => $order->develivered_qty,
                     'return_qty' => $order->return_qty,
                     'delevered_card_img' => $order->delevered_card_img 
-                    ? asset('storage/OrderCard/' . $order->delevered_card_img) 
+                    ? url('storage/OrderCard/' . $order->delevered_card_img) 
                     : null,
                     'return_card_img' => $order->return_card_img 
-                    ? asset('storage/OrderCard/' . $order->return_card_img) 
+                    ? url('storage/OrderCard/' . $order->return_card_img) 
                     : null,
                     'deleted_at' => $order->deleted_at,
                     'created_at' => $order->created_at,
@@ -150,6 +150,12 @@ class OrderController extends Controller
                 'message' => 'Order not found.',
             ], 404);
         }
+        $order->delevered_card_img =  $order->delevered_card_img 
+                    ? url('storage/OrderCard/' . $order->delevered_card_img) 
+                    : null;
+        $order->return_card_img =   $order->return_card_img 
+                    ? url('storage/OrderCard/' . $order->return_card_img) 
+                    : null;
         return response()->json([
             'status' => true,
             'message' => 'Order retrieved successfully.',
@@ -176,8 +182,8 @@ class OrderController extends Controller
             'develivered_qty' => 'required|integer|min:0',
             'return_qty' => 'required|integer|min:0',
             'status' => 'required|in:pending,completed,cancelled',  
-            'delevered_card_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'return_card_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'delevered_card_img' => 'nullable',
+            'return_card_img' => 'nullable',
         ]);
     
         if ($validator->fails()) {
@@ -190,32 +196,37 @@ class OrderController extends Controller
         try {
             $order = Orders::findOrFail($id);
             $order->update($request->except('delevered_card_img', 'return_card_img'));
-    
-            // Handle Delivered Card Upload
-            // dd($request->hasFile('delevered_card_img'), $request->hasFile('return_card_img'));
 
-
-            if ($request->hasFile('delevered_card_img')) {
-                if ($order->delevered_card_img) {
-                    Storage::delete('public/OrderCard/' . $order->delevered_card_img);
+            if ($request->filled('delevered_card_img')) {
+                $imageData = $request->input('delevered_card_img');
+            
+                if (Str::contains($imageData, 'base64,')) {
+                    $imageData = explode('base64,', $imageData)[1];
                 }
-    
-                $panCard = $request->file('delevered_card_img');
-                $panCardFile = Str::random(10) . '.' . $panCard->getClientOriginalExtension();
-                $panCard->storeAs('public/OrderCard', $panCardFile);
-                $order->delevered_card_img = $panCardFile;
+            
+                $decodedImage = base64_decode($imageData);
+            
+                if ($decodedImage) {
+                    $filename = Str::random(10) . '.jpg';
+                    Storage::put("public/OrderCard/$filename", $decodedImage);
+                    $order->delevered_card_img = $filename;
+                }
             }
-    
-            // Handle Return Card Upload
-            if ($request->hasFile('return_card_img')) {
-                if ($order->return_card_img) {
-                    Storage::delete('public/OrderCard/' . $order->return_card_img);
+
+            if ($request->filled('return_card_img')) {
+                $imageDataCard = $request->input('return_card_img');
+            
+                if (Str::contains($imageDataCard, 'base64,')) {
+                    $imageDataCard = explode('base64,', $imageDataCard)[1];
                 }
-    
-                $aadharCard = $request->file('return_card_img');
-                $aadharCardFile = Str::random(10) . '.' . $aadharCard->getClientOriginalExtension();
-                $aadharCard->storeAs('public/OrderCard', $aadharCardFile);
-                $order->return_card_img = $aadharCardFile;
+            
+                $decodedImageCard = base64_decode($imageDataCard);
+            
+                if ($decodedImageCard) {
+                    $filename = Str::random(10) . '.jpg';
+                    Storage::put("public/OrderCard/$filename", $decodedImageCard);
+                    $order->return_card_img = $filename;
+                }
             }
     
             $order->save();

@@ -46,15 +46,15 @@ class MaintenanceController extends Controller
         
             foreach ($maintenanceRecords as $record) {
                 $record->vehicle_no = $record->driver->vehicle_no;
-                // $images = is_array($record->image) ? $record->image : json_decode($record->image, true);
-                // if (is_array($images)) {
-                //     foreach ($images as $key => $imgPath) {
-                //         $record->$key = $imgPath ? url('storage/'.$type.'/'. $imgPath) : null;
-                //     }
-                // }
+                $images = is_array($record->image) ? $record->image : json_decode($record->image, true);
+                if (is_array($images)) {
+                    foreach ($images as $key => $imgPath) {
+                        $record->$key = $imgPath ? url('storage/'.$type.'/'. $imgPath) : null;
+                    }
+                }
         
                 // Optionally remove original image column
-                // unset($record->image);
+                unset($record->image);
                 unset($record->driver); // if you don't want to expose the full driver model
             }
         
@@ -104,9 +104,7 @@ class MaintenanceController extends Controller
         try {
             $data = $request->all();
             $imagePaths = []; // Initialize an empty array to store image paths
-    
-            // If the 'other' type, handle 'bill' image
-            // dd($request->hasFile('images.bill'));
+            $title = $request->type == 'fuel' ? 'Fuel' : 'Maintenance';
             if ($request->type == 'other' && $request->hasFile('images.bill')) {
                 $billImage = $request->file('images.bill');
                 $billImageName = Str::random(10) . '.' . $billImage->getClientOriginalExtension();
@@ -114,9 +112,7 @@ class MaintenanceController extends Controller
                 $imagePaths['bill'] = $billImageName; // Save the image file name
             }
     
-            // If the 'fuel' type, handle 'metercopy' and 'recipt' images
             if ($request->type == 'fuel') {
-                // Handle metercopy image
                 if ($request->hasFile('images.metercopy')) {
                     $metercopyImage = $request->file('images.metercopy');
                     $metercopyImageName = Str::random(10) . '.' . $metercopyImage->getClientOriginalExtension();
@@ -124,7 +120,6 @@ class MaintenanceController extends Controller
                     $imagePaths['metercopy'] = $metercopyImageName;
                 }
     
-                // Handle recipt image
                 if ($request->hasFile('images.recipt')) {
                     $reciptImage = $request->file('images.recipt');
                     $reciptImageName = Str::random(10) . '.' . $reciptImage->getClientOriginalExtension();
@@ -133,20 +128,18 @@ class MaintenanceController extends Controller
                 }
             }
     
-            // Store the images' paths in the database
             $data['image'] = json_encode($imagePaths); // Store the image paths as JSON
     
-            // Create a new maintenance record
             Maintenance::create($data);
     
             return response()->json([
                 'status' => true,
-                'message' => 'Maintenance record added successfully.',
+                'message' => `$title record added successfully.`,
             ], 201);
         } catch (Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => 'Failed to add maintenance record: ' . $e->getMessage(),
+                'message' => `Failed to add $title record: ` . $e->getMessage(),
             ], 500);
         }
     }

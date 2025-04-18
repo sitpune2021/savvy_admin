@@ -248,7 +248,7 @@ handleFormSubmit(
 		// 	window.location.href = '/customer/' + response.customer_id + '/assign-route';
 		// }
 		// else {
-			window.location.href = window.Laravel.routeIndex;
+		window.location.href = window.Laravel.routeIndex;
 		// }
 	},
 	function (xhr) { // error callback
@@ -415,7 +415,7 @@ $(document).ready(function () {
 	}
 
 	$('#add-address').on('click', function () {
-		const block = generateAddressBlock(addressIndex++, true);
+		const block = generateAddressBlock(addressIndex++,{}, true);
 		$('#shipping_address_div').append(block);
 	});
 
@@ -426,7 +426,7 @@ $(document).ready(function () {
 	});
 
 	$('#add-address-edit').on('click', function () {
-		const block = generateAddressBlock(addressIndex++, false);
+		const block = generateAddressBlock(addressIndex++,{}, true);
 		$('#address-container').append(block);
 		manageButtonBlock();
 	});
@@ -436,7 +436,7 @@ $(document).ready(function () {
 		$('#add-address-edit').hide();
 		$('.address-block').remove();
 		const data = $(this).data('address');
-		const block = generateAddressBlock(addressIndex++, data);
+		const block = generateAddressBlock(addressIndex++, data, true);
 		$('#address-container').append(block);
 		manageButtonBlock();
 	});
@@ -540,31 +540,65 @@ $(document).ready(function () {
 	function updateRoutes(plantId, index = null) {
 		const routes = window.routeData || [];
 		updateDrivers('', '', index);
-
 		const filteredRoutes = routes.filter(route => route.plant_id == plantId);
 		const $routeSelect = $(buildSelector('route_id', index));
 		$routeSelect.find('option:not(:first)').remove();
 
 		filteredRoutes.forEach(route => {
-			const locations = route.path.replace(/\|/g, ',').split(',').map(loc => loc.trim());
-			locations.forEach(location => {
+			if (window.locationData) {
+				const locations = route.path.replace(/\|/g, ',').split(',').map(loc => loc.trim());
+				locations.forEach(location => {
+					const isSelected = window.selectedRouteId == route.id && window.selectedRoutePath == location;
+					const selectedAttr = isSelected ? 'selected' : '';
+					$routeSelect.append(
+						`<option value="${route.id}" data-route-id="${route.id}" data-location="${location}" ${selectedAttr}>${route.name} - ${location}</option>`
+					);
+				});
+			} else {
+				const isSelected = window.selectedRouteId == route.id;
+				const selectedAttr = isSelected ? 'selected' : '';
 				$routeSelect.append(
-					`<option value="${route.id}" data-route-id="${route.id}" data-location="${location}">${route.name} - ${location}</option>`
+					`<option value="${route.id}" data-route-id="${route.id}" data-location="${route.path}" ${selectedAttr}>${route.name} - ${route.path}</option>`
 				);
-			});
+			}
 		});
-
 		const $plant = $(buildSelector('plant_id', index));
-		if ($plant.val() && $routeSelect.find('option').length > 1) {
+		if (!window.selectedRouteId && $plant.val() && $routeSelect.find('option').length > 1) {
 			const firstVal = $routeSelect.find('option:first').val();
 			$routeSelect.val(firstVal);
 			updateDrivers(firstVal, '', index);
+		} else if (window.selectedRouteId) {
+			const selectedOption = $routeSelect.find(`option:selected`);
+			const routePath = selectedOption.data('location') || '';
+			updateDrivers(window.selectedRouteId, routePath, index);
+			const $routePathInput = $(buildSelector('route_path', index));
+			if ($routePathInput.length) {
+				$routePathInput.val(routePath);
+			}
 		}
 	}
 
 	function updateDrivers(routeId, routePath, index = null) {
 		const drivers = window.driverData || [];
-		const filteredDrivers = drivers.filter(driver => driver.route_id == routeId && driver.route_path == routePath);
+		let filteredDrivers = [];
+
+		if (window.locationData) {
+			filteredDrivers = drivers.filter(driver => {
+				const pathSegments = driver.route_path
+					?.toLowerCase()
+					.split(/[\|,]/) // Split by '|' or ',' or both
+					.map(segment => segment.trim()); // Trim extra spaces
+
+				return (
+					driver.route_id == routeId &&
+					pathSegments?.includes(routePath.toLowerCase())
+				);
+			});
+		} else {
+			filteredDrivers = drivers.filter(driver => driver.route_id == routeId);
+		}
+
+
 		const $driverSelect = $(buildSelector('driver_id', index));
 		$driverSelect.find('option:not(:first)').remove();
 
