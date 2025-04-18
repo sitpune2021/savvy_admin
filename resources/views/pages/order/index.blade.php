@@ -82,6 +82,7 @@
                                 <tr>
                                     <th>#</th>
                                     <th>Customer</th>
+                                    <th>shipping Address</th>
                                     <th>Driver</th>
                                     <th>Develivered Quantity</th>
                                     {{-- <th>Return Quantity </th> --}}
@@ -95,6 +96,7 @@
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $order->customers->name }}</td>
+                                        <td>{{ $order->shipping->shipping_address }}</td>
                                         <td>{{ $order?->drivers?->name }}</td>
                                         <td>{{ $order->develivered_qty }}</td>
                                         {{-- <td>{{ $order->return_qty }}</td> --}}
