@@ -252,115 +252,107 @@
                                         </select>
                                     </div>
                                 </div>
+
+                                <div class="col-lg-4 col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Product</label>
+                                        <select class="select js-example-basic-single" name="contract[0][product_id]"
+                                            @if ($show) disabled @endif>
+                                            <option value="">Select Product</option>
+                                            @foreach ($products as $product)
+                                                <option value="{{ $product->id }}"
+                                                    {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->product_id == $product->id ? 'selected' : '' }}>
+                                                    {{ $product->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+        
+                                <div class="col-lg-4 col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Quantity</label>
+                                        <input name="contract[0][quantity]" type="number" class="form-control" placeholder="Enter Quantity"
+                                            value="{{ old('quantity', $Customer->contracts[0]->quantity ?? 1) }}"
+                                            @if ($show) disabled @endif>
+                                    </div>
+                                </div>
+        
+                                <div class="col-lg-4 col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Price {{ '/-' }}</label>
+                                        <input name="contract[0][price]" type="number" class="form-control" placeholder="Enter Price"
+                                            value="{{ old('price', $Customer->contracts[0]->price ?? 1) }}"
+                                            @if ($show) disabled @endif>
+                                    </div>
+                                </div>
+        
+                                <div class="col-lg-4 col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Delivery Frequency</label>
+                                        <select class="select js-example-basic-single" name="contract[0][frequency]" id="frequency">
+                                            @foreach (['daily', 'alternate_day', 'weekly', 'twice_per_week', 'random'] as $freq)
+                                                <option value="{{ $freq }}"
+                                                    {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->frequency == $freq ? 'selected' : '' }}>
+                                                    {{ ucwords(str_replace('_', ' ', $freq)) }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+        
+                                <div class="col-lg-4 col-md-6 col-sm-12" id="frequency_count">
+                                    <div class="input-block mb-3">
+                                        <label>Frequency Count</label>
+                                        <input name="contract[0][frequency_count]" type="number" class="form-control"
+                                            value="1">
+                                    </div>
+                                </div>
+        
+                                <div class="col-lg-4 col-md-6 col-sm-12" id="days_select">
+                                    <div class="input-block mb-3">
+                                        <label>Delivery Day</label>
+                                        <select class="select js-example-basic-single" name="contract[0][days][]"
+                                                @if ($show) disabled @endif multiple>
+                                            @foreach (['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as $day)
+                                                <option value="{{ $day }}" {{ in_array($day, $selectedDays) ? 'selected' : '' }}>
+                                                    {{ ucfirst($day) }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+        
+                                <div class="col-lg-6 col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Duration</label>
+                                        <input name="contract[0][duration]" type="number" class="form-control" placeholder="Enter Duration"
+                                            value="{{ old('duration', $Customer->contracts[0]->duration ?? 1) }}"
+                                            @if ($show) disabled @endif>
+                                    </div>
+                                </div>
+        
+                                <div class="col-lg-6 col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Duration Type</label>
+                                        <select class="select js-example-basic-single" name="contract[0][duration_type]"
+                                            @if ($show) disabled @endif>
+                                            @foreach (['years', 'months', 'weeks', 'days'] as $type)
+                                                <option value="{{ $type }}"
+                                                    {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->duration_type == $type ? 'selected' : '' }}>
+                                                    {{ ucfirst($type) }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 @endif
 
                 <div class="form-group-item card mb-2">
-                    <div class="card-header">
-                        <h5 class="form-title">Contract Details</h5>
-                    </div>
-                    <div class="row align-item-center  card-body">
-                        <div class="col-lg-4 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Product</label>
-                                <select class="select js-example-basic-single" name="product_id"
-                                    @if ($show) disabled @endif>
-                                    <option value="">Select Product</option>
-                                    @foreach ($products as $product)
-                                        <option value="{{ $product->id }}"
-                                            {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->product_id == $product->id ? 'selected' : '' }}>
-                                            {{ $product->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-4 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Quantity</label>
-                                <input name="quantity" type="number" class="form-control" placeholder="Enter Quantity"
-                                    value="{{ old('quantity', $Customer->contracts[0]->quantity ?? 1) }}"
-                                    @if ($show) disabled @endif>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-4 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Price {{ '/-' }}</label>
-                                <input name="price" type="number" class="form-control" placeholder="Enter Price"
-                                    value="{{ old('price', $Customer->contracts[0]->price ?? 1) }}"
-                                    @if ($show) disabled @endif>
-                            </div>
-                        </div>
-
-
-                        <div class="col-lg-4 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Delivery Frequency</label>
-                                <select class="select js-example-basic-single" name="frequency" id="frequency"
-                                    @if ($show) disabled @endif>
-                                    @foreach (['daily', 'alternate_day', 'weekly', 'twice_per_week', 'random'] as $freq)
-                                        <option value="{{ $freq }}"
-                                            {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->frequency == $freq ? 'selected' : '' }}>
-                                            {{ ucwords(str_replace('_', ' ', $freq)) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-4 col-md-6 col-sm-12" id="frequencyCountBlock">
-                            <div class="input-block mb-3">
-                                <label>Frequency Count</label>
-                                <input name="frequency_count" type="number" class="form-control"
-                                    value="{{ old('frequency_count', $Customer->contracts[0]->frequency_count ?? 1) }}"
-                                    @if ($show) disabled @endif>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-4 col-md-6 col-sm-12" id="daysBlock">
-                            <div class="input-block mb-3">
-                                <label>Delivery Day</label>
-                                <select class="select js-example-basic-single" name="days[]" id="days"
-                                        @if ($show) disabled @endif multiple>
-                                    @foreach (['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as $day)
-                                        <option value="{{ $day }}" {{ in_array($day, $selectedDays) ? 'selected' : '' }}>
-                                            {{ ucfirst($day) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Duration</label>
-                                <input name="duration" type="number" class="form-control" placeholder="Enter Duration"
-                                    value="{{ old('duration', $Customer->contracts[0]->duration ?? 1) }}"
-                                    @if ($show) disabled @endif>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Duration Type</label>
-                                <select class="select js-example-basic-single" name="duration_type"
-                                    @if ($show) disabled @endif>
-                                    @foreach (['years', 'months', 'weeks', 'days'] as $type)
-                                        <option value="{{ $type }}"
-                                            {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->duration_type == $type ? 'selected' : '' }}>
-                                            {{ ucfirst($type) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="text-end m-3 mt-0">
+                    <div class="text-end m-3">
                         <button type="button" class="btn btn-primary cancel me-2"
                             onclick="window.location='{{ route('customer.index') }}'">Cancel</button>
                         @if (!$show)
@@ -370,8 +362,6 @@
                         @endif
                     </div>
                 </div>
-
-
             </div>
         </div>
     </form>
@@ -413,7 +403,9 @@
                                                     <div class="hstack gap-3 flex-wrap">
                                                         <a href="javascript:void(0);"
                                                             class="link-success fs-15 edit-address"
-                                                            data-address='@json($shippingAddress)'>
+                                                            data-address='@json($shippingAddress)'
+                                                            data-contract='@json($shippingAddress->Contract)'
+                                                            >
                                                             <i class="ri-edit-2-line"></i>
                                                         </a>
                                                         <a href="javascript:void(0);"
@@ -450,9 +442,10 @@
     <script>
         window.show = @json($show);
         window.plants = @json($plants);
+        window.products = @json($products);
         window.routeData = @json($routes);
         window.driverData = @json($drivers);
-        window.locationData = true;
+        window.locationData = false;
 
         window.Laravel = {
             routeIndex: "{{ route('customer.index') }}"

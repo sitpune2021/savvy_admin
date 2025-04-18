@@ -14,8 +14,8 @@ use App\Models\Routes;
 
 class Orders extends Model
 {
-    // use HasFactory, SoftDeletes;
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+    // use HasFactory;
 
     protected $fillable = [
         'customer_id',

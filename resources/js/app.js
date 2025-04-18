@@ -8,15 +8,12 @@ select2();// does nothing
 	if ($('.js-example-basic-single').length > 0) {
 		$('.js-example-basic-single').select2();
 	}
-
 })(jQuery);
-
 
 function handleFormSubmit(formId, actionUrl, method = 'POST', subPath = {}, successCallback = null, errorCallback = null) {
 	$(formId).on('submit', function (e) {
 		e.preventDefault();
 
-		// Remove previous error messages
 		$(this).find('.is-invalid').removeClass('is-invalid');
 		$(this).find('.invalid-feedback').remove();
 		$(this).find('.is-valid').removeClass('is-valid');
@@ -31,7 +28,7 @@ function handleFormSubmit(formId, actionUrl, method = 'POST', subPath = {}, succ
 				actionUrl = actionUrl + '/' + Id;
 			}
 			currentMethod = 'POST';
-			formData.append('_method', 'PUT'); // Simulate PUT request for Laravel
+			formData.append('_method', 'PUT');
 			if (subPath?.subPath && !actionUrl.includes(subPath.subPath)) {
 				if (subPath.method?.toUpperCase() === 'PUT') {
 					actionUrl += `/${subPath.subPath}`;
@@ -119,29 +116,22 @@ function showErrorAlert(message) {
         </div>
     `;
 
-	// Insert into DOM
 	document.body.insertAdjacentHTML('beforeend', alertHTML);
 
-	// Get the latest alert
 	const alert = document.querySelectorAll('.alert-dismissible.alert-danger');
 	const thisAlert = alert[alert.length - 1];
 
-	// Trigger slide-in animation
 	requestAnimationFrame(() => {
 		thisAlert.style.transform = 'translateX(0)';
 		thisAlert.style.opacity = '1';
 	});
 
-	// Auto-dismiss after 5 seconds
 	setTimeout(() => {
 		thisAlert.style.transform = 'translateX(100%)';
 		thisAlert.style.opacity = '0';
 		setTimeout(() => thisAlert.remove(), 500); // wait for animation
 	}, 5000);
 }
-
-
-
 
 handleFormSubmit(
 	'#orderForm',
@@ -243,13 +233,8 @@ handleFormSubmit(
 		subPath: 'shipping-address',
 		method: 'Put',
 	},
-	function (response) { // success callback
-		// if (response.customer_id) {
-		// 	window.location.href = '/customer/' + response.customer_id + '/assign-route';
-		// }
-		// else {
+	function (response) {
 		window.location.href = window.Laravel.routeIndex;
-		// }
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -272,9 +257,6 @@ $('.js-example-basic-single').on('select2:open', function () {
 $(document).ready(function () {
 	let addressIndex = 1;
 
-	// ========== Utility Functions ==========
-
-
 	function manageButtonBlock() {
 		$('.address-buttons').remove();
 		const total = $('.address-block').length;
@@ -293,10 +275,15 @@ $(document).ready(function () {
 	}
 
 	function generateAddressBlock(index, data = {}, isEdit = false) {
+		const routes = window.routeData || [];
+		const drivers = window.driverData || [];
+		const filteredRoutes = routes.filter(route => route.plant_id == data?.address?.plant_id);
+		const filteredDrivers = drivers.filter(driver => driver.route_id == data?.address?.route_id);
+
 		const deployedSelect = $(`
 			<select class="select js-example-basic-single form-control" name="shipping[${index}][machine_deployed]">
-				<option value="Yes" ${data.machine_deployed === 'Yes' ? 'selected' : ''}>Yes</option>
-				<option value="No" ${data.machine_deployed === 'No' ? 'selected' : ''}>No</option>
+				<option value="Yes" ${data?.address?.machine_deployed === 'Yes' ? 'selected' : ''}>Yes</option>
+				<option value="No" ${data?.address?.machine_deployed === 'No' ? 'selected' : ''}>No</option>
 			</select>
 		`);
 
@@ -304,7 +291,7 @@ $(document).ready(function () {
 			<select class="select js-example-basic-single form-control" name="shipping[${index}][plant_id]" id="plant_id_${index}" ${window.show ? 'disabled' : ''}>
 				<option value="">Select Plant</option>
 				${window.plants.map(plant => `
-					<option value="${plant.id}" ${data.plant_id === plant.id ? 'selected' : ''}>${plant.name}</option>
+					<option value="${plant.id}" ${data?.address?.plant_id === plant.id ? 'selected' : ''}>${plant.name}</option>
 				`).join('')}
 			</select>
 		`);
@@ -312,56 +299,117 @@ $(document).ready(function () {
 		const routeSelect = $(`
 			<select name="shipping[${index}][route_id]" class="select js-example-basic-single form-control" id="route_id_${index}" ${window.show ? 'disabled' : ''}>
 				<option value="">Select Route</option>
+				${filteredRoutes.map(route => {
+			const isSelected = route.id == data?.address?.route_id;
+			return `<option value="${route.id}" data-route-id="${route.id}" data-location="${route.path}" ${isSelected ? 'selected' : ''}>${route.name} - ${route.path}</option>`;
+		}).join('')
+			}
 			</select>
 		`);
 
 		const driverSelect = $(`
 			<select name="shipping[${index}][driver_id]" class="select js-example-basic-single form-control" id="driver_id_${index}" ${window.show ? 'disabled' : ''}>
 				<option value="">Select Driver</option>
+				${filteredDrivers.map(driver => {
+			const isSelected = driver.id == data?.address?.driver_id;
+			return `<option value="${driver.id}" ${isSelected ? 'selected' : ''} data-driver-id="${driver.id}" >${driver.name}</option>`;
+		}).join('')
+			}
 			</select>
 		`);
+		// ${data?.address?.contracts.product_id === product.id ? 'selected' : ''}
+		const productSelect = $(`
+            <select class="select js-example-basic-single" name="contract[${index}][product_id]"${window.show ? 'disabled' : ''}>
+                <option value="">Select Product</option>
+				${window.products.map(product => `
+					<option value="${product.id}" ${data?.contract?.product_id === product.id ? 'selected' : ''} >${product.name}</option>
+				`).join('')}
+            </select>
+		`)
+
+		const formatFrequency = (str) => {
+			return str
+				.replace(/_/g, ' ') // Replace underscores with spaces
+				.replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word
+		};
+
+		const frequencies = ['daily', 'alternate_day', 'weekly', 'twice_per_week', 'random'];
+		const frequencieDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+		const durationType = ['years', 'months', 'weeks', 'days'];
+
+		const frequencySelect = $(`
+			<select class="select js-example-basic-single" name="contract[${index}][frequency]" id="frequency_${index}">
+				${frequencies.map(freq => `
+					<option value="${freq}" ${data?.contract?.frequency === freq ? 'selected' : ''} >${formatFrequency(freq)}</option>
+				`).join('')}
+			</select>
+		`);
+
+		const selectedDays = data?.contract?.days ? data?.contract?.days.split('|') : [];
+
+		const frequencyDaysSelect = $(`
+			<select class="select js-example-basic-single" name="contract[${index}][days][]" multiple>
+				${frequencieDays.map(fday => `
+					<option value="${fday}" ${selectedDays.includes(fday) ? 'selected' : ''}>${fday.toUpperCase()}</option>
+				`).join('')}
+			</select>
+		`);
+
+
+		const durationTypeSelect = $(`
+			<select class="select js-example-basic-single" name="contract[${index}][duration_type]">
+				${durationType.map(dtyp => `
+					<option value="${dtyp}" ${data?.contract?.duration_type === dtyp ? 'selected' : ''}>${dtyp.toUpperCase()}</option>
+				`).join('')}
+			</select>
+		`);
+
+
+
+
 
 		const block = $(`
 			<div class="form-group-item card address-block">
 				<div class="card-header d-flex justify-content-between align-items-center add-remove">
-					<h5 class="form-title">${isEdit ? (data.id ? 'Edit' : 'Create') : ''} Shipping Address</h5>
+					<h5 class="form-title">${isEdit ? (data?.address?.id ? 'Edit' : 'Create') : ''} Shipping Address</h5>
 					<button type="button" class="btn btn-sm btn-danger ${isEdit ? 'remove-address-edit' : 'remove-address'}">Remove</button>
 				</div>
 				<div class="row align-item-center card-body">
-					<input type="hidden" name="shipping[${index}][id]" value="${data.id || ''}">
+					<input type="hidden" name="shipping[${index}][id]" value="${data?.address?.id || ''}">
+					<input type="hidden" name="contract[${index}][id]" value="${data?.contract?.id || ''}">
 					<div class="col-sm-12">
 						<div class="input-block mb-3">
 							<label>Address</label>
 							<input name="shipping[${index}][shipping_address]" type="text" class="form-control"
-								placeholder="Enter Shipping Address" value="${data.shipping_address || ''}">
+								placeholder="Enter Shipping Address" value="${data?.address?.shipping_address || ''}">
 						</div>
 					</div>
 					<div class="col-lg-3 col-md-6 col-sm-12">
 						<div class="input-block mb-3">
 							<label>Country</label>
 							<input name="shipping[${index}][shipping_country]" type="text" class="form-control"
-								placeholder="Enter Shipping Country" value="${data.shipping_country || ''}">
+								placeholder="Enter Shipping Country" value="${data?.address?.shipping_country || ''}">
 						</div>
 					</div>
 					<div class="col-lg-3 col-md-6 col-sm-12">
 						<div class="input-block mb-3">
 							<label>State</label>
 							<input name="shipping[${index}][shipping_state]" type="text" class="form-control"
-								placeholder="Enter Shipping State" value="${data.shipping_state || ''}">
+								placeholder="Enter Shipping State" value="${data?.address?.shipping_state || ''}">
 						</div>
 					</div>
 					<div class="col-lg-3 col-md-6 col-sm-12">
 						<div class="input-block mb-3">
 							<label>City</label>
 							<input name="shipping[${index}][shipping_city]" type="text" class="form-control"
-								placeholder="Enter Shipping City" value="${data.shipping_city || ''}">
+								placeholder="Enter Shipping City" value="${data?.address?.shipping_city || ''}">
 						</div>
 					</div>
 					<div class="col-lg-3 col-md-6 col-sm-12">
 						<div class="input-block mb-3">
 							<label>Pin Code</label>
 							<input name="shipping[${index}][shipping_pincode]" type="number" class="form-control"
-								placeholder="Enter Shipping Pin Code" value="${data.shipping_pincode || ''}">
+								placeholder="Enter Shipping Pin Code" value="${data?.address?.shipping_pincode || ''}">
 						</div>
 					</div>
 					<div class="col-lg-4 col-md-6 col-sm-12" id="plant_select">
@@ -383,14 +431,14 @@ $(document).ready(function () {
 						<div class="input-block mb-3">
 							<label>Name</label>
 							<input name="shipping[${index}][contact_person]" type="text" class="form-control"
-								placeholder="Enter Name" value="${data.contact_person || ''}">
+								placeholder="Enter Name" value="${data?.address?.contact_person || ''}">
 						</div>
 					</div>
 					<div class="col-md-4 col-sm-12">
 						<div class="input-block mb-3">
 							<label>Mobile No</label>
 							<input name="shipping[${index}][contact_person_phone]" type="text" class="form-control"
-								placeholder="Enter Mobile No" value="${data.contact_person_phone || ''}">
+								placeholder="Enter Mobile No" value="${data?.address?.contact_person_phone || ''}">
 						</div>
 					</div>
 					<div class="col-md-4 col-sm-12" id="machine_select">
@@ -398,24 +446,83 @@ $(document).ready(function () {
 							<label>Deployed</label>
 						</div>
 					</div>
+					<div class="col-lg-4 col-md-6 col-sm-12" id="product_select">
+                        <div class="input-block mb-3 product-container">
+                            <label>Product</label>
+                        </div>
+                    </div>
+					<div class="col-lg-4 col-md-6 col-sm-12">
+						<div class="input-block mb-3">
+							<label>Quantity</label>
+							<input name="contract[${index}][quantity]" type="number" class="form-control" placeholder="Enter Quantity" value="${data?.contract?.quantity || '1'}">
+						</div>
+					</div>
+					
+					<div class="col-lg-4 col-md-6 col-sm-12">
+						<div class="input-block mb-3">
+							<label>Price /-</label>
+							<input name="contract[${index}][price]" type="number" class="form-control" placeholder="Enter Price"
+								value="${data?.contract?.price || '1'}">
+						</div>
+					</div>
+
+					<div class="col-lg-4 col-md-6 col-sm-12" id="frequency_select">
+						<div class="input-block mb-3 frequency-container">
+							<label>Delivery Frequency</label>
+						</div>
+					</div>
+
+					<div class="col-lg-4 col-md-6 col-sm-12" id="frequency_count_${index}">
+						<div class="input-block mb-3">
+							<label>Frequency Count</label>
+							<input name="contract[${index}][frequency_count]" type="number" class="form-control" value="${data?.contract?.frequency_count || '1'}">
+						</div>
+					</div>
+
+					<div class="col-lg-4 col-md-6 col-sm-12" id="days_select_${index}">
+						<div class="input-block mb-3 days-container">
+							<label>Delivery Day</label>
+						</div>
+					</div>
+
+					<div class="col-lg-6 col-md-6 col-sm-12">
+						<div class="input-block mb-3">
+							<label>Duration</label>
+							<input name="contract[${index}][duration]" type="number" class="form-control" placeholder="Enter Duration"
+								value="${data?.contract?.duration || '1'}">
+						</div>
+					</div>
+
+					<div class="col-lg-6 col-md-6 col-sm-12" id="duration_type_select">
+						<div class="input-block mb-3 duration-type-container">
+							<label>Duration Type</label>
+						</div>
+					</div>
+
 				</div>
 			</div>
 		`);
 
-		// Append selects to their containers
 		block.find('.deployed-container').append(deployedSelect);
 		block.find('.plant-container').append(plantSelect);
 		block.find('.route-container').append(routeSelect);
 		block.find('.driver-container').append(driverSelect);
-
-		// Initialize Select2
+		block.find('.product-container').append(productSelect);
+		block.find('.frequency-container').append(frequencySelect);
+		block.find('.days-container').append(frequencyDaysSelect);
+		block.find('.duration-type-container').append(durationTypeSelect);
 		block.find('select.select').select2();
+		if (frequencySelect.val() === 'weekly') {
+			block.find(`#days_select_${index}`).show();
+		} else {
+			block.find(`#days_select_${index}`).hide();
+		}
 
 		return block;
 	}
 
 	$('#add-address').on('click', function () {
-		const block = generateAddressBlock(addressIndex++,{}, true);
+		const block = generateAddressBlock(addressIndex++, {}, false);
 		$('#shipping_address_div').append(block);
 	});
 
@@ -426,29 +533,29 @@ $(document).ready(function () {
 	});
 
 	$('#add-address-edit').on('click', function () {
-		const block = generateAddressBlock(addressIndex++,{}, true);
+		const block = generateAddressBlock(addressIndex++, {}, true);
 		$('#address-container').append(block);
 		manageButtonBlock();
 	});
 
-	// Edit existing address
 	$('.edit-address').on('click', function () {
 		$('#add-address-edit').hide();
 		$('.address-block').remove();
-		const data = $(this).data('address');
+		const data = {
+			address: $(this).data('address'),
+			contract: $(this).data('contract')
+		};
 		const block = generateAddressBlock(addressIndex++, data, true);
 		$('#address-container').append(block);
 		manageButtonBlock();
 	});
 
-	// Remove editable block
 	$(document).on('click', '.remove-address-edit', function () {
 		$('#add-address-edit').show();
 		$(this).closest('.address-block').remove();
 		manageButtonBlock();
 	});
 
-	// Cancel all edits
 	$(document).on('click', '.cancel-all', function () {
 		$('#add-address-edit').show();
 		$('#address-container').empty();
@@ -497,7 +604,6 @@ $(document).ready(function () {
 		});
 	}
 
-	// On customer change
 	$('#customer-select').on('change', function () {
 		const selected = $(this).find(':selected');
 		const contracts = selected.data('contracts') || [];
@@ -514,20 +620,17 @@ $(document).ready(function () {
 		}
 	});
 
-	// On contract change
 	$('#contract-select').on('change', function () {
 		const qty = $(this).find(':selected').data('qty') || '';
 		$('#delivered-qty').val(qty);
 	});
 
-	// Trigger on load
 	if (selectedCustomerId) {
 		$('#customer-select').val(selectedCustomerId).trigger('change');
 	}
 });
 
 $(document).ready(function () {
-
 	function getIndexFromId(id, base) {
 		const match = id.match(new RegExp(`^${base}_(\\d+)$`));
 		return match ? match[1] : null;
@@ -612,13 +715,11 @@ $(document).ready(function () {
 		}
 	}
 
-	// Static initialization for first/default plant
 	const initialPlantId = $('#plant_id').val();
 	if (initialPlantId) {
 		updateRoutes(initialPlantId, null);
 	}
 
-	// Delegated change event for ALL plant_id (static and dynamic)
 	$(document).on('change', '[id^=plant_id]', function () {
 		const id = $(this).attr('id');
 		const index = getIndexFromId(id, 'plant_id');
@@ -647,51 +748,71 @@ $(document).ready(function () {
 
 
 $(document).ready(function () {
-	// Toggle the days block based on the frequency
-	function toggleDaysBlock() {
-		var frequency = $('#frequency').val();
-		if (frequency === 'weekly') {
-			$('#daysBlock').show();
-		} else {
-			$('#daysBlock').hide();
+	function getSuffixFromId(id) {
+		// If ID is like "frequency" return "", if "frequency_1" return "_1"
+		const match = id.match(/^frequency(?:_(\d+))?$/);
+		return match && match[1] !== undefined ? '_' + match[1] : '';
+	}
+
+	function toggleDaysBlock($frequencySelect) {
+		const frequency = $frequencySelect.val();
+		const suffix = getSuffixFromId($frequencySelect.attr('id'));
+		const $daysBlock = $('#days_select' + suffix);
+		console.log($daysBlock);
+
+
+		if ($daysBlock.length) {
+			if (frequency === 'weekly') {
+				$daysBlock.show();
+			} else {
+				$daysBlock.hide();
+			}
 		}
 	}
 
-	// Update the placeholder for Frequency Count based on the frequency
-	function updateFrequencyCountPlaceholder() {
-		var frequency = $('#frequency').val();
-		var $frequencyCountInput = $('#frequencyCountBlock input');
-		switch (frequency) {
-			case 'daily':
-				$frequencyCountInput.attr('placeholder', 'How many days per week?');
-				break;
-			case 'alternate_day':
-				$frequencyCountInput.attr('placeholder', 'Every other day');
-				break;
-			case 'weekly':
-				$frequencyCountInput.attr('placeholder', 'How many deliveries per week?');
-				break;
-			case 'twice_per_week':
-				$frequencyCountInput.attr('placeholder', 'Twice a week');
-				break;
-			case 'random':
-				$frequencyCountInput.attr('placeholder', 'Random frequency count');
-				break;
-			default:
-				$frequencyCountInput.attr('placeholder', 'Enter Frequency Count');
+	function updateFrequencyCountPlaceholder($frequencySelect) {
+		const frequency = $frequencySelect.val();
+		const suffix = getSuffixFromId($frequencySelect.attr('id'));
+		const $frequencyCountInput = $('#frequency_count' + suffix + ' input');
+
+		if ($frequencyCountInput.length) {
+			let placeholderText = 'Enter Frequency Count';
+			switch (frequency) {
+				case 'daily':
+					placeholderText = 'How many days per week?';
+					break;
+				case 'alternate_day':
+					placeholderText = 'Every other day';
+					break;
+				case 'weekly':
+					placeholderText = 'How many deliveries per week?';
+					break;
+				case 'twice_per_week':
+					placeholderText = 'Twice a week';
+					break;
+				case 'random':
+					placeholderText = 'Random frequency count';
+					break;
+			}
+			$frequencyCountInput.attr('placeholder', placeholderText);
 		}
 	}
 
-	// Initialize on page load
-	toggleDaysBlock(); // Show/hide days dropdown
-	updateFrequencyCountPlaceholder(); // Update placeholder for frequency count
+	// Initialize existing rows on page load
+	$('[id^="frequency"]').each(function () {
+		toggleDaysBlock($(this));
+		updateFrequencyCountPlaceholder($(this));
+	});
 
-	// When the frequency changes, adjust the form
-	$('#frequency').change(function () {
-		toggleDaysBlock();
-		updateFrequencyCountPlaceholder();
+	// Handle changes on all frequency selects (also supports dynamic rows)
+	$(document).on('change', '[id^="frequency"]', function () {
+		toggleDaysBlock($(this));
+		updateFrequencyCountPlaceholder($(this));
 	});
 });
+
+
+
 
 
 

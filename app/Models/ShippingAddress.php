@@ -9,10 +9,11 @@ use App\Models\Customers;
 
 class ShippingAddress extends Model
 {
-    // use HasFactory, softDeletes;
-    use HasFactory;
+    use HasFactory, softDeletes;
+    // use HasFactory;
     protected $fillable = [
         'customer_id',
+        'contract_id',
         'plant_id',
         'route_id',
         'driver_id',
@@ -32,7 +33,12 @@ class ShippingAddress extends Model
         return $this->hasMany(Customers::class, 'customer_id');
     }
 
-    // protected $dates = ['deleted_at'];
+    public function Contract()
+    {
+        return $this->belongsTo(Contracts::class, 'contract_id');
+    }
+
+    protected $dates = ['deleted_at'];
 
 
 }
