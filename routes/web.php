@@ -60,14 +60,10 @@ Route::get('/storage-link', function () {
     return "All seeders have been run successfully! Output: " . nl2br($output);
 });
 
-// Route::get('/create-controller', function () {
-//     $exitCode = Artisan::call('make:controller DriverController --resource');
-
-//     $output = Artisan::output();
-    
-//     return "Controller has been created successfully! Output: <pre>" . nl2br(e($output)) . "</pre>";
-// });
-
+Route::get('/schedule', function () {
+    Artisan::call('schedule:run');
+    return "schedule run!";
+});
 
 Route::get('/fix-assets', function () {
     Artisan::call('config:clear');
