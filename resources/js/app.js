@@ -592,8 +592,6 @@ $(document).ready(function () {
 	}
 
 	function populateShippings(shippings, selectedId = null) {
-		$('#shipping-select').html('<option value="">Choose Shipping</option>');
-
 		shippings.forEach(shipping => {
 			const isSelected = shipping.id == selectedId ? 'selected' : '';
 			$('#shipping-select').append(`

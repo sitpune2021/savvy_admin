@@ -79,43 +79,16 @@
                                         </ul>
                                     </div>
                                 </div>
-                                <div class=" col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label for="contract_id">Select Contract</label>
-                                        <select id="contract-select" class="select js-example-basic-single"
-                                            name="contract_id" @if ($show) disabled @endif>
-                                            <option value="">Choose Contract</option>
-                                        </select>
-                                        </ul>
-                                    </div>
-                                </div>
-
 
                                 <div class="col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label for="shipping_id">Select shipping</label>
                                         <select id="shipping-select" class="select js-example-basic-single"
                                             name="shipping_id[]" @if ($show) disabled @endif multiple>
-                                            <option value="">Choose Shipping</option>
                                         </select>
                                     </div>
                                 </div>
 
-                                {{-- <div class="col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label for="route_id">Select Route</label>
-                                        <select class="select js-example-basic-single"
-                                            name="route_id"@if ($show) disabled @endif>
-                                            <option>Choose Route</option>
-                                            @foreach ($routes as $route)
-                                                <option value="{{ $route->id }}"
-                                                    @if (isset($Order) && $Order->route_id == $route->id) selected @endif>
-                                                    {{ $route->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div> --}}
                                 <div class="col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Delivered Quantity</label>

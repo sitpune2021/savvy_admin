@@ -47,7 +47,6 @@ class OrderController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'customer_id' => 'required|exists:customers,id',
-            'contract_id' => 'nullable|exists:contracts,id',
             'shipping_id' => 'required|array',
             'shipping_id.*' => 'exists:shipping_addresses,id',
             'develivered_qty' => 'nullable|integer|min:0',
@@ -62,12 +61,12 @@ class OrderController extends Controller
             $shipping = ShippingAddress::where('id', $shippingId)->first();
                 Orders::create([
                     'customer_id' => $request->customer_id,
-                    'contract_id' => $request->contract_id,
+                    'contract_id' => $shipping?->contract_id,
                     'shipping_id' => $shippingId,
                     'route_id' => $shipping?->route_id,
                     'driver_id' => $shipping?->driver_id,
                     'develivered_qty' => $request->develivered_qty,
-                    'return_qty' => $request->return_qty,
+                    'return_qty' => 0,
                     'status' => 'pending',
                 ]);
             }
