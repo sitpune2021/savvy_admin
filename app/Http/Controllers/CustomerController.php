@@ -15,6 +15,8 @@ use App\Models\Routes;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use Illuminate\Support\Arr;
+use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class CustomerController extends Controller
 {
@@ -188,17 +190,21 @@ class CustomerController extends Controller
                 $shippingData['customer_id'] = $customer->id;
                 $shippingData['contract_id'] = $contract->id;
                 $shipping = ShippingAddress::create($shippingData);
-                $order = Orders::create([
-                    'customer_id' => $customer->id,
-                    'contract_id' => $contract->id,
-                    'driver_id' => $shipping->driver_id,
-                    'shipping_id' => $shipping->id,
-                    'route_id' => $shipping->route_id,
-                    'status' => 'pending',
-                    'develivered_qty' => $contract->quantity, // corrected spelling
-                    'return_qty' => 0,
-                ]);
-                $orders[] = $order;
+                $todayDay = strtolower(Carbon::now()->format('l')); // e.g. 'monday'
+                $contractDays = explode('|', strtolower($contract->days ?? ''));
+                if (in_array($todayDay, $contractDays)) {
+                    $order = Orders::create([
+                        'customer_id'    => $customer->id,
+                        'contract_id'    => $contract->id,
+                        'driver_id'      => $address->driver_id,
+                        'shipping_id'    => $address->id,
+                        'route_id'       => $address->route_id,
+                        'status'         => 'pending',
+                        'develivered_qty'  => $contract->quantity, // ✅ corrected spelling
+                        'return_qty'     => 0,
+                    ]);
+                    $orders[] = $order;
+                }
             }
             DB::commit();
             return response()->json([
@@ -404,13 +410,15 @@ class CustomerController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        DB::beginTransaction();
         try {
+            DB::beginTransaction(); // Make sure the transaction is started
+        
             $customer = Customers::findOrFail($id);
             $orders = [];
+        
             foreach ($request->shipping as $key => $shippingData) {
                 $contractData = $request->contract[$key] ?? [];
-
+        
                 // 1. Handle Contract
                 if (!empty($contractData['id'])) {
                     $contract = Contracts::findOrFail($contractData['id']);
@@ -422,9 +430,9 @@ class CustomerController extends Controller
                         'duration_type'   => $contractData['duration_type'],
                         'frequency'       => $contractData['frequency'],
                         'frequency_count' => $contractData['frequency_count'],
-                        'days'            => is_array($contractData['days'] ?? null) 
-                                                ? implode('|', $contractData['days']) 
-                                                : null,
+                        'days'            => is_array($contractData['days'] ?? null)
+                            ? implode('|', $contractData['days'])
+                            : null,
                     ]);
                 } else {
                     $contract = Contracts::create([
@@ -437,44 +445,68 @@ class CustomerController extends Controller
                         'frequency'       => $contractData['frequency'],
                         'frequency_count' => $contractData['frequency_count'],
                         'days'            => is_array($contractData['days'] ?? null)
-                                                ? implode('|', $contractData['days'])
-                                                : null,
+                            ? implode('|', $contractData['days'])
+                            : null,
                         'status' => 'active',
                     ]);
                 }
-
+        
                 // 2. Handle Shipping Address
                 $shippingData['customer_id'] = $customer->id;
                 $shippingData['contract_id'] = $contract->id;
-
+        
                 if (!empty($shippingData['id'])) {
                     $address = ShippingAddress::findOrFail($shippingData['id']);
                     $address->update($shippingData);
                 } else {
                     $address = ShippingAddress::create($shippingData);
                 }
-
-                $order = Orders::create([
-                    'customer_id'      => $customer->id,
-                    'contract_id'      => $contract->id,
-                    'driver_id'        => $address->driver_id,
-                    'shipping_id'      => $address->id,
-                    'route_id'         => $address->route_id,
-                    'status'           => 'pending',
-                    'develivered_qty'  => $contract->quantity, // fixed typo
-                    'return_qty'       => 0,
-                ]);
-
-                $orders[] = $order;
+        
+                // 3. Generate Order if needed
+                $todayDay = strtolower(Carbon::now()->format('l')); // e.g. 'monday'
+                $contractDays = explode('|', strtolower($contract->days ?? ''));
+        
+                if (in_array($todayDay, $contractDays)) {
+                    $existingOrder = Orders::where('customer_id', $customer->id)
+                        ->where('contract_id', $contract->id)
+                        ->whereDate('created_at', Carbon::today())
+                        ->first();
+        
+                    if ($existingOrder && $existingOrder->status === 'complete') {
+                        continue;
+                    }
+        
+                    if ($existingOrder && $existingOrder->status === 'pending') {
+                        $existingOrder->update([
+                            'develivered_qty' => $contract->quantity, // ✅ corrected spelling
+                            'driver_id'     => $address->driver_id,
+                            'route_id'      => $address->route_id,
+                        ]);
+                        $orders[] = $existingOrder;
+                    } else {
+                        $order = Orders::create([
+                            'customer_id'    => $customer->id,
+                            'contract_id'    => $contract->id,
+                            'driver_id'      => $address->driver_id,
+                            'shipping_id'    => $address->id,
+                            'route_id'       => $address->route_id,
+                            'status'         => 'pending',
+                            'develivered_qty'  => $contract->quantity, // ✅ corrected spelling
+                            'return_qty'     => 0,
+                        ]);
+                        $orders[] = $order;
+                    }
+                }
             }
-
-    
+        
             DB::commit();
+        
             return response()->json([
                 'message' => 'Shipping addresses updated successfully!',
-                'orders_created' => $orders,
             ]);
-        } catch (\Exception $e) {
+        
+        }
+         catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'error' => 'Something went wrong.',
