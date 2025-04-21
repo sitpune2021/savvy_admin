@@ -465,13 +465,12 @@ class CustomerController extends Controller
                 // 3. Generate Order if needed
                 $todayDay = strtolower(Carbon::now()->format('l')); // e.g. 'monday'
                 $contractDays = explode('|', strtolower($contract->days ?? ''));
-        
-                if (in_array($todayDay, $contractDays)) {
-                    $existingOrder = Orders::where('customer_id', $customer->id)
+                $existingOrder = Orders::where('customer_id', $customer->id)
                         ->where('contract_id', $contract->id)
+                        ->where('shipping_id', $address->id)
                         ->whereDate('created_at', Carbon::today())
                         ->first();
-        
+                if (in_array($todayDay, $contractDays)) {
                     if ($existingOrder && $existingOrder->status === 'complete') {
                         continue;
                     }
@@ -495,6 +494,11 @@ class CustomerController extends Controller
                             'return_qty'     => 0,
                         ]);
                         $orders[] = $order;
+                    }
+                }
+                else{
+                    if ($existingOrder && $existingOrder->status === 'pending') {
+                        $existingOrder->delete();
                     }
                 }
             }
