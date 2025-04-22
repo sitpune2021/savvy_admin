@@ -75,6 +75,11 @@ Route::get('/fix-assets', function () {
 
 Auth::routes(['register' => false]); 
 
+Route::get('/privicy-policy', function () {
+    return view('privicy-policy');
+})->name('privicy-policy');
+
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::resource('plant', PlantController::class);

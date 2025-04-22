@@ -3,13 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+// use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Customers;
+use App\Models\Contracts;
+use App\Models\Drivers;
+use App\Models\Routes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
-class ShippingAddress extends Model
+class ShippingAddress extends Authenticatable
 {
-    use HasFactory, softDeletes;
+    use HasApiTokens, HasFactory, softDeletes;
     // use HasFactory;
     protected $fillable = [
         'customer_id',
@@ -27,6 +32,8 @@ class ShippingAddress extends Model
         'machine_deployed',
         'machine_deployed_date'
     ];
+    protected $hidden = ['password'];
+
 
     public function Customers()
     {

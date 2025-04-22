@@ -12,7 +12,8 @@ use App\Models\Drivers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-
+use App\Models\ShippingAddress;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -192,7 +193,6 @@ class AuthController extends Controller
         }
     }
 
-
     private function sendWhatsAppOtp($phone_no, $otp)
     {
         try {
@@ -234,6 +234,69 @@ class AuthController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'An error occurred while sending OTP. Please try again later.',
+            ], 500);
+        }
+    }
+
+    public function login(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone_no' => 'required|digits:10',
+            'password' => 'required|string|min:6',
+            'role' => 'required|string|in:customer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // Get all users with this phone number
+            $users = ShippingAddress::where('contact_person_phone', $request->phone_no)->get();
+
+            if ($users->count() === 0) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User not found',
+                ], 404);
+            }
+
+            if ($users->count() > 1) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Multiple users found with the same phone number. Cannot proceed with login.',
+                ], 409); // 409 Conflict
+            }
+
+            $user = $users->first();
+
+            if (!Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid password',
+                ], 401);
+            }
+
+            $token = $user->createToken('customer_token')->plainTextToken;
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Login successful',
+                'data' => [
+                    'customer' => $user,
+                    'token' => $token
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while logging in',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
