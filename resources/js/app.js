@@ -564,32 +564,9 @@ $(document).ready(function () {
 
 
 $(document).ready(function () {
-	const selectedContractId = window.orderData?.contractId || '';
 	const selectedShippingId = window.orderData?.shippingId || '';
 	const selectedCustomerId = window.orderData?.customerId || '';
-
-
-	function populateContracts(contracts, selectedId) {
-		$('#contract-select').html('<option value="">Choose Contract</option>');
-
-		contracts.forEach(contract => {
-			const isSelected = contract.id == selectedId ? 'selected' : '';
-			console.log('contract', contract.id, selectedId);
-
-			const productName = contract.product?.name || 'N/A';
-			$('#contract-select').append(`
-				<option value="${contract.id}" data-qty="${contract.quantity}" ${isSelected}>
-					Name: ${productName} - Quantity: ${contract.quantity} - Price: ${contract.price}
-				</option>
-			`);
-		});
-
-		if (selectedId) {
-			const selectedOption = $('#contract-select option:selected');
-			const qty = selectedOption.data('qty');
-			$('#delivered-qty').val(qty);
-		}
-	}
+	const selectedDeliveryId = window.orderData?.deliveryId || '';
 
 	function populateShippings(shippings, selectedId = null) {
 		shippings.forEach(shipping => {
@@ -604,27 +581,16 @@ $(document).ready(function () {
 
 	$('#customer-select').on('change', function () {
 		const selected = $(this).find(':selected');
-		const contracts = selected.data('contracts') || [];
-
 		const shippings = selected.data('shippings') || [];
-		const contractIdToSelect = $(this).val() == selectedCustomerId ? selectedContractId : null;
 		const shippingIdToSelect = $(this).val() == selectedCustomerId ? selectedShippingId : null;
-
-		populateContracts(contracts, contractIdToSelect);
 		populateShippings(shippings, shippingIdToSelect);
-
-		if (!contractIdToSelect) {
-			$('#delivered-qty').val('');
-		}
-	});
-
-	$('#contract-select').on('change', function () {
-		const qty = $(this).find(':selected').data('qty') || '';
-		$('#delivered-qty').val(qty);
 	});
 
 	if (selectedCustomerId) {
 		$('#customer-select').val(selectedCustomerId).trigger('change');
+	}
+	if(selectedDeliveryId) {
+		$('#delivered_qty').val(selectedDeliveryId);
 	}
 });
 

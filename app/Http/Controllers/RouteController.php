@@ -17,7 +17,7 @@ class RouteController extends Controller
      */
     public function index()
     {
-        $routes = Routes::all();
+        $routes = Routes::orderBy('created_at', 'desc')->get();
         return view('pages.route.index', compact('routes'));
     }
 

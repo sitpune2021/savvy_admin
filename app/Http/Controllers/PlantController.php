@@ -15,7 +15,7 @@ class PlantController extends Controller
      */
     public function index()
     {
-        $Plants = Plant::all();
+        $Plants = Plant::orderBy('created_at', 'desc')->get();
         return view('pages.plant.index', compact('Plants'));
     }
 

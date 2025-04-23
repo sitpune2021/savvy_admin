@@ -116,9 +116,9 @@
     </div>
     <script>
         window.orderData = {
-            contractId: "{{ $Order->contract_id ?? '' }}",
             shippingId: "{{ $Order->shipping_id ?? '' }}",
-            customerId: "{{ $Order->customer_id ?? '' }}"
+            customerId: "{{ $Order->customer_id ?? '' }}",
+            develiveredQty: "{{ $Order->develivered_qty ?? 1 }}",
         };
         window.Laravel = {
             routeIndex: "{{ route('order.index') }}"

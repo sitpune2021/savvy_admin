@@ -22,7 +22,8 @@ class OrderController extends Controller
      */
     public function index()
     {
-        $orders = Orders::with('customers', 'drivers')->get();
+        $orders = Orders::with('customers', 'drivers')->orderBy('created_at', 'desc') // or 'id', depending on your use case
+        ->get();
         return view('pages.order.index', compact('orders'));
         //  border-0 mb-0
     }

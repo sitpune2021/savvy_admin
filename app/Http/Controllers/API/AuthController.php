@@ -255,7 +255,6 @@ class AuthController extends Controller
         }
 
         try {
-            // Get all users with this phone number
             $users = ShippingAddress::where('contact_person_phone', $request->phone_no)->get();
 
             if ($users->count() === 0) {
@@ -296,6 +295,98 @@ class AuthController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'An error occurred while logging in',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function verifyAccount(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone_no' => 'required|digits:10',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $users = ShippingAddress::where('contact_person_phone', $request->phone_no)->get();
+
+            if ($users->count() === 0) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User not found',
+                ], 404);
+            }
+
+            if ($users->count() > 1) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Multiple users found with the same phone number. Cannot proceed with verification.',
+                ], 409);
+            }
+
+            $user = $users->first();
+            return response()->json([
+                'status' => true,
+                'message' => 'customer verified successfully',
+                'data' => [
+                    'customer' => $user,
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while verifying the customer',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+
+    }
+
+    public function resetPassword(Request $request)    
+    {
+        $validator = Validator::make($request->all(), [
+            'phone_no' => 'required|digits:10',
+            'password' => 'required|string|min:6',
+            'role' => 'required|string|in:customer',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $user = ShippingAddress::where('contact_person_phone', $request->phone_no)->first();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User not found',
+                ], 404);
+            }
+
+            $user->password = Hash::make($request->password);
+            $user->save();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Password reset successfully',
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while resetting the password',
                 'error' => $e->getMessage()
             ], 500);
         }

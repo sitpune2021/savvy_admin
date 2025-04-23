@@ -18,7 +18,7 @@ class DriverController extends Controller
      */
     public function index()
     {
-        $drivers = Drivers::all();
+        $drivers = Drivers::orderBy('created_at', 'desc')->get();
         return view('pages.driver.index', compact('drivers'));
     }
 
