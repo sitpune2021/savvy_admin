@@ -49,7 +49,7 @@
                         @endforeach
                     </ol>
                 </div>
-                
+
             </div>
         </div>
     </div>
@@ -59,14 +59,6 @@
             <div class="row g-2">
                 <div class="col-sm-auto ms-auto">
                     <div class="list-grid-nav hstack gap-1">
-                        {{-- <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink1">
-                            <li><a class="dropdown-item" href="#">All</a></li>
-                            <li><a class="dropdown-item" href="#">Last Week</a></li>
-                            <li>
-                                <a class="dropdown-item" href="#">Last Month</a>
-                            </li>
-                            <li><a class="dropdown-item" href="#">Last Year</a></li>
-                        </ul> --}}
                         <a class="btn btn-success" href="{{ route('customer.create') }}">
                             <i class="ri-add-fill me-1 align-bottom"></i> Add
                             Customer
@@ -83,7 +75,7 @@
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="buttons-datatables" class="display table table-bordered" style="width:100%">
-                            <thead >
+                            <thead>
                                 <tr>
                                     <th>#</th>
                                     <th>Name</th>
@@ -99,22 +91,22 @@
                                         <td>{{ $customer->phone_no }}</td>
                                         <td>
                                             <div class="hstack gap-3 flex-wrap">
-                                                <a href="{{ route('customer.edit', $customer->id) }}" class="link-success fs-15"><i class="ri-edit-2-line"></i></a>
-                                                <a href="{{ route('customer.show', $customer->id) }}" class="link-primary fs-15"><i class="ri-eye-line"></i></a>
-                                                <a href="javascript:void(0);" class="link-danger fs-15"><i class="ri-delete-bin-line"></i></a>
-                                            </div>
-                                            {{-- <div class="dropdown">
-                                                <a href="#" role="button" id="dropdownMenuLink1"
-                                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="ri-more-2-fill"></i>
-                                                </a>
+                                                <a href="{{ route('customer.edit', $customer->id) }}"
+                                                    class="link-success fs-15"><i class="ri-edit-2-line"></i></a>
+                                                <a href="{{ route('customer.show', $customer->id) }}"
+                                                    class="link-primary fs-15"><i class="ri-eye-line"></i></a>
+                                                <form action="{{ route('customer.destroy', $customer->id) }}"
+                                                    method="POST" id="delete-form-{{ $customer->id }}"
+                                                    style="display: none;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                </form>
 
-                                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink1">
-                                                    <li><a class="dropdown-item" href="{{ route('customer.show', $customer->id) }}">View</a></li>
-                                                    <li><a class="dropdown-item" href="{{ route('customer.edit', $customer->id) }}">Edit</a></li>
-                                                    <li><a class="dropdown-item" href="#">Delete</a></li>
-                                                </ul>
-                                            </div> --}}
+                                                <a href="javascript:void(0);" class="link-danger fs-15"
+                                                    onclick="if(confirm('Are you sure you want to delete this item?')) { document.getElementById('delete-form-{{ $customer->id }}').submit(); }">
+                                                    <i class="ri-delete-bin-line"></i>
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach

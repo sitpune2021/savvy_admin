@@ -190,20 +190,44 @@ class CustomerController extends Controller
                 $shippingData['customer_id'] = $customer->id;
                 $shippingData['contract_id'] = $contract->id;
                 $shipping = ShippingAddress::create($shippingData);
-                $todayDay = strtolower(Carbon::now()->format('l')); // e.g. 'monday'
-                $contractDays = explode('|', strtolower($contract->days ?? ''));
-                if (in_array($todayDay, $contractDays)) {
+                if($contract->frequency == 'daily'){
                     $order = Orders::create([
                         'customer_id'    => $customer->id,
                         'contract_id'    => $contract->id,
-                        'driver_id'      => $address->driver_id,
-                        'shipping_id'    => $address->id,
-                        'route_id'       => $address->route_id,
+                        'driver_id'      => $shipping->driver_id,
+                        'shipping_id'    => $shipping->id,
+                        'route_id'       => $shipping->route_id,
                         'status'         => 'pending',
                         'develivered_qty'  => $contract->quantity, // ✅ corrected spelling
-                        'return_qty'     => 0,
                     ]);
-                    $orders[] = $order;
+                }
+                if($contract->frequency == 'alternate_day'){
+                    $order = Orders::create([
+                        'customer_id'    => $customer->id,
+                        'contract_id'    => $contract->id,
+                        'driver_id'      => $shipping->driver_id,
+                        'shipping_id'    => $shipping->id,
+                        'route_id'       => $shipping->route_id,
+                        'status'         => 'pending',
+                        'develivered_qty'  => $contract->quantity, // ✅ corrected spelling
+                    ]);
+                }
+                if($contract->frequency == 'weekly'){
+                    $todayDay = strtolower(Carbon::now()->format('l')); // e.g. 'monday'
+                    $contractDays = explode('|', strtolower($contract->days ?? ''));
+                    if (in_array($todayDay, $contractDays)) {
+                        $order = Orders::create([
+                            'customer_id'    => $customer->id,
+                            'contract_id'    => $contract->id,
+                            'driver_id'      => $shipping->driver_id,
+                            'shipping_id'    => $shipping->id,
+                            'route_id'       => $shipping->route_id,
+                            'status'         => 'pending',
+                            'develivered_qty'  => $contract->quantity, // ✅ corrected spelling
+                            'return_qty'     => 0,
+                        ]);
+                        $orders[] = $order;
+                    }
                 }
             }
             DB::commit();
@@ -299,27 +323,35 @@ class CustomerController extends Controller
     public function destroy(string $id)
     {
         try {
-            $customer = Customers::findOrFail($id);
-            $contract = Contracts::where('customer_id', $id)->first();
-            if ($contract) {
-                $contract->delete();
+            $orderspending = Orders::where('customer_id', $id)->where('status', 'pending')->get();
+            foreach ($orderspending as $orderP) {
+                $orderP->forceDelete();  
             }
-            
-            $customer->delete();
-            return response()->json([
-                'message' => 'Customer deleted successfully.',
-            ], 200);
+        
+            $orderscompleted = Orders::where('customer_id', $id)->where('status', 'completed')->get();
+            foreach ($orderscompleted as $orderC) {
+                $orderC->delete(); 
+            }
+        
+            $shippingAddress = ShippingAddress::where('customer_id', $id)->get();
+            foreach ($shippingAddress as $address) {
+                $address->forceDelete();  
+            }
+        
+            $contracts = Contracts::where('customer_id', $id)->get();
+            foreach ($contracts as $contract) {
+                $contract->forceDelete();  
+            }
+        
+            $customer = Customers::findOrFail($id);
+            $customer->forceDelete(); 
+            return back()->with('success', 'Customer deleted successfully.');
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Customer not found.',
-                'message' => $e->getMessage(),
-            ], 404); 
+            return back()->withErrors(['error' => 'Customer not found.']);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'An error occurred while deleting the  Customer.',
-                'message' => $e->getMessage(),
-            ], 500); 
+            return back()->withErrors(['error' => 'An error occurred while fetching the Customer for editing: ' . $e->getMessage()]);
         }
+        
     }
 
     public function storeUpdateShippingAddress(Request $request, $id)

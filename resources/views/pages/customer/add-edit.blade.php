@@ -291,7 +291,7 @@
                                     <div class="input-block mb-3">
                                         <label>Delivery Frequency</label>
                                         <select class="select js-example-basic-single" name="contract[0][frequency]" id="frequency">
-                                            @foreach (['daily', 'alternate_day', 'weekly', 'twice_per_week', 'random'] as $freq)
+                                            @foreach (['daily', 'alternate_day', 'weekly'] as $freq)
                                                 <option value="{{ $freq }}"
                                                     {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->frequency == $freq ? 'selected' : '' }}>
                                                     {{ ucwords(str_replace('_', ' ', $freq)) }}

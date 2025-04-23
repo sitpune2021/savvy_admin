@@ -333,7 +333,7 @@ $(document).ready(function () {
 				.replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word
 		};
 
-		const frequencies = ['daily', 'alternate_day', 'weekly', 'twice_per_week', 'random'];
+		const frequencies = ['daily', 'alternate_day', 'weekly'];
 		const frequencieDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 		const durationType = ['years', 'months', 'weeks', 'days'];
 
@@ -750,12 +750,6 @@ $(document).ready(function () {
 					break;
 				case 'weekly':
 					placeholderText = 'How many deliveries per week?';
-					break;
-				case 'twice_per_week':
-					placeholderText = 'Twice a week';
-					break;
-				case 'random':
-					placeholderText = 'Random frequency count';
 					break;
 			}
 			$frequencyCountInput.attr('placeholder', placeholderText);
