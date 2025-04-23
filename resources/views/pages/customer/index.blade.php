@@ -95,7 +95,7 @@
                                                     class="link-success fs-15"><i class="ri-edit-2-line"></i></a>
                                                 <a href="{{ route('customer.show', $customer->id) }}"
                                                     class="link-primary fs-15"><i class="ri-eye-line"></i></a>
-                                                <form action="{{ route('customer.destroy', $customer->id) }}"
+                                                {{-- <form action="{{ route('customer.destroy', $customer->id) }}"
                                                     method="POST" id="delete-form-{{ $customer->id }}"
                                                     style="display: none;">
                                                     @csrf
@@ -105,7 +105,8 @@
                                                 <a href="javascript:void(0);" class="link-danger fs-15"
                                                     onclick="if(confirm('Are you sure you want to delete this item?')) { document.getElementById('delete-form-{{ $customer->id }}').submit(); }">
                                                     <i class="ri-delete-bin-line"></i>
-                                                </a>
+                                                </a> --}}
+                                                <a href="javascript:void(0);" class="link-danger fs-15"><i class="ri-delete-bin-line"></i></a>
                                             </div>
                                         </td>
                                     </tr>
