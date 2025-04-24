@@ -31,6 +31,7 @@ class GenerateContractOrders extends Command
      */
     public function handle()
     {
+        Log::info('Scheduler command started at: ' . now()); // ✅ ADD THIS LINE
         $today = Carbon::today(); // only the date part
         $contracts = Contracts::where('status', 'active')->get();
 
@@ -62,7 +63,7 @@ class GenerateContractOrders extends Command
                     break;
             }
         }
-
+        Log::info('Scheduler command completed at: ' . now()); // ✅ ADD THIS LINE
         $this->info('Orders generated successfully based on contract frequency.');
     }
 
@@ -111,7 +112,6 @@ class GenerateContractOrders extends Command
 
         $todayName = strtolower($today->format('l'));
         $lowerDays = array_map('strtolower', $days);
-
         if (in_array($todayName, $lowerDays)) {
             $weekStart = $today->copy()->startOfWeek();
             $weekEnd = $today->copy()->endOfWeek();
@@ -119,6 +119,7 @@ class GenerateContractOrders extends Command
             $weeklyOrderCount = Orders::where('contract_id', $contract->id)
                 ->whereBetween('created_at', [$weekStart, $weekEnd])
                 ->count();
+            Log::info('Scheduler command weeklyOrderCount: ' . $weeklyOrderCount, $weeklyOrderCount < $frequencyCount); // ✅ ADD THIS LINE
 
             if ($weeklyOrderCount < $frequencyCount) {
                 $this->createOrderIfNotExists($contract, $today);
