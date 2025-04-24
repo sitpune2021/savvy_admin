@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthController;
-use App\Http\Controllers\API\Driver\OrderController;
+use App\Http\Controllers\API\Driver\OrderController as DriverOrderController;
 use App\Http\Controllers\API\Customer\OrderController as CustomerOrderController;
 use App\Http\Controllers\API\Driver\ProfileController;
 use App\Http\Controllers\API\Driver\MaintenanceController;
@@ -50,10 +50,10 @@ Route::middleware('auth:customer_api')->prefix('customer')->group(function () {
 // 🚚 Driver Routes
 Route::middleware('auth:driver_api')->group(function () {
     // Orders
-    Route::resource('orders', OrderController::class)->except([
+    Route::resource('order', DriverOrderController::class)->except([
         'create', 'store', 'edit', 'destroy'
     ]);
-    Route::post('orders/update/{id}', [OrderController::class, 'update']);
+    Route::post('order/update/{id}', [DriverOrderController::class, 'update']);
 
     // Profile
     Route::resource('profile', ProfileController::class)->except([
