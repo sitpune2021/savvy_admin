@@ -119,7 +119,7 @@ class GenerateContractOrders extends Command
             $weeklyOrderCount = Orders::where('contract_id', $contract->id)
                 ->whereBetween('created_at', [$weekStart, $weekEnd])
                 ->count();
-            Log::info('Scheduler command weeklyOrderCount: ' . $weeklyOrderCount, $weeklyOrderCount < $frequencyCount); // ✅ ADD THIS LINE
+            Log::info('Scheduler command weeklyOrderCount: ' . $weeklyOrderCount . $weeklyOrderCount < $frequencyCount); // ✅ ADD THIS LINE
 
             if ($weeklyOrderCount < $frequencyCount) {
                 $this->createOrderIfNotExists($contract, $today);
