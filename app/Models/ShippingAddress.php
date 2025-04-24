@@ -37,7 +37,7 @@ class ShippingAddress extends Authenticatable
 
     public function Customers()
     {
-        return $this->hasMany(Customers::class, 'customer_id');
+        return $this->belongsTo(Customers::class, 'customer_id');
     }
 
     public function Contract()

@@ -26,8 +26,25 @@ Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:drive
 // 👤 Customer Routes
 Route::middleware('auth:customer_api')->prefix('customer')->group(function () {
     Route::resource('orders', CustomerOrderController::class)->except([
-        'create', 'store', 'edit', 'destroy'
+        'create', 'edit', 'destroy'
     ]);
+    Route::get('products', [CustomerOrderController::class, 'products']);
+    Route::get('contact_info', function() {
+        $user = auth()->user()->load('customers');
+        return response()->json([
+            'status' => true,
+            'message' => 'Contact info retrieved successfully',
+            'data'=> [
+                'id' => $user->id,
+                'name'  => $user->contact_person,
+                'phone_no' => $user->contact_person_phone,
+                'address' => $user->shipping_address,
+                'customer_id' => $user->customer_id,
+                'customer_name' => optional($user->customers)->name,
+            ]
+            ]);
+    });
+    Route::post('logout', [AuthController::class, 'logout']);
 });
 
 // 🚚 Driver Routes
@@ -48,3 +65,5 @@ Route::middleware('auth:driver_api')->group(function () {
         'create', 'edit'
     ]);
 });
+
+

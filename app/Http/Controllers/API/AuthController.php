@@ -138,54 +138,17 @@ class AuthController extends Controller
         }
     }
 
-    public function logout(Request $request)
+    public function logout()
     {
         try {
-            // Validate the incoming request for driver_id
-            $validator = Validator::make($request->all(), [
-                'driver_id' => 'required|exists:drivers,id', // Ensure the driver_id exists in the database
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            // Find the driver by ID
-            $driver = Drivers::find($request->driver_id);
-
-            if (!$driver) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Driver not found'
-                ], 404);
-            }
-
-            // Check if the driver has any tokens
-            if ($driver->tokens->isEmpty()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'No active session found for this driver'
-                ], 404);
-            }
-
-            // Delete all tokens associated with the driver
-            $driver->tokens->each(function ($token) {
-                $token->delete();
-            });
-
+            $user = auth()->user();
+            $user->currentAccessToken()->delete();
             return response()->json([
                 'status' => true,
-                'message' => 'Logged out successfully for driver ID ' . $request->driver_id
-            ], 200);
-
+                'message' => 'Successfully logged out from current session.'
+            ]);
         } catch (\Exception $e) {
-            // Log the error for debugging purposes
-            Log::error('Error logging out driver ID ' . $request->driver_id . ': ' . $e->getMessage());
-
+            Log::error('Error logging out : ' . $e->getMessage());
             return response()->json([
                 'status' => false,
                 'message' => 'An error occurred while logging out. Please try again later.'

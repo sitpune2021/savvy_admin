@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use App\Models\ShippingAddress;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Contracts;
+use App\Models\Product;
 
 class OrderController extends Controller
 {
@@ -61,25 +62,39 @@ class OrderController extends Controller
     
         if (!$todayOrder) {
             $contract = Contracts::findOrFail($user->contract_id);
-    
+        
             $latestOrder = (clone $ordersQuery)
                 ->where('contract_id', $contract->id)
                 ->latest('created_at')
                 ->first();
-    
+        
             $lastOrderDate = $latestOrder ? Carbon::parse($latestOrder->created_at) : $today;
-            $contractDays = explode('|', strtolower($contract->days));
-            $contractDays = array_map('trim', $contractDays);
-
+        
             $nextOrderDate = null;
-            foreach ($contractDays as $day) {
-                $potentialDate = (clone $lastOrderDate)->next($day);
-
-                if (!$nextOrderDate || $potentialDate->lt($nextOrderDate)) {
-                    $nextOrderDate = $potentialDate;
+        
+            if ($contract->frequency == 'daily') {
+                $nextOrderDate = $today->addDay();
+            } elseif ($contract->frequency == 'alternate_day') {
+                $nextOrderDate = $today->addDays(2);
+            } elseif ($contract->frequency == 'weekly') {
+                $contractDays = explode('|', strtolower($contract->days));
+                $contractDays = array_map('trim', $contractDays);
+        
+                foreach ($contractDays as $day) {
+                    $potentialDate = (clone $lastOrderDate)->next($day);
+        
+                    if (!$nextOrderDate || $potentialDate->lt($nextOrderDate)) {
+                        $nextOrderDate = $potentialDate;
+                    }
                 }
             }
-    
+            if (!$nextOrderDate) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Could not determine the next order date.',
+                ], 400);
+            }
+        
             return response()->json([
                 'status' => true,
                 'message' => 'No order found for today. Next scheduled order date retrieved.',
@@ -121,7 +136,16 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+            'date'=>'required|date',
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        $user = auth()->user();
     }
 
     /**
@@ -154,5 +178,14 @@ class OrderController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function products(){
+        $products = Product::all();
+        return response()->json([
+            'status' => true,
+            'message' => 'Products retrieved successfully',
+            'data' => $products
+        ], 200);
     }
 }
