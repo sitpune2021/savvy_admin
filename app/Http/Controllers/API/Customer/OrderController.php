@@ -16,9 +16,6 @@ use App\Models\Product;
 
 class OrderController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -29,20 +26,23 @@ class OrderController extends Controller
                 'message' => 'Authenticated user or shipping ID is missing.',
             ], 422);
         }
+
         $shippingId = $user->id;
         $status = $request->status;
         $today = Carbon::today();
-    
-        $ordersQuery = Orders::where('shipping_id', $shippingId)
-            ->with(['drivers:id,name,phone_no', 'contract']);
 
+        // Base query with eager loading
+        $ordersQuery = Orders::with(['drivers:id,name,phone_no', 'contract.product'])
+            ->where('shipping_id', $shippingId);
+
+        // If status is passed, return filtered order history
         if ($status) {
             $orderHistory = (clone $ordersQuery)->where('status', $status)->get();
-    
+
             $formattedOrders = $orderHistory->map(function ($order) {
                 return [
                     'id' => $order->id,
-                    'delivered_qty' => $order->develivered_qty,
+                    'delivered_qty' => $order->delivered_qty, // Fixed typo from 'develivered_qty'
                     'return_qty' => $order->return_qty,
                     'driver_name' => optional($order->drivers)->name,
                     'driver_phone_no' => optional($order->drivers)->phone_no,
@@ -51,60 +51,51 @@ class OrderController extends Controller
                     'created_at' => $order->created_at->toDateTimeString(),
                 ];
             });
-    
+
             return response()->json([
                 'status' => true,
                 'message' => 'Order history retrieved successfully.',
-                'data' => $formattedOrders
-            ], 200);
+                'data' => $formattedOrders,
+            ]);
         }
-    
+
+        // Today's order
         $todayOrder = (clone $ordersQuery)->whereDate('created_at', $today)->first();
-    
+
         if (!$todayOrder) {
-            $contract = Contracts::findOrFail($user->contract_id);
-        
+            $contract = $user->contract ?? Contracts::find($user->contract_id);
+            if (!$contract) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'No contract found for the user.',
+                ], 404);
+            }
+
             $latestOrder = (clone $ordersQuery)
                 ->where('contract_id', $contract->id)
                 ->latest('created_at')
                 ->first();
-        
+
             $lastOrderDate = $latestOrder ? Carbon::parse($latestOrder->created_at) : $today;
-        
-            $nextOrderDate = null;
-        
-            if ($contract->frequency == 'daily') {
-                $nextOrderDate = $today->addDay();
-            } elseif ($contract->frequency == 'alternate_day') {
-                $nextOrderDate = $today->addDays(2);
-            } elseif ($contract->frequency == 'weekly') {
-                $contractDays = explode('|', strtolower($contract->days));
-                $contractDays = array_map('trim', $contractDays);
-        
-                foreach ($contractDays as $day) {
-                    $potentialDate = (clone $lastOrderDate)->next($day);
-        
-                    if (!$nextOrderDate || $potentialDate->lt($nextOrderDate)) {
-                        $nextOrderDate = $potentialDate;
-                    }
-                }
-            }
+            $nextOrderDate = $this->getNextOrderDate($contract, $lastOrderDate);
+
             if (!$nextOrderDate) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Could not determine the next order date.',
                 ], 400);
             }
-        
+
             return response()->json([
                 'status' => true,
                 'message' => 'No order found for today. Next scheduled order date retrieved.',
                 'data' => [
                     'next_order_date' => $nextOrderDate->toDateString(),
-                ]
-            ], 200);
+                ],
+            ]);
         }
-    
+
+        // Today's order exists
         $orderData = [
             'id' => $todayOrder->id,
             'delivered_qty' => $todayOrder->delivered_qty,
@@ -114,27 +105,41 @@ class OrderController extends Controller
             'status' => $todayOrder->status,
             'created_at' => $todayOrder->created_at->toDateTimeString(),
         ];
-    
+
         return response()->json([
             'status' => true,
-            'message' => 'Today\'s order retrieved successfully.',
-            'data' => $orderData
-        ], 200);
-        
-
+            'message' => "Today's order retrieved successfully.",
+            'data' => $orderData,
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    private function getNextOrderDate($contract, $lastOrderDate)
     {
-        //
+        $today = Carbon::today();
+
+        return match ($contract->frequency) {
+            'daily' => $today->copy()->addDay(),
+            'alternate_day' => $today->copy()->addDays(2),
+            'weekly' => $this->getNextWeeklyDate($contract->days, $lastOrderDate),
+            default => null,
+        };
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    private function getNextWeeklyDate($days, $fromDate)
+    {
+        $contractDays = array_map('trim', explode('|', strtolower($days)));
+        $nextDate = null;
+
+        foreach ($contractDays as $day) {
+            $potentialDate = (clone $fromDate)->next($day);
+            if (!$nextDate || $potentialDate->lt($nextDate)) {
+                $nextDate = $potentialDate;
+            }
+        }
+
+        return $nextDate;
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -147,38 +152,6 @@ class OrderController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
         $user = auth()->user();
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
     }
 
     public function products(){

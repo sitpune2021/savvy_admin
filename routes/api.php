@@ -8,16 +8,6 @@ use App\Http\Controllers\API\Driver\ProfileController;
 use App\Http\Controllers\API\Customer\ProfileController as CustomerProfileController;
 use App\Http\Controllers\API\Driver\MaintenanceController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-| These routes are assigned to the "api" middleware group.
-|--------------------------------------------------------------------------
-*/
-
-// 
-
 // Driver 🔐 Auth RoutesA
 Route::post('send-otp', [AuthController::class, 'sendOtp']); 
 Route::post('verify-otp', [AuthController::class, 'verifyOtp']);
@@ -30,10 +20,11 @@ Route::post('reset-password', [AuthController::class, 'resetPassword']);
 // 👤 Customer Routes
 Route::middleware('auth:customer_api')->prefix('customer')->group(function () {
     Route::resource('orders', CustomerOrderController::class)->except([
-        'create', 'edit', 'destroy'
+        'create', 'edit', 'destroy', 'update', 'show'
     ]);
     Route::get('products', [CustomerOrderController::class, 'products']);
     Route::post('password', [CustomerProfileController::class, 'updatePassword']);
+    Route::post('delete-account', [CustomerProfileController::class, 'deleteAccount']);
     Route::post('logout', [AuthController::class, 'logout']);
 });
 
@@ -47,7 +38,7 @@ Route::middleware('auth:driver_api')->group(function () {
         'create', 'edit', 'index', 'store'
     ]);
     Route::resource('maintenance', MaintenanceController::class)->except([
-        'create', 'edit'
+        'create', 'edit', 'destroy', 'update', 'show'
     ]);
     Route::post('logout', [AuthController::class, 'logout']);
 });

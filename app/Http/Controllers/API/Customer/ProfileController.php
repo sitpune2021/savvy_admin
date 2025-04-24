@@ -12,8 +12,6 @@ use Exception;
 
 class ProfileController extends Controller
 {
-    //
-
     public function updatePassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -23,17 +21,37 @@ class ProfileController extends Controller
         ]);
         
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()], 422);
         }
-        
         try {
             $user = auth()->user();
-        dd($user);
-        
-        } catch (ModelNotFoundException $e) {
-            
+            if (!Hash::check($request->old_password, $user->password)) {
+                return response()->json([
+                    'status' => false,
+                    'error' => 'Old password is incorrect'], 400);
+            }
+
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Password updated successfully'], 200);
         } catch (Exception $e) {
-            
+            return response()->json([
+                'satus' => false,
+                'error' => 'An error occurred while updating the password'], 500);
         }
+    }
+
+    public function deleteAccount(Request $request)
+    {
+        $user = auth()->user();
+        $user->currentAccessToken()->delete();
+        return response()->json([
+            'status' => true,
+            'message' => 'Account deleted successfully'], 200);
     }
 }

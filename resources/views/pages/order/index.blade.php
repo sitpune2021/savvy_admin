@@ -84,7 +84,7 @@
                                     <th>Customer</th>
                                     <th>shipping Address</th>
                                     <th>Driver</th>
-                                    <th>Develivered Quantity</th>
+                                    <th>Delivery Quantity</th>
                                     {{-- <th>Return Quantity </th> --}}
                                     <th>Status</th>
                                     <th>Date</th>

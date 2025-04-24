@@ -104,7 +104,7 @@ class MaintenanceController extends Controller
         try {
             $data = $request->all();
             $imagePaths = []; // Initialize an empty array to store image paths
-            $title = $request->type == 'fuel' ? 'Fuel' : 'Maintenance';
+            // $title = $request->type == 'fuel' ? 'Fuel' : 'Maintenance';
             if ($request->type == 'other' && $request->hasFile('images.bill')) {
                 $billImage = $request->file('images.bill');
                 $billImageName = Str::random(10) . '.' . $billImage->getClientOriginalExtension();
@@ -134,12 +134,12 @@ class MaintenanceController extends Controller
     
             return response()->json([
                 'status' => true,
-                'message' => `$title record added successfully.`,
+                'message' => 'record added successfully.',
             ], 201);
         } catch (Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => `Failed to add $title record: ` . $e->getMessage(),
+                'message' =>    'Failed to add record: ' . $e->getMessage(),
             ], 500);
         }
     }
