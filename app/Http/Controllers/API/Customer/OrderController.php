@@ -34,7 +34,7 @@ class OrderController extends Controller
         $today = Carbon::today();
     
         $ordersQuery = Orders::where('shipping_id', $shippingId)
-            ->with(['drivers:id,name,phone_no']);
+            ->with(['drivers:id,name,phone_no', 'contract']);
 
         if ($status) {
             $orderHistory = (clone $ordersQuery)->where('status', $status)->get();
@@ -42,11 +42,12 @@ class OrderController extends Controller
             $formattedOrders = $orderHistory->map(function ($order) {
                 return [
                     'id' => $order->id,
-                    'delivered_qty' => $order->delivered_qty,
+                    'delivered_qty' => $order->develivered_qty,
                     'return_qty' => $order->return_qty,
                     'driver_name' => optional($order->drivers)->name,
                     'driver_phone_no' => optional($order->drivers)->phone_no,
                     'status' => $order->status,
+                    'product_name' => optional($order->contract->product)->name,
                     'created_at' => $order->created_at->toDateTimeString(),
                 ];
             });
