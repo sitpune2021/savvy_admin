@@ -48,6 +48,16 @@ Route::get('/migration_fresh', function () {
     }
 });
 
+Route::get('/scheduler', function () {
+    try {
+        Artisan::call('schedule:run');
+        $output = Artisan::output();
+        return "All schedule have been run successfully! Output: " . nl2br($output);
+    } catch (\Exception $e) {
+        return "schedule failed: " . $e->getMessage();
+    }
+});
+
 Route::get('/run-all-seeders', function () {
     $exitCode = Artisan::call('db:seed');
     $output = Artisan::output();
