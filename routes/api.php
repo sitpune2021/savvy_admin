@@ -26,6 +26,9 @@ Route::middleware('auth:customer_api')->prefix('customer')->group(function () {
     Route::post('password', [CustomerProfileController::class, 'updatePassword']);
     Route::post('delete-account', [CustomerProfileController::class, 'deleteAccount']);
     Route::post('logout', [AuthController::class, 'logout']);
+
+    Route::get('request-order-list', [CustomerOrderController::class, 'requestOrderList']);
+    Route::get('accept-order-request/{id}', [CustomerOrderController::class, 'requestOrderUpdate']);
 });
 
 // 🚚 Driver Routes

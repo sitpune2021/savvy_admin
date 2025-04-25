@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Orders;
 use App\Models\Customers;
 use App\Models\Drivers;
+use App\Models\Plant;
 use Carbon\Carbon;
 
 class HomeController extends Controller
@@ -58,7 +59,25 @@ class HomeController extends Controller
         $orderChange = percentChange($thisMonthOrders, $lastMonthOrders);
         $customerChange = percentChange($thisMonthCustomers, $lastMonthCustomers);
 
+        $ordersCountByPlant = Orders::with('route')
+        ->get()
+        ->groupBy(function($order) {
+            return $order->route->plant_id; 
+        })
+        ->map(function($group) {
+            return $group->count(); 
+        });
+
+    $plants = Plant::pluck('name', 'id'); 
+
+    foreach ($plants as $plantId => $plantName) {
+        if (!isset($ordersCountByPlant[$plantId])) {
+            $ordersCountByPlant[$plantId] = 0;
+        }
+    }
+
+
     return view('home', compact('thisMonthOrders', 'todayOrders', 'todayPendingOrders', 'yesterdayPendingOrders',
-    'todayCompletedOrders', 'orderChange',  'customerChange', 'thisMonthCustomers'));
+    'todayCompletedOrders', 'orderChange',  'customerChange', 'thisMonthCustomers', 'ordersCountByPlant', 'plants'));
     }
 }

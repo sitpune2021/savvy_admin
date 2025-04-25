@@ -92,7 +92,7 @@
                                         <h4 class="fs-22 fw-semibold ff-secondary mb-4">
                                             <span class="counter-value" data-target="{{ $todayOrders }}">0</span>
                                         </h4>
-                                        <a href="{{url('order')}}" class="d-flex align-items-center gap-2">
+                                        <a href="{{ url('order') }}" class="d-flex align-items-center gap-2">
                                             <p class="fs-16 mb-0 text-muted"><i
                                                     class="mdi mdi-circle fs-14 align-middle text-success me-1"></i><span
                                                     class="counter-value"
@@ -113,7 +113,7 @@
                         </div>
                     </div>
 
-                    
+
                     <div class="col-xl-3 col-md-6">
                         <div class="card card-animate bg-danger">
                             <div class="card-body">
@@ -127,7 +127,8 @@
                                 <div class="d-flex align-items-end justify-content-between mt-4">
                                     <div>
                                         <h4 class="fs-22 fw-semibold ff-secondary mb-4 text-white">
-                                            <span class="counter-value" data-target="{{ count($yesterdayPendingOrders) }}">0</span>
+                                            <span class="counter-value"
+                                                data-target="{{ count($yesterdayPendingOrders) }}">0</span>
                                         </h4>
                                         <a href="#yesterdayPendingOrders" class="text-decoration-underline text-white">
                                             view pending orders
@@ -269,22 +270,8 @@
                         <div class="card card-height-100">
                             <div class="card-header align-items-center d-flex">
                                 <h4 class="card-title mb-0 flex-grow-1">
-                                    Store Visits by Source
+                                    Orders Distribution Across Plants
                                 </h4>
-                                <div class="flex-shrink-0">
-                                    <div class="dropdown card-header-dropdown">
-                                        <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown"
-                                            aria-haspopup="true" aria-expanded="false">
-                                            <span class="text-muted">Report<i
-                                                    class="mdi mdi-chevron-down ms-1"></i></span>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a class="dropdown-item" href="#">Download Report</a>
-                                            <a class="dropdown-item" href="#">Export</a>
-                                            <a class="dropdown-item" href="#">Import</a>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                             <!-- end card header -->
 
@@ -303,7 +290,7 @@
                 </div>
                 @if (count($yesterdayPendingOrders) > 0)
                     <div class="row">
-                        <div class="col-xl-8">
+                        <div class="col-xl-12">
                             <div class="card">
                                 <div class="card-header align-items-center d-flex">
                                     <h4 class="card-title mb-0 flex-grow-1">
@@ -373,4 +360,11 @@
         </div>
         <!-- end col -->
     </div>
+    <script>
+        window.seriesData = @json($ordersCountByPlant->values()); // Order counts (series data)
+        window.labels = @json(collect($ordersCountByPlant->keys())->map(function ($id) use ($plants) {
+                    return $plants[$id] ?? 'Unknown';
+                })->values());
+        console.log(window.seriesData, window.labels);
+    </script>
 @endsection

@@ -149,7 +149,7 @@ class OrderController extends Controller
             'driver_id' => 'required|exists:drivers,id', 
             'develivered_qty' => 'required|integer|min:0',
             'return_qty' => 'required|integer|min:0',
-            'status' => 'required|in:pending,completed,cancelled',  
+            'status' => 'required|in:pending,completed,in-progress',  
             'delevered_card_img' => 'nullable',
             'return_card_img' => 'nullable',
         ]);
@@ -163,7 +163,8 @@ class OrderController extends Controller
     
         try {
             $order = Orders::findOrFail($id);
-            $order->update($request->except('delevered_card_img', 'return_card_img'));
+            $order->status = 'in-progress';
+            $order->update($request->except('delevered_card_img', 'return_card_img', 'status'));
 
             if ($request->filled('delevered_card_img')) {
                 $imageData = $request->input('delevered_card_img');

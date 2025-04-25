@@ -42,7 +42,7 @@ class OrderController extends Controller
             $formattedOrders = $orderHistory->map(function ($order) {
                 return [
                     'id' => $order->id,
-                    'delivered_qty' => $order->delivered_qty, // Fixed typo from 'develivered_qty'
+                    'delivered_qty' => $order->develivered_qty, // Fixed typo from 'develivered_qty'
                     'return_qty' => $order->return_qty,
                     'driver_name' => optional($order->drivers)->name,
                     'driver_phone_no' => optional($order->drivers)->phone_no,
@@ -98,7 +98,7 @@ class OrderController extends Controller
         // Today's order exists
         $orderData = [
             'id' => $todayOrder->id,
-            'delivered_qty' => $todayOrder->delivered_qty,
+            'delivered_qty' => $todayOrder->develivered_qty,
             'return_qty' => $todayOrder->return_qty,
             'driver_name' => optional($todayOrder->drivers)->name,
             'driver_phone_no' => optional($todayOrder->drivers)->phone_no,
@@ -109,7 +109,9 @@ class OrderController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Today's order retrieved successfully.",
-            'data' => $orderData,
+            'data' => [
+                'ongoing_order' => $orderData,
+            ]
         ]);
     }
 
@@ -154,7 +156,8 @@ class OrderController extends Controller
         $user = auth()->user();
     }
 
-    public function products(){
+    public function products()
+    {
         $products = Product::all();
         return response()->json([
             'status' => true,
@@ -162,4 +165,31 @@ class OrderController extends Controller
             'data' => $products
         ], 200);
     }
+
+    public function requestOrderList()
+    {
+        $user = auth()->user();
+        $orders = Orders::where('shipping_id', $user->id)->where('status', 'in-progress')->get();
+            return response()->json([
+                'status' => true,
+                'message' => 'Order list retrieved successfully',
+                'data' => $orders
+            ], 200);
+    }
+
+    public function requestOrderUpdate($id)
+    {
+        $user = auth()->user();
+        $order = Orders::findOrFail($id);
+        $order->status = 'completed';
+        $order->save();
+        return response()->json([
+            'status' => true,
+            'message' => 'Order accepted successfully',
+            'data' => $order // Use $order, not $orders
+        ], 200);
+    }
+
+
+
 }
