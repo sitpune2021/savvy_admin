@@ -20,6 +20,11 @@ class Maintenance extends Model
         'date',
     ];
 
+    protected $casts = [
+        'image' => 'array',
+    ];
+    
+
     public function driver()
     {
         return $this->belongsTo(Drivers::class, 'driver_id');

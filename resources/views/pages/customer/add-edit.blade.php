@@ -29,7 +29,6 @@
         <div class="col-12">
             <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
                 <h4 class="mb-sm-0">{{ $PageTitle }}</h4>
-
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
                         @foreach ($breadcrumbs as $breadcrumb)
@@ -147,6 +146,7 @@
                         </div>
                     </div>
                 </div>
+
                 @if (!isset($Customer))
                     <div id="shipping_address_div">
                         <div class="form-group-item card address-block">
@@ -208,7 +208,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-4 col-sm-12">
+                                <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Routes</label>
                                         <select name="shipping[0][route_id]" class="select js-example-basic-single"
@@ -218,7 +218,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-4 col-sm-12">
+                                <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Drivers</label>
                                         <select name="shipping[0][driver_id]" class="select js-example-basic-single"
@@ -227,32 +227,34 @@
                                         </select>
                                     </div>
                                 </div>
+                                <div class="col-12" id="shipping_contact_div">
+                                    <div class="row align-item-center">
+                                        <input name="shipping[0][shipping_contacts][0][id]" type="hidden"
+                                            value="">
 
-                                <div class="col-md-4 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Name</label>
-                                        <input name="shipping[0][contact_person]" type="text" class="form-control"
-                                            placeholder="Enter Name">
+                                        <div class="col-lg-5 col-md-6 col-sm-12">
+                                            <div class="input-block mb-3">
+                                                <label>Name</label>
+                                                <input name="shipping[0][shipping_contacts][0][name]" type="text"
+                                                    class="form-control" placeholder="Enter Name">
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-5 col-md-6 col-sm-12">
+                                            <div class="input-block mb-3">
+                                                <label>Mobile No</label>
+                                                <input name="shipping[0][shipping_contacts][0][phone]" type="text"
+                                                    class="form-control" placeholder="Enter Mobile No">
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="col-lg-2 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
+                                            <button type="button" class="btn btn-sm btn-success"
+                                                id="add-address-contacts">
+                                                + Add contact
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-md-4 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Mobile No</label>
-                                        <input name="shipping[0][contact_person_phone]" type="text"
-                                            class="form-control" placeholder="Enter Mobile No">
-                                    </div>
-                                </div>
-                                <div class="col-md-4 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Deployed</label>
-                                        <select class="select js-example-basic-single"
-                                            name="shipping[0][machine_deployed]">
-                                            <option value="Yes">Yes</option>
-                                            <option value="No">No</option>
-                                        </select>
-                                    </div>
-                                </div>
-
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Product</label>
@@ -268,29 +270,32 @@
                                         </select>
                                     </div>
                                 </div>
-        
+
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
-                                        <label>Quantity</label>
-                                        <input name="contract[0][quantity]" type="number" class="form-control" placeholder="Enter Quantity"
+                                        <label>Stock</label>
+                                        <input name="contract[0][quantity]" type="number" class="form-control"
+                                            placeholder="Enter Stock"
                                             value="{{ old('quantity', $Customer->contracts[0]->quantity ?? 1) }}"
                                             @if ($show) disabled @endif>
                                     </div>
                                 </div>
-        
+
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Price {{ '/-' }}</label>
-                                        <input name="contract[0][price]" type="number" class="form-control" placeholder="Enter Price"
+                                        <input name="contract[0][price]" type="number" class="form-control"
+                                            placeholder="Enter Price"
                                             value="{{ old('price', $Customer->contracts[0]->price ?? 1) }}"
                                             @if ($show) disabled @endif>
                                     </div>
                                 </div>
-        
+
                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Delivery Frequency</label>
-                                        <select class="select js-example-basic-single" name="contract[0][frequency]" id="frequency">
+                                        <select class="select js-example-basic-single" name="contract[0][frequency]"
+                                            id="frequency">
                                             @foreach (['daily', 'alternate_day', 'weekly'] as $freq)
                                                 <option value="{{ $freq }}"
                                                     {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->frequency == $freq ? 'selected' : '' }}>
@@ -300,7 +305,7 @@
                                         </select>
                                     </div>
                                 </div>
-        
+
                                 <div class="col-lg-4 col-md-6 col-sm-12" id="frequency_count">
                                     <div class="input-block mb-3">
                                         <label>Frequency Count</label>
@@ -308,31 +313,33 @@
                                             value="1">
                                     </div>
                                 </div>
-        
+
                                 <div class="col-lg-4 col-md-6 col-sm-12" id="days_select">
                                     <div class="input-block mb-3">
                                         <label>Delivery Day</label>
                                         <select class="select js-example-basic-single" name="contract[0][days][]"
-                                                @if ($show) disabled @endif multiple>
+                                            @if ($show) disabled @endif multiple>
                                             @foreach (['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as $day)
-                                                <option value="{{ $day }}" {{ in_array($day, $selectedDays) ? 'selected' : '' }}>
+                                                <option value="{{ $day }}"
+                                                    {{ in_array($day, $selectedDays) ? 'selected' : '' }}>
                                                     {{ ucfirst($day) }}
                                                 </option>
                                             @endforeach
                                         </select>
                                     </div>
                                 </div>
-        
-                                <div class="col-lg-6 col-md-6 col-sm-12">
+
+                                <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Duration</label>
-                                        <input name="contract[0][duration]" type="number" class="form-control" placeholder="Enter Duration"
+                                        <input name="contract[0][duration]" type="number" class="form-control"
+                                            placeholder="Enter Duration"
                                             value="{{ old('duration', $Customer->contracts[0]->duration ?? 1) }}"
                                             @if ($show) disabled @endif>
                                     </div>
                                 </div>
-        
-                                <div class="col-lg-6 col-md-6 col-sm-12">
+
+                                <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Duration Type</label>
                                         <select class="select js-example-basic-single" name="contract[0][duration_type]"
@@ -346,11 +353,22 @@
                                         </select>
                                     </div>
                                 </div>
+                                <div class="col-lg-4 col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Deployed</label>
+                                        <select class="select js-example-basic-single"
+                                            name="shipping[0][machine_deployed]">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
+                        </div>
+                        <div id="shipping_address_div_contact">
                         </div>
                     </div>
                 @endif
-
                 <div class="form-group-item card mb-2">
                     <div class="text-end m-3">
                         <button type="button" class="btn btn-primary cancel me-2"
@@ -372,7 +390,7 @@
                     <div class="card-header d-flex justify-content-between align-items-center add-remove">
                         <h5 class="form-title">Shipping Address</h5>
                         @if (!$show)
-                            <button type="button" class="btn btn-sm btn-success" id="add-address-edit">
+                            <button type="button" class="btn btn-sm btn-success" id="add-address">
                                 + Add Location
                             </button>
                         @endif
@@ -384,8 +402,8 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>Address</th>
-                                        <th>Person</th>
-                                        <th>No.</th>
+                                        <th>Name</th>
+                                        <th>Phone</th>
                                         @if (!$show)
                                             <th>Action</th>
                                         @endif
@@ -393,48 +411,76 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($Customer->shippingAddresses as $index => $shippingAddress)
+                                        @php
+                                            $contactCount = count($shippingAddress->contacts);
+                                            $rowspan = max($contactCount, 1);
+                                        @endphp
                                         <tr data-index="{{ $index }}">
-                                            <td class="fw-medium">{{ $index + 1 }}</td>
-                                            <td>{{ $shippingAddress->shipping_address }}</td>
-                                            <td>{{ $shippingAddress->contact_person }}</td>
-                                            <td>{{ $shippingAddress->contact_person_phone }}</td>
-                                            @if (!$show)
-                                                <td>
-                                                    <div class="hstack gap-3 flex-wrap">
-                                                        <a href="javascript:void(0);"
-                                                            class="link-success fs-15 edit-address"
-                                                            data-address='@json($shippingAddress)'
-                                                            data-contract='@json($shippingAddress->Contract)'
-                                                            >
-                                                            <i class="ri-edit-2-line"></i>
-                                                        </a>
-                                                        <a href="javascript:void(0);"
-                                                            class="link-danger fs-15 remove-address">
-                                                            <i class="ri-delete-bin-line"></i>
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                            @endif
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+                                            <td class="fw-medium" rowspan="{{ $rowspan }}">{{ $index + 1 }}</td>
+                                            <td rowspan="{{ $rowspan }}">{{ $shippingAddress->shipping_address }}
+                                            </td>
+
+                                            @if ($contactCount > 0)
+                                                @foreach ($shippingAddress->contacts as $i => $contact)
+                                                    @if ($i > 0)
+                                        <tr>
+                                    @endif
+                                    <td>{{ $contact->name }}</td>
+                                    <td>{{ $contact->phone }}</td>
+                                    @if ($i == 0 && !$show)
+                                        <td rowspan="{{ $rowspan }}">
+                                            <div class="hstack gap-2">
+                                                <a href="javascript:void(0);" class="link-success fs-15 edit-address"
+                                                    data-address='@json($shippingAddress)'
+                                                    data-contract='@json($shippingAddress->Contract)'
+                                                    >
+                                                    <i class="ri-edit-2-line"></i>
+                                                </a>
+                                                <a href="javascript:void(0);" class="link-danger fs-15 remove-address">
+                                                    <i class="ri-delete-bin-line"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    @endif
+                                    </tr>
+    @endforeach
+@else
+    <td colspan="2">No contacts</td>
+    @if (!$show)
+        <td>
+            <div class="hstack gap-2">
+                <a href="javascript:void(0);" class="link-success fs-15 edit-address"
+                    data-address='@json($shippingAddress)' data-contract='@json($shippingAddress->Contract)'>
+                    <i class="ri-edit-2-line"></i>
+                </a>
+                <a href="javascript:void(0);" class="link-danger fs-15 remove-address">
+                    <i class="ri-delete-bin-line"></i>
+                </a>
+            </div>
+        </td>
+    @endif
+    @endif
+    @endforeach
+    </tbody>
+    </table>
+
+
+    </div>
+    </div>
+    </div>
+    </div>
+    </div>
+    @if (!$show)
+        <form id="shippingForm" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col-md-12">
+                    <div id="address-container">
+                        {{-- Dynamic address blocks injected here --}}
                     </div>
                 </div>
             </div>
-        </div>
-        @if (!$show)
-            <form id="shippingForm" enctype="multipart/form-data">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div id="address-container">
-                            {{-- Dynamic address blocks injected here --}}
-                        </div>
-                    </div>
-                </div>
-            </form>
-        @endif
+        </form>
+    @endif
     @endif
 
 
@@ -446,7 +492,7 @@
         window.routeData = @json($routes);
         window.driverData = @json($drivers);
         window.locationData = false;
-
+        window.CustomerExists = {{ isset($Customer) ? 'true' : 'false' }}
         window.Laravel = {
             routeIndex: "{{ route('customer.index') }}"
         };

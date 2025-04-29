@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class MaintenanceController extends Controller
 {
@@ -19,19 +20,10 @@ class MaintenanceController extends Controller
     public function index(Request $request)
     {
         try {
-            $driverId = $request->driver_id;
+            $user = Auth::user();
+            $driverId = $user->id;
             $type = $request->type;
         
-            if (!$driverId) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Driver ID is required.',
-                ], 422);
-            }
-        
-            $title = $type === 'fuel' ? 'Fuel' : 'Maintenance';
-        
-            // Fetch maintenance records with the driver relationship
             $maintenanceRecords = Maintenance::where('driver_id', $driverId)
                 ->when($type, fn($q) => $q->where('type', $type))
                 ->with('driver')
@@ -40,7 +32,7 @@ class MaintenanceController extends Controller
             if ($maintenanceRecords->isEmpty()) {
                 return response()->json([
                     'status' => false,
-                    'message' => "No $title records found for this driver.",
+                    'message' => "records found for this driver.",
                 ], 404);
             }
         
@@ -53,14 +45,13 @@ class MaintenanceController extends Controller
                     }
                 }
         
-                // Optionally remove original image column
                 unset($record->image);
                 unset($record->driver); // if you don't want to expose the full driver model
             }
         
             return response()->json([
                 'status' => true,
-                'message' => "$title records retrieved successfully.",
+                'message' => "records retrieved successfully.",
                 'data' => $maintenanceRecords
             ], 200);
         
@@ -103,32 +94,31 @@ class MaintenanceController extends Controller
     
         try {
             $data = $request->all();
-            $imagePaths = []; // Initialize an empty array to store image paths
-            // $title = $request->type == 'fuel' ? 'Fuel' : 'Maintenance';
+            $imagePaths = []; 
             if ($request->type == 'other' && $request->hasFile('images.bill')) {
                 $billImage = $request->file('images.bill');
                 $billImageName = Str::random(10) . '.' . $billImage->getClientOriginalExtension();
-                $billImage->storeAs('public/other/', $billImageName); // Store in other directory
-                $imagePaths['bill'] = $billImageName; // Save the image file name
+                $billImage->storeAs('public/other/', $billImageName); 
+                $imagePaths['bill'] = $billImageName; 
             }
     
             if ($request->type == 'fuel') {
                 if ($request->hasFile('images.metercopy')) {
                     $metercopyImage = $request->file('images.metercopy');
                     $metercopyImageName = Str::random(10) . '.' . $metercopyImage->getClientOriginalExtension();
-                    $metercopyImage->storeAs('public/fuel/', $metercopyImageName); // Store in fuel directory
+                    $metercopyImage->storeAs('public/fuel/', $metercopyImageName); 
                     $imagePaths['metercopy'] = $metercopyImageName;
                 }
     
                 if ($request->hasFile('images.recipt')) {
                     $reciptImage = $request->file('images.recipt');
                     $reciptImageName = Str::random(10) . '.' . $reciptImage->getClientOriginalExtension();
-                    $reciptImage->storeAs('public/fuel/', $reciptImageName); // Store in fuel directory
+                    $reciptImage->storeAs('public/fuel/', $reciptImageName); 
                     $imagePaths['recipt'] = $reciptImageName;
                 }
             }
     
-            $data['image'] = json_encode($imagePaths); // Store the image paths as JSON
+            $data['image'] = json_encode($imagePaths); 
     
             Maintenance::create($data);
     

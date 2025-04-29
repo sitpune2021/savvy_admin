@@ -128,10 +128,15 @@
                                     <div>
                                         <h4 class="fs-22 fw-semibold ff-secondary mb-4 text-white">
                                             <span class="counter-value"
-                                                data-target="{{ count($yesterdayPendingOrders) }}">0</span>
+                                                data-target="{{ $yesterdayPendingOrders }}">0</span>
                                         </h4>
+
                                         <a href="#yesterdayPendingOrders" class="text-decoration-underline text-white">
+                                            <i class="mdi mdi-circle fs-14 align-middle text-success me-1"></i><span
+                                                class="counter-value" data-target="{{ count($allPendingOrders) }}">0</span>
                                             view pending orders
+
+
                                         </a>
                                     </div>
                                     <div class="avatar-sm flex-shrink-0">
@@ -288,7 +293,7 @@
                     </div>
                     <!-- end col -->
                 </div>
-                @if (count($yesterdayPendingOrders) > 0)
+                @if (count($allPendingOrders) > 0)
                     <div class="row">
                         <div class="col-xl-12">
                             <div class="card">
@@ -313,7 +318,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @foreach ($yesterdayPendingOrders as $order)
+                                                @foreach ($allPendingOrders as $order)
                                                     <tr>
                                                         <td>
                                                             <a href="{{ url('order/' . $order->id) }}"

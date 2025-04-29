@@ -42,6 +42,8 @@ class Drivers extends Authenticatable
     }
 
     
+    protected $hidden = ['otp','otp_expires_at' ];
+    
 
     protected $dates = ['deleted_at'];
 }

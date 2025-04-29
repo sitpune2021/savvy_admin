@@ -45,11 +45,11 @@
                                 <script>
                                     document.write(new Date().getFullYear());
                                 </script>
-                                © Velzon.
+                                © Savvya Water .
                             </div>
                             <div class="col-sm-6">
                                 <div class="text-sm-end d-none d-sm-block">
-                                    Design & Develop by Themesbrand
+                                    Design & Develop by SIT Infotech
                                 </div>
                             </div>
                         </div>

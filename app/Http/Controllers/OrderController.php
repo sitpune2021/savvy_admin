@@ -66,8 +66,6 @@ class OrderController extends Controller
                     'shipping_id' => $shippingId,
                     'route_id' => $shipping?->route_id,
                     'driver_id' => $shipping?->driver_id,
-                    'develivered_qty' => $request->develivered_qty,
-                    'return_qty' => 0,
                     'status' => 'pending',
                 ]);
             }

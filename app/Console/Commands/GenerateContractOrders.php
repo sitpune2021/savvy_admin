@@ -88,8 +88,6 @@ class GenerateContractOrders extends Command
                 'route_id' => $shipping->route_id,
                 'driver_id' => $shipping->driver_id,
                 'status' => 'pending',
-                'develivered_qty' => $contract->quantity,
-                'return_qty' => 0
             ]);
         }
     }

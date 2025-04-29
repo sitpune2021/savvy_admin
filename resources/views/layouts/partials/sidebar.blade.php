@@ -98,6 +98,14 @@
                     </a>
                 </li>
 
+                <li class="nav-item">
+                    <a class="nav-link menu-link {{ Request::is('maintenance*') ? 'active' : '' }}"
+                        href="{{ url('maintenance') }}">
+                        <i class="ri-dashboard-2-line"></i>
+                        <span data-key="t-dashboards">maintenance</span>
+                    </a>
+                </li>
+
             </ul>
         </div>
         <!-- Sidebar -->

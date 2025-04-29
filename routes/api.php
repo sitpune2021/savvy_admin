@@ -38,7 +38,7 @@ Route::middleware('auth:driver_api')->group(function () {
     ]);
     Route::post('order_update/{id}', [DriverOrderController::class, 'update']);
     Route::resource('profile', ProfileController::class)->except([
-        'create', 'edit', 'index', 'store'
+        'create', 'edit', 'store','show'
     ]);
     Route::resource('maintenance', MaintenanceController::class)->except([
         'create', 'edit', 'destroy', 'update', 'show'

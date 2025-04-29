@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 use Exception;
 
@@ -18,20 +19,13 @@ class OrderController extends Controller
     
     public function index(Request $request)
     {
-        $driverId = $request->driver_id;
+        $user = Auth::user();
+        $driverId = $user->id;
         $count = $request->count;
         $status = $request->status;
     
-        if (!$driverId) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Driver ID is required.',
-            ], 422);
-        }
-    
         if ($count) {
             $today = Carbon::today();
-    
             $baseQuery = Orders::where('driver_id', $driverId);
             $todayQuery = (clone $baseQuery)->whereDate('created_at', $today);
 
@@ -59,7 +53,7 @@ class OrderController extends Controller
         }
     
         if ($status) {
-            $ordersQuery = Orders::where('driver_id', $driverId)->with(['customers:id,name', 'shipping:id,shipping_address']);
+            $ordersQuery = Orders::where('driver_id', $driverId)->with(['customers:id,name', 'shipping:id,shipping_address', 'shipping.contacts:id,shipping_id,name,phone', 'contract:id,quantity']);
     
             if ($status !== 'all') {
                 $ordersQuery->where('status', $status);
@@ -87,6 +81,7 @@ class OrderController extends Controller
                     'status' => $order->status,
                     'develivered_qty' => $order->develivered_qty,
                     'return_qty' => $order->return_qty,
+                    'balance' => strval(optional($order->contract)->quantity),
                     'delevered_card_img' => $order->delevered_card_img 
                     ? url('storage/OrderCard/' . $order->delevered_card_img) 
                     : null,
@@ -96,6 +91,12 @@ class OrderController extends Controller
                     'deleted_at' => $order->deleted_at,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
+                    'shipping_contacts' => $order->shipping->contacts->map(function ($contact) {
+                        return [
+                            'name' => $contact->name,
+                            'phone' => $contact->phone,
+                        ];
+                    })
                 ];
             });
     
@@ -115,14 +116,9 @@ class OrderController extends Controller
 
     public function show(string $id, Request $request)
     {
-        $driverId = $request->driver_id;
-        if (!$driverId) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Driver ID is required.',
-            ], 422);
-        }
-        $order = Orders::where('driver_id', $driverId)->with('shipping')->find($id);
+        $user = Auth::user();
+        $driverId = $user->id;
+        $order = Orders::where('driver_id', $driverId)->with('shipping.contacts')->find($id);
         if (!$order) {
             return response()->json([
                 'status' => false,
@@ -145,11 +141,8 @@ class OrderController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'customer_id' => 'required|exists:customers,id',
-            'driver_id' => 'required|exists:drivers,id', 
             'develivered_qty' => 'required|integer|min:0',
             'return_qty' => 'required|integer|min:0',
-            'status' => 'required|in:pending,completed,in-progress',  
             'delevered_card_img' => 'nullable',
             'return_card_img' => 'nullable',
         ]);
@@ -164,7 +157,7 @@ class OrderController extends Controller
         try {
             $order = Orders::findOrFail($id);
             $order->status = 'in-progress';
-            $order->update($request->except('delevered_card_img', 'return_card_img', 'status'));
+            $order->update($request->except('delevered_card_img', 'return_card_img', 'status', 'driver_id'));
 
             if ($request->filled('delevered_card_img')) {
                 $imageData = $request->input('delevered_card_img');

@@ -12,7 +12,7 @@ use App\Models\Drivers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Models\ShippingAddress;
+use App\Models\ShippingContact;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -218,8 +218,7 @@ class AuthController extends Controller
         }
 
         try {
-            $users = ShippingAddress::where('contact_person_phone', $request->phone_no)->get();
-
+            $users = ShippingContact::where('phone', $request->phone_no)->with('shippingAddress:id,shipping_address')->get();
             if ($users->count() === 0) {
                 return response()->json([
                     'status' => false,
@@ -277,7 +276,7 @@ class AuthController extends Controller
         }
 
         try {
-            $users = ShippingAddress::where('contact_person_phone', $request->phone_no)->get();
+            $users = ShippingContact::where('phone', $request->phone_no)->get();
 
             if ($users->count() === 0) {
                 return response()->json([
@@ -329,7 +328,7 @@ class AuthController extends Controller
         }
 
         try {
-            $user = ShippingAddress::where('contact_person_phone', $request->phone_no)->first();
+            $users = ShippingContact::where('phone', $request->phone_no)->get();
 
             if (!$user) {
                 return response()->json([

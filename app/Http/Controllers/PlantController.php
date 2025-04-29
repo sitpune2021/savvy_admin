@@ -34,11 +34,11 @@ class PlantController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:plants',
             'address' => 'required|string|max:255',
             'manager' => 'required|string|max:255',
             'location' => 'required|string|max:255',
-            'pincode' => 'required|string|min:6|max:20',
+            'pincode' => 'required|string|digits:6',
             'details' => 'nullable|string|max:255',
         ]);
 
@@ -89,11 +89,11 @@ class PlantController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:plants,name,' . $id,
             'address' => 'required|string|max:255',
             'manager' => 'required|string|max:255',
             'location' => 'required|string|max:255',
-            'pincode' => 'required|string|min:6|max:20',
+            'pincode' => 'required|string|digits:6',
             'details' => 'nullable|string|max:255',
         ]);
         

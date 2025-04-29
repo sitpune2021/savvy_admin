@@ -256,6 +256,7 @@ $('.js-example-basic-single').on('select2:open', function () {
 
 $(document).ready(function () {
 	let addressIndex = 1;
+	let addressContractIndex = 1;
 
 	function manageButtonBlock() {
 		$('.address-buttons').remove();
@@ -274,7 +275,7 @@ $(document).ready(function () {
 		`;
 	}
 
-	function generateAddressBlock(index, data = {}, isEdit = false) {
+	function generateAddressBlock(index, contactIndex, data = {}, isEdit = false) {
 		const routes = window.routeData || [];
 		const drivers = window.driverData || [];
 		const filteredRoutes = routes.filter(route => route.plant_id == data?.address?.plant_id);
@@ -364,10 +365,6 @@ $(document).ready(function () {
 			</select>
 		`);
 
-
-
-
-
 		const block = $(`
 			<div class="form-group-item card address-block">
 				<div class="card-header d-flex justify-content-between align-items-center add-remove">
@@ -417,34 +414,73 @@ $(document).ready(function () {
 							<label>Plant</label>
 						</div>
 					</div>
-					<div class="col-md-4 col-sm-12" id="route_select">
+					<div class="col-lg-4 col-md-6 col-sm-12" id="route_select">
 						<div class="input-block mb-3 route-container">
 							<label>Routes</label>
 						</div>
 					</div>
-					<div class="col-md-4 col-sm-12" id="driver_select">
+					<div class="col-lg-4 col-md-6 col-sm-12" id="driver_select">
 						<div class="input-block mb-3 driver-container">
 							<label>Drivers</label>
 						</div>
 					</div>
-					<div class="col-md-4 col-sm-12">
-						<div class="input-block mb-3">
-							<label>Name</label>
-							<input name="shipping[${index}][contact_person]" type="text" class="form-control"
-								placeholder="Enter Name" value="${data?.address?.contact_person || ''}">
+					<div class="col-12" id="shipping_contact_div_${index}">
+					${data?.address?.id && data?.address?.contacts?.length > 0 ? '' : `
+                        <div class="row align-item-center ">
+							<input name="shipping[${index}][shipping_contacts][${contactIndex}][id]" type="hidden" value="" >
+							<div class="col-lg-5 col-md-6 col-sm-12">
+								<div class="input-block mb-3">
+									<label>Name</label>
+									<input name="shipping[${index}][shipping_contacts][${contactIndex}][name]" type="text" class="form-control"
+										placeholder="Enter Name" value="${data?.address?.name || ''}">
+								</div>
+							</div>
+							<div class="col-lg-5 col-md-6 col-sm-12">
+								<div class="input-block mb-3">
+									<label>Mobile No</label>
+									<input name="shipping[${index}][shipping_contacts][${contactIndex}][phone]" type="text" class="form-control"
+										placeholder="Enter Mobile No" value="${data?.address?.phone || ''}">
+								</div>
+							</div>
+							<div class="col-lg-2 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
+								<button type="button" class="btn btn-sm btn-success"
+									id="add-address-contacts_${index}">
+									+ Add Contact
+								</button>
+							</div>
 						</div>
-					</div>
-					<div class="col-md-4 col-sm-12">
-						<div class="input-block mb-3">
-							<label>Mobile No</label>
-							<input name="shipping[${index}][contact_person_phone]" type="text" class="form-control"
-								placeholder="Enter Mobile No" value="${data?.address?.contact_person_phone || ''}">
-						</div>
-					</div>
-					<div class="col-md-4 col-sm-12" id="machine_select">
-						<div class="input-block mb-3 deployed-container">
-							<label>Deployed</label>
-						</div>
+						`}
+						 ${data?.address?.contacts?.map((contact, contactIndex) => `
+							<div class="row align-items-center address-contact-block" >
+								<input name="shipping[${index}][shipping_contacts][${contactIndex}][id]" type="hidden" value="${contact.id}">
+								<div class="col-lg-5 col-md-6 col-sm-12">
+									<div class="input-block mb-3">
+										<label>Name</label>
+										<input name="shipping[${index}][shipping_contacts][${contactIndex}][name]" type="text" class="form-control"
+											placeholder="Enter Name" value="${contact.name || ''}">
+									</div>
+								</div>
+								<div class="col-lg-5 col-md-6 col-sm-12">
+									<div class="input-block mb-3">
+										<label>Mobile No</label>
+										<input name="shipping[${index}][shipping_contacts][${contactIndex}][phone]" type="text" class="form-control"
+											placeholder="Enter Mobile No" value="${contact.phone || ''}">
+									</div>
+								</div>
+								${contactIndex === 0 ? `
+									<div class="col-lg-2 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
+										<button type="button" class="btn btn-sm btn-success" id="add-address-contacts_${index}">
+											+ Add Contact
+										</button>
+									</div>
+								` : `<div
+                                        class="col-lg-2 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
+                                        <button type="button" class="btn btn-sm btn-danger" id="remove-address-contacts" data-index="${index}" data-is-delete="${contact.id}">
+                                            - remove Contact
+                                        </button>
+                                    </div>`}
+							</div>
+						`).join('')}
 					</div>
 					<div class="col-lg-4 col-md-6 col-sm-12" id="product_select">
                         <div class="input-block mb-3 product-container">
@@ -453,8 +489,8 @@ $(document).ready(function () {
                     </div>
 					<div class="col-lg-4 col-md-6 col-sm-12">
 						<div class="input-block mb-3">
-							<label>Quantity</label>
-							<input name="contract[${index}][quantity]" type="number" class="form-control" placeholder="Enter Quantity" value="${data?.contract?.quantity || '1'}">
+							<label>Stock</label>
+							<input name="contract[${index}][quantity]" type="number" class="form-control" placeholder="Enter Stock" value="${data?.contract?.quantity || '1'}">
 						</div>
 					</div>
 					
@@ -485,7 +521,7 @@ $(document).ready(function () {
 						</div>
 					</div>
 
-					<div class="col-lg-6 col-md-6 col-sm-12">
+					<div class="col-lg-4 col-md-6 col-sm-12">
 						<div class="input-block mb-3">
 							<label>Duration</label>
 							<input name="contract[${index}][duration]" type="number" class="form-control" placeholder="Enter Duration"
@@ -493,9 +529,15 @@ $(document).ready(function () {
 						</div>
 					</div>
 
-					<div class="col-lg-6 col-md-6 col-sm-12" id="duration_type_select">
+					<div class="col-lg-4 col-md-6 col-sm-12" id="duration_type_select">
 						<div class="input-block mb-3 duration-type-container">
 							<label>Duration Type</label>
+						</div>
+					</div>
+					
+					<div class="col-lg-4 col-md-6 col-sm-12" id="machine_select">
+						<div class="input-block mb-3 deployed-container">
+							<label>Deployed</label>
 						</div>
 					</div>
 
@@ -512,6 +554,7 @@ $(document).ready(function () {
 		block.find('.days-container').append(frequencyDaysSelect);
 		block.find('.duration-type-container').append(durationTypeSelect);
 		block.find('select.select').select2();
+
 		if (frequencySelect.val() === 'weekly') {
 			block.find(`#days_select_${index}`).show();
 		} else {
@@ -521,10 +564,65 @@ $(document).ready(function () {
 		return block;
 	}
 
+	function generateAddressContactBlock(index, addressIndex) {
+		const addressBlock = $(`<div class="row align-item-center address-contact-block">
+								   <input name="shipping[${addressIndex}][shipping_contacts][${index}][id]" type="hidden" value="" >
+                                    <div class="col-lg-5 col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>Name</label>
+                                            <input name="shipping[${addressIndex}][shipping_contacts][${index}][name]" type="text"
+                                                class="form-control" placeholder="Enter Name">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-5 col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>Mobile No</label>
+                                            <input name="shipping[${addressIndex}][shipping_contacts][${index}][phone]"
+                                                type="text" class="form-control" placeholder="Enter Mobile No">
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="col-lg-2 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
+                                        <button type="button" class="btn btn-sm btn-danger" id="remove-address-contacts" data-index="${addressIndex}">
+                                            - remove Contact
+                                        </button>
+                                    </div>
+                                </div>`);
+		return addressBlock;
+	}
+
 	$('#add-address').on('click', function () {
-		const block = generateAddressBlock(addressIndex++, {}, false);
-		$('#shipping_address_div').append(block);
+		const block = generateAddressBlock(addressIndex++, addressContractIndex++, {}, window.CustomerExists);
+		if (window.CustomerExists) {
+			$('#address-container').append(block);
+			manageButtonBlock();
+		} else {
+			$('#shipping_address_div').append(block);
+		}
 	});
+
+
+	$(document).on('click', '[id^="add-address-contacts"]', function () {
+		let $button = $(this);
+		let buttonId = $button.attr('id');
+		let suffix = buttonId.replace('add-address-contacts', ''); // e.g. '', '_1', '_2'
+		let shippingDivId = 'shipping_contact_div' + suffix;
+
+		let parentindex = 0;
+		$('#' + shippingDivId)
+			.find('input[name*="[name]"]')
+			.each(function () {
+				const nameAttr = $(this).attr('name');
+				const match = nameAttr.match(/^shipping\[(\d+)]/);
+				if (match) {
+					parentindex = match[1]; // Use match[1] to get the index
+				}
+			});
+
+		const contactBlock = generateAddressContactBlock(addressContractIndex++, parentindex, {}, false);
+		$('#' + shippingDivId).append(contactBlock);
+	});
+
 
 	$(document).on('click', '.remove-address', function () {
 		if ($('#shipping_address_div .address-block').length > 1) {
@@ -532,26 +630,28 @@ $(document).ready(function () {
 		}
 	});
 
-	$('#add-address-edit').on('click', function () {
-		const block = generateAddressBlock(addressIndex++, {}, true);
-		$('#address-container').append(block);
-		manageButtonBlock();
+	$(document).on('click', '#remove-address-contacts', function () {
+		$(this).closest('.address-contact-block').remove();
 	});
 
+
+
 	$('.edit-address').on('click', function () {
-		$('#add-address-edit').hide();
+		$('#add-address').hide();
 		$('.address-block').remove();
 		const data = {
-			address: $(this).data('address'),
+			address: {
+				...$(this).data('address'),
+			},
 			contract: $(this).data('contract')
 		};
-		const block = generateAddressBlock(addressIndex++, data, true);
+		const block = generateAddressBlock(addressIndex++, addressContractIndex++, data, true);
 		$('#address-container').append(block);
 		manageButtonBlock();
 	});
 
 	$(document).on('click', '.remove-address-edit', function () {
-		$('#add-address-edit').show();
+		$('#add-address').show();
 		$(this).closest('.address-block').remove();
 		manageButtonBlock();
 	});
@@ -589,7 +689,7 @@ $(document).ready(function () {
 	if (selectedCustomerId) {
 		$('#customer-select').val(selectedCustomerId).trigger('change');
 	}
-	if(selectedDeliveryId) {
+	if (selectedDeliveryId) {
 		$('#delivered_qty').val(selectedDeliveryId);
 	}
 });
@@ -722,8 +822,6 @@ $(document).ready(function () {
 		const frequency = $frequencySelect.val();
 		const suffix = getSuffixFromId($frequencySelect.attr('id'));
 		const $daysBlock = $('#days_select' + suffix);
-		console.log($daysBlock);
-
 
 		if ($daysBlock.length) {
 			if (frequency === 'weekly') {

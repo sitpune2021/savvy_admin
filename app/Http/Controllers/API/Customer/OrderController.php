@@ -20,19 +20,12 @@ class OrderController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user || !$user->id) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Authenticated user or shipping ID is missing.',
-            ], 422);
-        }
-
-        $shippingId = $user->id;
+        $shippingId = $user->shippingAddress->id;
         $status = $request->status;
         $today = Carbon::today();
 
         // Base query with eager loading
-        $ordersQuery = Orders::with(['drivers:id,name,phone_no', 'contract.product'])
+        $ordersQuery = Orders::with(['drivers:id,name,phone_no', 'contract.product', 'contract:id,quantity'])
             ->where('shipping_id', $shippingId);
 
         // If status is passed, return filtered order history
@@ -44,6 +37,7 @@ class OrderController extends Controller
                     'id' => $order->id,
                     'delivered_qty' => $order->develivered_qty, // Fixed typo from 'develivered_qty'
                     'return_qty' => $order->return_qty,
+                    'balance' => strval(optional($order->contract)->quantity),
                     'driver_name' => optional($order->drivers)->name,
                     'driver_phone_no' => optional($order->drivers)->phone_no,
                     'status' => $order->status,
@@ -63,7 +57,7 @@ class OrderController extends Controller
         $todayOrder = (clone $ordersQuery)->whereDate('created_at', $today)->first();
 
         if (!$todayOrder) {
-            $contract = $user->contract ?? Contracts::find($user->contract_id);
+            $contract = $user->shippingAddress->contract ?? Contracts::find($user->shippingAddress->contract_id);
             if (!$contract) {
                 return response()->json([
                     'status' => false,
@@ -101,6 +95,7 @@ class OrderController extends Controller
             'delivered_qty' => $todayOrder->develivered_qty,
             'return_qty' => $todayOrder->return_qty,
             'driver_name' => optional($todayOrder->drivers)->name,
+            'balance' => strval(optional($todayOrder->contract)->quantity),
             'driver_phone_no' => optional($todayOrder->drivers)->phone_no,
             'status' => $todayOrder->status,
             'created_at' => $todayOrder->created_at->toDateTimeString(),
@@ -159,17 +154,24 @@ class OrderController extends Controller
     public function products()
     {
         $products = Product::all();
+
+        $products->transform(function($product) {
+            $product->image = url('storage/product/' . $product->image);
+            return $product;
+        });
+
         return response()->json([
             'status' => true,
             'message' => 'Products retrieved successfully',
             'data' => $products
         ], 200);
+
     }
 
     public function requestOrderList()
     {
         $user = auth()->user();
-        $orders = Orders::where('shipping_id', $user->id)->where('status', 'in-progress')->get();
+        $orders = Orders::where('shipping_id', $user->shippingAddress->id)->where('status', 'in-progress')->get();
             return response()->json([
                 'status' => true,
                 'message' => 'Order list retrieved successfully',
@@ -179,7 +181,6 @@ class OrderController extends Controller
 
     public function requestOrderUpdate($id)
     {
-        $user = auth()->user();
         $order = Orders::findOrFail($id);
         $order->status = 'completed';
         $order->save();

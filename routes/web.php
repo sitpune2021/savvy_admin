@@ -8,6 +8,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\RouteController;
+use App\Http\Controllers\MaintenanceController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -98,12 +99,11 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('customer', CustomerController::class);
     Route::resource('driver', DriverController::class);
     Route::resource('order', OrderController::class);
+    Route::resource('maintenance', MaintenanceController::class);
+    Route::put('/maintenance/{id}/status', [MaintenanceController::class, 'updateStatus'])->name('maintenance.update.status');
+
     Route::get('/order/{id}/assign-driver', [OrderController::class, 'assignDriver'])->name('order.assign-driver');
     Route::get('customer/{id}/assign-route', [CustomerController::class, 'assignRoute'])->name('customer.assign-route');
     Route::put('customer/{id}/shipping-address', [CustomerController::class, 'storeUpdateShippingAddress'])->name('customer.store-update-shipping-address');
     Route::post('assign-route', [OrderController::class, 'storeRoute'])->name('order.store-route');
-
-
-
-
 });

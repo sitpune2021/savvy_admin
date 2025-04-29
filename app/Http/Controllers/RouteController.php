@@ -37,7 +37,7 @@ class RouteController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:routes',
             'path' => 'required|string|max:255',
             'plant_id' => 'required|exists:plants,id',
 
@@ -91,7 +91,7 @@ class RouteController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:routes,name,' . $id,
             'path' => 'required|string|max:255',
             'plant_id' => 'required|exists:plants,id',
 

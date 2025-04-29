@@ -11,12 +11,14 @@ use App\Models\Product;
 use App\Models\Orders;
 use App\Models\ShippingAddress;
 use App\Models\Drivers;
+use App\Models\ShippingContact;
 use App\Models\Routes;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use Illuminate\Support\Arr;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+
 
 class CustomerController extends Controller
 {
@@ -49,15 +51,15 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'customer_zohi_id' => 'required|string|unique:customers',
-            'name' => 'required|string|max:255', 
+            'customer_zohi_id' => 'required|string|unique:customers,customer_zohi_id',
+            'name' => 'required|string|max:255|unique:customers,name', 
             'email' => 'nullable|email|unique:customers,email|max:255', 
-            'phone_no' => 'nullable|digits:10',
+            'phone_no' => 'nullable|digits:10|unique:customers,phone_no',
             'billing_address' => 'required|string|max:255',
             'billing_country' => 'required|string|max:255',
             'billing_state' => 'nullable|string|max:255',
             'billing_city' => 'required|string|max:255',
-            'billing_pincode' => 'required',
+            'billing_pincode' => 'required|digits:6|numeric',
 
             'shipping.*.plant_id' => 'required|exists:plants,id',
             'shipping.*.route_id' => 'required|exists:routes,id',
@@ -67,8 +69,9 @@ class CustomerController extends Controller
             'shipping.*.shipping_state' => 'nullable|string|max:255',
             'shipping.*.shipping_city' => 'required|string|max:255',
             'shipping.*.shipping_pincode' => 'required|digits:6',
-            'shipping.*.contact_person' => 'required|string|max:255',
-            'shipping.*.contact_person_phone' => 'required|digits:10',
+
+            'shipping.*.shipping_contacts.*.name' => 'required|string|max:255|unique:shipping_contacts,name',
+            'shipping.*.shipping_contacts.*.phone' => 'required|digits:10|unique:shipping_contacts,phone',
             'shipping.*.machine_deployed' => 'nullable|string|max:255',
 
             'contract.*.product_id' => 'required|exists:products,id',
@@ -77,7 +80,7 @@ class CustomerController extends Controller
             'contract.*.duration' => 'nullable|integer|min:1',
             'contract.*.duration_type' => 'nullable|string|in:days,weeks,months,years',
             'contract.*.frequency' => 'required|string|in:daily,alternate_day,weekly,monthly',
-            'contract.*.frequency_count' => 'nullable|integer|min:1',
+            'contract.*.frequency_count' => 'required_if:contract.*.frequency,weekly,alternate_day|nullable|integer|min:1',
             'contract.*.days' => 'nullable|array',
             'contract.*.days.*' => 'in:sunday,monday,tuesday,wednesday,thursday,friday,saturday',
         ],
@@ -107,12 +110,14 @@ class CustomerController extends Controller
             'shipping.*.shipping_pincode.required' => 'The shipping pincode is required.',
             'shipping.*.shipping_pincode.digits' => 'The shipping pincode must be exactly 6 digits.',
         
-            'shipping.*.contact_person.required' => 'The contact person is required.',
-            'shipping.*.contact_person.string' => 'The contact person must be a string.',
-            'shipping.*.contact_person.max' => 'The contact person name may not be greater than 255 characters.',
+            'shipping.*.shipping_contacts.*.name.required' => 'The contact person is required.',
+            'shipping.*.shipping_contacts.*.name.string' => 'The contact person must be a string.',
+            'shipping.*.shipping_contacts.*.name.max' => 'The contact person name may not be greater than 255 characters.',
+            'shipping.*.shipping_contacts.*.name.unique' => 'The contact person name has already been taken.',
         
-            'shipping.*.contact_person_phone.required' => 'The contact person\'s phone number is required.',
-            'shipping.*.contact_person_phone.digits' => 'The contact person\'s phone number must be exactly 10 digits.',
+            'shipping.*.shipping_contacts.*.phone.required' => 'The contact person\'s phone number is required.',
+            'shipping.*.shipping_contacts.*.phone.digits' => 'The contact person\'s phone number must be exactly 10 digits.',
+            'shipping.*.shipping_contacts.*.phone.unique' => 'The contact person\'s phone number has already been taken.',
         
             'shipping.*.machine_deployed.string' => 'The machine deployed field must be a string.',
             'shipping.*.machine_deployed.max' => 'The machine deployed field may not be greater than 255 characters.',
@@ -134,35 +139,39 @@ class CustomerController extends Controller
             'contract.*.frequency.in' => 'The selected frequency is invalid.',
             'contract.*.frequency_count.integer' => 'The frequency count must be an integer.',
             'contract.*.frequency_count.min' => 'The frequency count must be at least 1.',
+            'contract.*.frequency_count.required_if' => 'The frequency count field is required when Delivery Frequency is weekly.',
+            
             'contract.*.days.array' => 'The days must be an array.',
             'contract.*.days.*.in' => 'The selected days are invalid.',
             'contract.*.days.*.required' => 'The days field is required.',
             'contract.*.days.*.string' => 'The days field must be a string.',
             'contract.*.days.*.max' => 'The days field may not be greater than 255 characters.',
         ]);
+
+        $validator->after(function ($validator) use ($request) {
+            $data = $request->all();
+            foreach ($data['contract'] ?? [] as $index => $contract) {
+                $days = $contract['days'] ?? [];
+        
+                if (
+                    $contract['frequency'] == 'weekly' &&
+                    is_array($days) &&
+                    !empty($contract['frequency_count']) &&
+                    $contract['frequency_count'] > count($days) // > instead of <
+                ) {
+                    $validator->errors()->add(
+                        "contract.$index.frequency_count",
+                        'Frequency count cannot be greater than the number of selected days.'
+                    );
+                }
+                
+            }
+        });
         
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $days = $request->input('days');
-        $frequencyCount = $request->input('frequency_count');
-        $frequency = $request->input('frequency');
-
-        if (
-            $frequency !== 'daily' &&
-            is_array($days) &&
-            !empty($frequencyCount) &&
-            $frequencyCount > count($days)
-        ) {
-            $validator->errors()->add(
-                'frequency_count',
-                'Frequency count cannot be greater than the number of selected days.'
-            );
-        }
-        if($request->frequency_count > $request->days){
-            return response()->json(['error' => 'Frequency count cannot be greater than the number of days.'], 422);
-        }
         DB::beginTransaction();
         try {
             $customerData = $request->only([
@@ -190,6 +199,14 @@ class CustomerController extends Controller
                 $shippingData['customer_id'] = $customer->id;
                 $shippingData['contract_id'] = $contract->id;
                 $shipping = ShippingAddress::create($shippingData);
+                foreach ($shippingData['shipping_contacts'] as $contact) {
+                    ShippingContact::create([
+                        'shipping_id' => $shipping->id,
+                        'name' => $contact['name'],
+                        'phone'=> $contact['phone'],
+                    ]);
+                };
+
                 if($contract->frequency == 'daily'){
                     $order = Orders::create([
                         'customer_id'    => $customer->id,
@@ -198,7 +215,6 @@ class CustomerController extends Controller
                         'shipping_id'    => $shipping->id,
                         'route_id'       => $shipping->route_id,
                         'status'         => 'pending',
-                        'develivered_qty'  => $contract->quantity, // ✅ corrected spelling
                     ]);
                 }
                 if($contract->frequency == 'alternate_day'){
@@ -209,7 +225,6 @@ class CustomerController extends Controller
                         'shipping_id'    => $shipping->id,
                         'route_id'       => $shipping->route_id,
                         'status'         => 'pending',
-                        'develivered_qty'  => $contract->quantity, // ✅ corrected spelling
                     ]);
                 }
                 if($contract->frequency == 'weekly'){
@@ -223,8 +238,6 @@ class CustomerController extends Controller
                             'shipping_id'    => $shipping->id,
                             'route_id'       => $shipping->route_id,
                             'status'         => 'pending',
-                            'develivered_qty'  => $contract->quantity, // ✅ corrected spelling
-                            'return_qty'     => 0,
                         ]);
                         $orders[] = $order;
                     }
@@ -284,7 +297,7 @@ class CustomerController extends Controller
             'customer_zohi_id' => 'required|string|unique:customers,customer_zohi_id,' . $id,
             'name' => 'required|string|max:255', 
             'email' => 'nullable|email|unique:customers,email,' . $id . '|max:255',
-            'phone_no' => 'nullable|digits:10',
+            'phone_no' => 'nullable|digits:10|unique:customers,phone_no,' . $id . '|max:15',
             'billing_address' => 'required|string|max:255',
             'billing_country' => 'required|string|max:255',
             'billing_state' => 'nullable|string|max:255',
@@ -365,10 +378,11 @@ class CustomerController extends Controller
             'shipping.*.shipping_state' => 'nullable|string|max:255',
             'shipping.*.shipping_city' => 'required|string|max:255',
             'shipping.*.shipping_pincode' => 'required|digits:6',
-            'shipping.*.contact_person' => 'required|string|max:255',
-            'shipping.*.contact_person_phone' => 'required|digits:10',
             'shipping.*.machine_deployed' => 'nullable|string|max:255',
 
+            'shipping.*.shipping_contacts.*.name' => 'required|string|max:255,',
+            'shipping.*.shipping_contacts.*.phone' => 'required|digits:10,',
+            
             'contract.*.product_id' => 'required|exists:products,id',
             'contract.*.quantity' => 'required|integer|min:1',
             'contract.*.price' => 'required|string|max:255',
@@ -405,12 +419,12 @@ class CustomerController extends Controller
             'shipping.*.shipping_pincode.required' => 'The shipping pincode is required.',
             'shipping.*.shipping_pincode.digits' => 'The shipping pincode must be exactly 6 digits.',
         
-            'shipping.*.contact_person.required' => 'The contact person is required.',
-            'shipping.*.contact_person.string' => 'The contact person must be a string.',
-            'shipping.*.contact_person.max' => 'The contact person name may not be greater than 255 characters.',
+            'shipping.*.shipping_contacts.*.name.required' => 'The contact person is required.',
+            'shipping.*.shipping_contacts.*.name.string' => 'The contact person must be a string.',
+            'shipping.*.shipping_contacts.*.name.max' => 'The contact person name may not be greater than 255 characters.',
         
-            'shipping.*.contact_person_phone.required' => 'The contact person\'s phone number is required.',
-            'shipping.*.contact_person_phone.digits' => 'The contact person\'s phone number must be exactly 10 digits.',
+            'shipping.*.shipping_contacts.*.phone.required' => 'The contact person\'s phone number is required.',
+            'shipping.*.shipping_contacts.*.phone.digits' => 'The contact person\'s phone number must be exactly 10 digits.',
         
             'shipping.*.machine_deployed.string' => 'The machine deployed field must be a string.',
             'shipping.*.machine_deployed.max' => 'The machine deployed field may not be greater than 255 characters.',
@@ -438,6 +452,40 @@ class CustomerController extends Controller
             'contract.*.days.*.string' => 'The days field must be a string.',
             'contract.*.days.*.max' => 'The days field may not be greater than 255 characters.',
         ]);
+
+        $validator->after(function ($validator) use ($request) {
+            foreach ($request->shipping ?? [] as $sIndex => $shipping) {
+                foreach ($shipping['shipping_contacts'] ?? [] as $cIndex => $contact) {
+                    $contactId = $contact['id'] ?? null;
+        
+                    // Check for duplicate name in DB
+                    $existingName = ShippingContact::where('name', $contact['name'] ?? '')
+                        ->when($contactId, fn($query) => $query->where('id', '!=', $contactId))
+                        ->exists();
+        
+                    if ($existingName) {
+                        $validator->errors()->add(
+                            "shipping.$sIndex.shipping_contacts.$cIndex.name",
+                            'The contact person name has already been taken.'
+                        );
+                    }
+        
+                    // Check for duplicate phone in DB
+                    $existingPhone = ShippingContact::where('phone', $contact['phone'] ?? '')
+                        ->when($contactId, fn($query) => $query->where('id', '!=', $contactId))
+                        ->exists();
+        
+                    if ($existingPhone) {
+                        $validator->errors()->add(
+                            "shipping.$sIndex.shipping_contacts.$cIndex.phone",
+                            'The contact person phone number has already been taken.'
+                        );
+                    }
+                }
+            }
+        });
+
+        
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -486,15 +534,44 @@ class CustomerController extends Controller
                 // 2. Handle Shipping Address
                 $shippingData['customer_id'] = $customer->id;
                 $shippingData['contract_id'] = $contract->id;
-        
+
                 if (!empty($shippingData['id'])) {
                     $address = ShippingAddress::findOrFail($shippingData['id']);
                     $address->update($shippingData);
                 } else {
                     $address = ShippingAddress::create($shippingData);
                 }
+
+                if (isset($shippingData['shipping_contacts']) && is_array($shippingData['shipping_contacts'])) {
+                    $existingContacts = ShippingContact::where('shipping_id', $address->id)->get();
+                    $existingIds = $existingContacts->pluck('id')->toArray();
+                    $receivedIds = []; // Will collect IDs from the incoming data
+                    foreach ($shippingData['shipping_contacts'] as $contact) {
+                        if (!empty($contact['id'])) {
+                            $receivedIds[] = $contact['id']; // Track received ID
+                            $contactModel = ShippingContact::findOrFail($contact['id']);
+                            $contactModel->update([
+                                'name' => $contact['name'],
+                                'phone' => $contact['phone'],
+                            ]);
+                        } else {
+                            $newContact = ShippingContact::create([
+                                'shipping_id' => $address->id,
+                                'name' => $contact['name'],
+                                'phone' => $contact['phone'],
+                            ]);
+                            $receivedIds[] = $newContact->id; // Track new ID too
+                        }
+                    }
+                
+                    $contactsToDelete = array_diff($existingIds, $receivedIds);
+                    if (!empty($contactsToDelete)) {
+                        ShippingContact::whereIn('id', $contactsToDelete)->delete();
+                    }
+                }
+                
+
         
-                // 3. Generate Order if needed
                 $todayDay = strtolower(Carbon::now()->format('l')); // e.g. 'monday'
                 $contractDays = explode('|', strtolower($contract->days ?? ''));
                 $existingOrder = Orders::where('customer_id', $customer->id)
@@ -522,8 +599,6 @@ class CustomerController extends Controller
                             'shipping_id'    => $address->id,
                             'route_id'       => $address->route_id,
                             'status'         => 'pending',
-                            'develivered_qty'  => $contract->quantity, // ✅ corrected spelling
-                            'return_qty'     => 0,
                         ]);
                         $orders[] = $order;
                     }

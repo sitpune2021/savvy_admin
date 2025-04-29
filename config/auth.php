@@ -46,7 +46,7 @@ return [
         ],
         'customer_api' => [
             'driver' => 'sanctum',
-            'provider' => 'ShippingAddress',
+            'provider' => 'ShippingContact',
         ],
     ],
 
@@ -78,9 +78,9 @@ return [
             'model' => App\Models\Drivers::class,
         ],
 
-        'ShippingAddress' => [
+        'ShippingContact' => [
             'driver' => 'eloquent',
-            'model' => App\Models\ShippingAddress::class,
+            'model' => App\Models\ShippingContact::class,
         ],
 
         // 'users' => [
