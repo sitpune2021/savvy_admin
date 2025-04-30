@@ -77,7 +77,7 @@
 
             <div class="card">
                 <div class="card-body">
-                    <ul class="nav nav-tabs nav-tabs-custom nav-success nav-justified mb-3" role="tablist">
+                    <ul class="nav nav-pills animation-nav gap-2 mb-3" role="tablist">
                         <li class="nav-item">
                             <a class="nav-link active" data-bs-toggle="tab" href="#fuel1" role="tab">
                                 Fuel

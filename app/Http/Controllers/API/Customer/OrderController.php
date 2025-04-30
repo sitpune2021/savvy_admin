@@ -24,11 +24,9 @@ class OrderController extends Controller
         $status = $request->status;
         $today = Carbon::today();
 
-        // Base query with eager loading
         $ordersQuery = Orders::with(['drivers:id,name,phone_no', 'contract.product', 'contract:id,quantity'])
             ->where('shipping_id', $shippingId);
 
-        // If status is passed, return filtered order history
         if ($status) {
             $orderHistory = (clone $ordersQuery)->where('status', $status)->get();
 
@@ -140,15 +138,70 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-            'date'=>'required|date',
+            'product'           => 'required|array|min:1',
+            'product.*.product_id' => 'required|exists:products,id',
+            'product.*.quantity'   => 'required|integer|min:1',
+            'date'             => 'required|date_format:d-m-Y',
         ]);
     
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
         }
-        $user = auth()->user();
+    
+        try {
+            $date = Carbon::createFromFormat('d-m-Y', $request->date)->format('Y-m-d');
+            $user = auth()->user();
+    
+            if (!$user || !$user->shippingAddress) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User or shipping address not found.'
+                ], 404);
+            }
+    
+            $shipping = ShippingAddress::find($user->shippingAddress->id);
+            $activeContract = $shipping->Contract()
+                ->where('type', 'contracts')
+                ->where('status', 'active')
+                ->first();
+    
+            foreach ($request->product as $productData) {
+                Contracts::create([
+                    'type'             => 'additional',
+                    'customer_id'      => $user->shippingAddress->customer_id,
+                    'product_id'       => $productData['product_id'],
+                    'quantity'         => $productData['quantity'],
+                    'price'            => $activeContract ? $activeContract->price : 0,
+                    'duration'         => 1,
+                    'duration_type'    => 'days',
+                    'frequency'        => null,
+                    'frequency_count'  => null,
+                    'days'             => null,
+                    'status'           => 'active',
+                    'date'             => $date,
+                    'send_by'          => $user->id,
+                    'accepted_status'  => 'pending',
+                ]);
+            }
+    
+            return response()->json([
+                'status' => true,
+                'message' => 'Order request sent successfully',
+            ], 201);
+    
+        } catch (\Exception $e) {
+            Log::error('Contract creation failed: ' . $e->getMessage());
+    
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while processing your request. Please try again later.',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function products()
@@ -188,6 +241,17 @@ class OrderController extends Controller
             'status' => true,
             'message' => 'Order accepted successfully',
             'data' => $order // Use $order, not $orders
+        ], 200);
+    }
+
+    public function getRequestedOrders()
+    {
+        $user = auth()->user();
+        $orders = Contracts::where('send_by', $user->id)->get();
+        return response()->json([
+            'status' => true,
+            'message' => 'Requested orders retrieved successfully',
+            'data' => $orders
         ], 200);
     }
 

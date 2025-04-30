@@ -20,8 +20,9 @@ Route::post('reset-password', [AuthController::class, 'resetPassword']);
 // 👤 Customer Routes
 Route::middleware('auth:customer_api')->prefix('customer')->group(function () {
     Route::resource('orders', CustomerOrderController::class)->except([
-        'create', 'edit', 'destroy', 'update', 'show'
+         'edit', 'destroy', 'update', 'show'
     ]);
+    Route::get('orders/send-requests', [CustomerOrderController::class, 'getRequestedOrders']);
     Route::get('products', [CustomerOrderController::class, 'products']);
     Route::post('password', [CustomerProfileController::class, 'updatePassword']);
     Route::post('delete-account', [CustomerProfileController::class, 'deleteAccount']);

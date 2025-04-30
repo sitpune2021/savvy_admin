@@ -99,6 +99,14 @@
                 </li>
 
                 <li class="nav-item">
+                    <a class="nav-link menu-link {{ Request::is('request-order*') ? 'active' : '' }}"
+                        href="{{ url('request-order') }}">
+                        <i class="ri-dashboard-2-line"></i>
+                        <span data-key="t-dashboards">Orders Request</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a class="nav-link menu-link {{ Request::is('maintenance*') ? 'active' : '' }}"
                         href="{{ url('maintenance') }}">
                         <i class="ri-dashboard-2-line"></i>

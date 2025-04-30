@@ -25,25 +25,17 @@ class OrderController extends Controller
         $orders = Orders::with('customers', 'drivers')->orderBy('created_at', 'desc') // or 'id', depending on your use case
         ->get();
         return view('pages.order.index', compact('orders'));
-        //  border-0 mb-0
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         $show = false;
         $customers= Customers::whereHas('contracts')->whereHas('shippingAddresses')->with('contracts.product', 'shippingAddresses')->get();
         $contracts = Contracts::all();
         $shippingAddresses = ShippingAddress::all();
-        // $routes = Routes::whereHas('drivers')->get();
         return view('pages.order.add-edit',compact('show', 'customers' ,  'contracts', 'shippingAddresses'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -77,32 +69,24 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
         $show = true;
         $Order = Orders::findOrFail($id);
         $customers= Customers::whereHas('contracts')->whereHas('shippingAddresses')->with('contracts.product', 'shippingAddresses')->get();
-        // $routes = Routes::whereHas('drivers')->get();
         $contracts = Contracts::all();
         $shippingAddresses = ShippingAddress::all();
         return view('pages.order.add-edit',compact('show', 'customers' , 'Order', 'contracts', 'shippingAddresses'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
         try {
             $show = false;
             $Order = Orders::findOrFail($id);
             $customers= Customers::whereHas('contracts')->whereHas('shippingAddresses')->with('contracts.product', 'shippingAddresses')->get();
-            // $routes = Routes::whereHas('drivers')->get();
             $contracts = Contracts::all();
-        $shippingAddresses = ShippingAddress::all();
+            $shippingAddresses = ShippingAddress::all();
             return view('pages.order.add-edit',compact('show', 'customers' , 'Order','contracts', 'shippingAddresses'));
         } catch (ModelNotFoundException $e) {
             return back()->withErrors(['error' => 'Orders not found.']);
@@ -111,48 +95,6 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    // public function update(Request $request, string $id)
-    // {
-    //     $validator = Validator::make($request->all(), [
-    //         'customer_id' => 'required|exists:customers,id',
-    //         'contract_id' => 'nullable|exists:contracts,id',
-    //         'shipping_id' => 'nullable|exists:shipping_addresses,id',
-    //         'route_id' => 'nullable|exists:routes,id',
-    //         'develivered_qty' => 'nullable|integer|min:0',
-    //     ]);
-        
-    //     if ($validator->fails()) {
-    //         return response()->json(['errors' => $validator->errors()], 422);
-    //     }
-        
-    //     try {
-    //         $order = Orders::findOrFail($id);
-    //         $driver = Drivers::where('route_id', $request->route_id)->first();
-    //         $order->update([
-    //             'customer_id' => $request->customer_id,
-    //             'contract_id' => $request->contract_id,
-    //             'shipping_id' => $request->shipping_id,
-    //             'route_id' => $request->route_id,
-    //             'driver_id' => $driver->id,
-    //             'develivered_qty' => $request->develivered_qty,
-    //             'return_qty' => $request->return_qty,
-    //             'status' => 'pending',
-    //         ]);
-    //         return response()->json([
-    //             'message' => 'Order updated successfully!',
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         return response()->json(['error' => $e->getMessage()], 500);
-    //     }
-        
-    // }
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         try {
@@ -220,6 +162,5 @@ class OrderController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
 
 }

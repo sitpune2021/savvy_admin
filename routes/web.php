@@ -9,6 +9,7 @@ use App\Http\Controllers\DriverController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\MaintenanceController;
+use App\Http\Controllers\RequestOrdersController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -99,6 +100,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('customer', CustomerController::class);
     Route::resource('driver', DriverController::class);
     Route::resource('order', OrderController::class);
+    Route::resource('request-order', RequestOrdersController::class);
     Route::resource('maintenance', MaintenanceController::class);
     Route::put('/maintenance/{id}/status', [MaintenanceController::class, 'updateStatus'])->name('maintenance.update.status');
 
