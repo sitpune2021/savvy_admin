@@ -19,7 +19,6 @@
 @push('scripts')
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
         integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-    <!--datatable js-->
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
@@ -91,7 +90,7 @@
                                                 {{ ucfirst(str_replace('_', ' ', $contract->accepted_status)) }}
                                             </span>
                                         </td>
-                                        <td>{{ $contract->created_at->format('d-m-Y')}}</td>
+                                        <td>{{ $contract->date}}</td>
                                         <td>
                                             <div class="hstack gap-3 flex-wrap">
                                                 <a href="{{ route('order.show', $contract->id) }}"

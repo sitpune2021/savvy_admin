@@ -56,7 +56,8 @@ class Orders extends Model
     
     public function drivers()
     {
-        return $this->belongsTo(Drivers::class, 'driver_id');
+        
+        return $this->belongsTo(Drivers::class, 'driver_id')->withTrashed();
     }
 
 

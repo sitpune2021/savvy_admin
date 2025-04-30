@@ -57,21 +57,6 @@
         </div>
     </div>
 
-    {{-- <div class="card">
-        <div class="card-body">
-            <div class="row g-2">
-                <div class="col-sm-auto ms-auto">
-                    <div class="list-grid-nav hstack gap-1">
-                        <a class="btn btn-success" href="{{ route('order.create') }}">
-                            <i class="ri-add-fill me-1 align-bottom"></i> Add
-                            Order
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> --}}
-
     <div class="row">
         <div class="col-lg-12">
 
@@ -133,14 +118,23 @@
                                                 </td>
 
                                                 <td>
-                                                    <form action="{{ route('maintenance.update.status', $maintenance->id) }}" method="POST">
+                                                    <form
+                                                        action="{{ route('maintenance.update.status', $maintenance->id) }}"
+                                                        method="POST">
                                                         @csrf
                                                         @method('PUT')
-                                                    
-                                                        <select name="status" class="form-select" onchange="this.form.submit()">
-                                                            <option value="pending" {{ $maintenance->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                                                            <option value="approved" {{ $maintenance->status == 'approved' ? 'selected' : '' }}>Approved</option>
-                                                            <option value="rejected" {{ $maintenance->status == 'rejected' ? 'selected' : '' }}>Rejected</option>
+
+                                                        <select name="status" class="form-select"
+                                                            onchange="this.form.submit()">
+                                                            <option value="pending"
+                                                                {{ $maintenance->status == 'pending' ? 'selected' : '' }}>
+                                                                Pending</option>
+                                                            <option value="approved"
+                                                                {{ $maintenance->status == 'approved' ? 'selected' : '' }}>
+                                                                Approved</option>
+                                                            <option value="rejected"
+                                                                {{ $maintenance->status == 'rejected' ? 'selected' : '' }}>
+                                                                Rejected</option>
                                                         </select>
                                                     </form>
                                                 </td>
@@ -186,10 +180,29 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    <span
+                                                    {{-- <span
                                                         class="badge {{ $statusClasses[$maintenance->status] ?? 'bg-secondary-subtle text-secondary' }} p-2">
                                                         {{ ucfirst(str_replace('_', ' ', $maintenance->status)) }}
-                                                    </span>
+                                                    </span> --}}
+                                                    <form
+                                                        action="{{ route('maintenance.update.status', $maintenance->id) }}"
+                                                        method="POST">
+                                                        @csrf
+                                                        @method('PUT')
+
+                                                        <select name="status" class="form-select"
+                                                            onchange="this.form.submit()">
+                                                            <option value="pending"
+                                                                {{ $maintenance->status == 'pending' ? 'selected' : '' }}>
+                                                                Pending</option>
+                                                            <option value="approved"
+                                                                {{ $maintenance->status == 'approved' ? 'selected' : '' }}>
+                                                                Approved</option>
+                                                            <option value="rejected"
+                                                                {{ $maintenance->status == 'rejected' ? 'selected' : '' }}>
+                                                                Rejected</option>
+                                                        </select>
+                                                    </form>
                                                 </td>
                                                 <td>{{ $maintenance->date }}</td>
                                             </tr>

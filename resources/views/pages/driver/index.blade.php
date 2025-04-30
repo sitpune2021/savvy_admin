@@ -56,14 +56,6 @@
             <div class="row g-2">
                 <div class="col-sm-auto ms-auto">
                     <div class="list-grid-nav hstack gap-1">
-                        {{-- <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink1">
-                            <li><a class="dropdown-item" href="#">All</a></li>
-                            <li><a class="dropdown-item" href="#">Last Week</a></li>
-                            <li>
-                                <a class="dropdown-item" href="#">Last Month</a>
-                            </li>
-                            <li><a class="dropdown-item" href="#">Last Year</a></li>
-                        </ul> --}}
                         <a class="btn btn-success" href="{{ route('driver.create') }}">
                             <i class="ri-add-fill me-1 align-bottom"></i> Add
                             Driver
@@ -98,7 +90,18 @@
                                             <div class="hstack gap-3 flex-wrap">
                                                 <a href="{{ route('driver.edit', $driver->id) }}" class="link-success fs-15"><i class="ri-edit-2-line"></i></a>
                                                 <a href="{{ route('driver.show', $driver->id) }}" class="link-primary fs-15"><i class="ri-eye-line"></i></a>
-                                                <a href="javascript:void(0);" class="link-danger fs-15"><i class="ri-delete-bin-line"></i></a>
+                                                <form action="{{ route('driver.destroy', $driver->id) }}"
+                                                    method="POST" id="delete-form-{{ $driver->id }}"
+                                                    style="display: none;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                </form>
+
+                                                <a href="javascript:void(0);" class="link-danger fs-15"
+                                                    onclick="if(confirm('Are you sure you want to delete this driver?')) { document.getElementById('delete-form-{{ $driver->id }}').submit(); }">
+                                                    <i class="ri-delete-bin-line"></i>
+                                                </a>
+                                                {{-- <a href="javascript:void(0);" class="link-danger fs-15"><i class="ri-delete-bin-line"></i></a> --}}
                                             </div>
                                         </td>
                                     </tr>

@@ -192,7 +192,6 @@ class DriverController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
@@ -205,19 +204,25 @@ class DriverController extends Controller
                 Storage::delete('public/driver/' . $driver->aadhar_card_FILE);
             }
                 $driver->delete();
-                return response()->json([
-                    'message' => 'Driver  deleted successfully.',
-                ], 200);
+                // return response()->json([
+                //     'message' => 'Driver  deleted successfully.',
+                // ], 200);
+            return back()->with('success', 'Customer deleted successfully.');
+
         } catch (ModelNotFoundException $e) {
-                return response()->json([
-                    'error' => 'Driver not found.',
-                    'message' => $e->getMessage(),
-                ], 404); 
+                // return response()->json([
+                //     'error' => 'Driver not found.',
+                //     'message' => $e->getMessage(),
+                // ], 404); 
+                return back()->with('error', 'Driver not found.'.$e->getMessage());
+
         } catch (Exception $e) {
-                return response()->json([
-                    'error' => 'An error occurred while deleting the  Driver.',
-                    'message' => $e->getMessage(),
-                ], 500);
+                // return response()->json([
+                //     'error' => 'An error occurred while deleting the  Driver.',
+                //     'message' => $e->getMessage(),
+                // ], 500);
+                return back()->with('error', 'An error occurred while deleting the  Driver.'.$e->getMessage());
+
         }
     }
 }
