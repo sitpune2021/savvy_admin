@@ -24,7 +24,7 @@ class OrderController extends Controller
         $status = $request->status;
         $today = Carbon::today();
 
-        $ordersQuery = Orders::with(['drivers:id,name,phone_no', 'contract.product', 'contract:id,quantity'])
+        $ordersQuery = Orders::with(['drivers:id,name,phone_no', 'contract:id,quantity,product_id', 'contract.product'])
             ->where('shipping_id', $shippingId);
 
         if ($status) {
