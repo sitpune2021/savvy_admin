@@ -92,15 +92,14 @@
                                     <div class="input-block mb-3">
                                         <label>Image</label>
                                         @if (!$show)
-                                            <input name="image" type="file" class="form-control" placeholder="Enter image"
-                                                value="{{ old('image', $product->image ?? '') }}"
+                                            <input name="image" type="file" class="form-control"
+                                                placeholder="Enter image" value="{{ old('image', $product->image ?? '') }}"
                                                 @if ($show) disabled @endif>
                                         @endif
                                         @if ($show)
                                             @if (isset($product->image) && $product->image)
                                                 <a href="{{ asset('storage/product/' . $product->image) }}"
-                                                    data-fancybox="gallery"
-                                                    data-caption="{{ $product->image }}">
+                                                    data-fancybox="gallery" data-caption="{{ $product->image }}">
                                                     <img src="{{ asset('storage/product/' . $product->image) }}"
                                                         alt="image" width="100" height="100"
                                                         style="cursor: pointer;" class="img-thumbnail">
@@ -117,8 +116,12 @@
                                 <div class="col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Description</label>
-                                        <textarea name="description" class="form-control snow-editor" rows="10" placeholder="Enter description"
-                                          @if ($show) disabled @endif>{{ old('description', $product->description ?? '') }}</textarea>
+                                        <div name="description" class="form-control snow-editor" rows="10" data-input-id="description"
+                                            placeholder="Enter description"
+                                            @if ($show) disabled @endif>
+                                            {{ old('description', $product->description ?? '') }}</div>
+                                        <input type="hidden" name="description" id="description"
+                                            value="{{ old('description', $product->description ?? '') }}">
                                     </div>
                                 </div>
                             </div>
@@ -129,7 +132,8 @@
                         <button type="button" class="btn btn-primary cancel me-2"
                             onclick="window.location='{{ route('product.index') }}'">Cancel</button>
                         @if (!$show)
-                            <button type="submit" class="btn btn-primary">{{ isset($product) ? 'Update' : 'Save' }}</button>
+                            <button type="submit"
+                                class="btn btn-primary">{{ isset($product) ? 'Update' : 'Save' }}</button>
                         @endif
                     </div>
                 </div>

@@ -77,7 +77,7 @@
                         <table id="buttons-datatables" class="display table table-bordered" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th>#</th>
+                                    <th>Customer Zohi Id</th>
                                     <th>Name</th>
                                     <th>Phone No.</th>
                                     <th>Actions</th>

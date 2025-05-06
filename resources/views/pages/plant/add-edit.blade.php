@@ -113,8 +113,14 @@
                                 <div class="col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Details</label>
-                                        <textarea name="details" class="form-control snow-editor" rows="10"
-                                            placeholder="Enter additional details about the plant" @if ($show) disabled @endif>{{ old('details', $Plant->details ?? '') }}</textarea>
+                                        @if ($show)
+                                        <div name="details" class="form-control ql-editor" rows="10" 
+                                        >{!! $Plant->details !!}</div>
+                                        @else
+                                        <div name="details" class="form-control snow-editor" rows="10" data-input-id="details"
+                                            placeholder="Enter additional details about the plant">{{ old('details', $Plant->details ?? '') }}</div>
+                                            <input type="hidden" name="details" id="details" value="{{ old('details', $Plant->details ?? '') }}">
+                                            @endif
                                     </div>
                                 </div>
                             </div>

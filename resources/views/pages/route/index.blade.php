@@ -82,7 +82,7 @@
                         <table id="buttons-datatables" class="display table table-bordered" style="width:100%">
                             <thead class="thead-light">
                                 <tr>
-                                    <th>#</th>
+                                    <th>Sr. No</th>
                                     <th>Plant</th>
                                     <th>Name</th>
                                     <th>Path</th>

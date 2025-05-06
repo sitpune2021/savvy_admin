@@ -12,6 +12,7 @@ use App\Models\Contracts;
 use App\Models\Routes;
 use App\Models\ShippingAddress;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 use Exception;
 
@@ -41,7 +42,9 @@ class OrderController extends Controller
         $validator = Validator::make($request->all(), [
             'customer_id' => 'required|exists:customers,id',
             'shipping_id' => 'required|array',
-            'shipping_id.*' => 'exists:shipping_addresses,id',
+            'shipping_id.*' => Rule::exists('shipping_addresses', 'id')->where(function ($query) use ($request) {
+                                    return $query->where('customer_id', $request->customer_id);
+                                }),
             'develivered_qty' => 'nullable|integer|min:0',
         ]);
     

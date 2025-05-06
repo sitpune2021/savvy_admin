@@ -33,7 +33,7 @@ class GenerateContractOrders extends Command
     {
         Log::info('Scheduler command started at: ' . now()); // ✅ ADD THIS LINE
         $today = Carbon::today(); // only the date part
-        $contracts = Contracts::where('status', 'active')->get();
+        $contracts = Contracts::where('status', 'active')->where('type', 'contracts')->get();
 
         foreach ($contracts as $contract) {
             $startDate = Carbon::parse($contract->created_at);
@@ -69,27 +69,52 @@ class GenerateContractOrders extends Command
 
     protected function createOrderIfNotExists($contract, Carbon $today)
     {
-        $shipping = ShippingAddress::where('customer_id', $contract->customer_id)
+        // $shipping = ShippingAddress::where('customer_id', $contract->customer_id)
+        //     ->where('contract_id', $contract->id)
+        //     ->first();
+
+        // if (!$shipping) return;
+
+        // // Check if an order already exists for this contract and date (date-only check)
+        // $exists = Orders::whereDate('created_at', $today->toDateString())
+        //     ->where('contract_id', $contract->id)
+        //     ->exists();
+
+        // if (!$exists) {
+        //     Orders::create([
+        //         'customer_id' => $contract->customer_id,
+        //         'contract_id' => $contract->id,
+        //         'shipping_id' => $shipping->id,
+        //         'route_id' => $shipping->route_id,
+        //         'driver_id' => $shipping->driver_id,
+        //         'status' => 'pending',
+        //     ]);
+        // }
+        $shippings = ShippingAddress::where('customer_id', $contract->customer_id)
             ->where('contract_id', $contract->id)
-            ->first();
+            ->get();
 
-        if (!$shipping) return;
+        if ($shippings->isEmpty()) return;
 
-        // Check if an order already exists for this contract and date (date-only check)
-        $exists = Orders::whereDate('created_at', $today->toDateString())
-            ->where('contract_id', $contract->id)
-            ->exists();
+        foreach ($shippings as $shipping) {
+            // Check if an order already exists for this contract and date (date-only check)
+            $exists = Orders::whereDate('created_at', $today->toDateString())
+                ->where('contract_id', $contract->id)
+                ->where('shipping_id', $shipping->id) // Consider per shipping address
+                ->exists();
 
-        if (!$exists) {
-            Orders::create([
-                'customer_id' => $contract->customer_id,
-                'contract_id' => $contract->id,
-                'shipping_id' => $shipping->id,
-                'route_id' => $shipping->route_id,
-                'driver_id' => $shipping->driver_id,
-                'status' => 'pending',
-            ]);
+            if (!$exists) {
+                Orders::create([
+                    'customer_id' => $contract->customer_id,
+                    'contract_id' => $contract->id,
+                    'shipping_id' => $shipping->id,
+                    'route_id' => $shipping->route_id,
+                    'driver_id' => $shipping->driver_id,
+                    'status' => 'pending',
+                ]);
+            }
         }
+
     }
 
     protected function handleAlternateDay($contract, Carbon $today)

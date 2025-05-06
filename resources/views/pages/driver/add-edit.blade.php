@@ -92,7 +92,7 @@
                                             <option value="">Select Plant</option>
                                             @foreach ($plants as $plant)
                                                 <option value="{{ $plant->id }}"
-                                                    {{ (isset($Driver) && $Driver->plant_id == $plant->id) || $plant->id == 1 ? 'selected' : '' }}>
+                                                    {{ (isset($Driver) && $Driver->plant_id == $plant->id) ? 'selected' : '' }}>
                                                     {{ $plant->name }}
                                                 </option>
                                             @endforeach

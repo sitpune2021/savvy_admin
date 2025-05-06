@@ -9,6 +9,7 @@ use App\Models\Routes;
 use App\Models\Plant;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Exception;
 
 class DriverController extends Controller
@@ -42,9 +43,24 @@ class DriverController extends Controller
             'route_id' => 'required|exists:routes,id',
             'plant_id' => 'required|exists:plants,id',
             'route_path' => 'nullable',
-            'name' => 'required|string|max:255|unique:drivers,name',
-            'email' => 'required|email|unique:drivers,email',
-            'phone_no' => 'required|string|max:10|unique:drivers,phone_no',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z\s\-]+$/',
+                Rule::unique('drivers')->whereNull('deleted_at'),
+            ],
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('drivers')->whereNull('deleted_at'),
+            ],
+            'phone_no' => [
+                'required',
+                'string',
+                'digits:10',
+                Rule::unique('drivers')->whereNull('deleted_at'),
+            ],
             'full_address' => 'required|string|max:255',
             'country' => 'required|string|max:255',
             'state' => 'required|string|max:255',
@@ -127,11 +143,27 @@ class DriverController extends Controller
      */
     public function update(Request $request, string $id)
     {
+
         $validator = Validator::make($request->all(), [
             'route_id' => 'required|exists:routes,id',
-            'name' => 'required|string|max:255|unique:drivers,name,' . $id,
-            'email' => 'required|email|unique:drivers,email,' . $id,
-            'phone_no' => 'required|string|max:20|unique:drivers,phone_no,' . $id,
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z\s\-]+$/',
+                Rule::unique('drivers')->ignore($id)->whereNull('deleted_at'),
+            ],
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('drivers')->ignore($id)->whereNull('deleted_at'),
+            ],
+            'phone_no' => [
+                'required',
+                'string',
+                'digits:10',
+                Rule::unique('drivers')->ignore($id)->whereNull('deleted_at'),
+            ],
             'full_address' => 'required|string|max:255',
             'country' => 'required|string|max:255',
             'state' => 'required|string|max:255',
@@ -145,6 +177,7 @@ class DriverController extends Controller
             'pan_card_FILE' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'aadhar_card_FILE' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
+
         
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);

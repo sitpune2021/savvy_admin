@@ -9,6 +9,7 @@ use App\Models\Drivers;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Validation\Rule;
 use Exception;
 
 class ProfileController extends Controller
@@ -37,14 +38,28 @@ class ProfileController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:drivers,email,' . $id,
-            'phone_no' => 'required|string|max:20',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('drivers')->ignore($id)->whereNull('deleted_at'),
+            ],
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('drivers')->ignore($id)->whereNull('deleted_at'),
+            ],
+            'phone_no' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('drivers')->ignore($id)->whereNull('deleted_at'),
+            ],
             'full_address' => 'required|string|max:255',
             'country' => 'required|string|max:255',
             'state' => 'required|string|max:255',
             'city' => 'required|string|max:255',
-            'pincode' => 'required|string|max:20',
+            'pincode' => 'required|digits:6',
             'license_no' => 'nullable|string|max:255',
             'vehicle_no' => 'nullable|string|max:255',
             'vehicle_name' => 'nullable|string|max:255',

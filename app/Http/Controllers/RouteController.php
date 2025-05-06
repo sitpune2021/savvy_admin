@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use App\Models\Routes;
 use App\Models\Plant;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Exception;
 
 class RouteController extends Controller
@@ -37,7 +38,12 @@ class RouteController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:routes',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('routes')->whereNull('deleted_at'), // Excludes soft-deleted records
+            ],
             'path' => 'required|string|max:255',
             'plant_id' => 'required|exists:plants,id',
 
@@ -51,7 +57,7 @@ class RouteController extends Controller
         try {
             $data = $request->all();
             Routes::create($data);
-            return redirect()->route('route.index')->with('success', 'Route added successfully.');
+            return response()->json(['message'=>'Route added successfully.']);
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Failed to add route: '.$e->getMessage());
         }
@@ -91,7 +97,12 @@ class RouteController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:routes,name,' . $id,
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('routes')->ignore($id)->whereNull('deleted_at'),
+            ],
             'path' => 'required|string|max:255',
             'plant_id' => 'required|exists:plants,id',
 
@@ -103,7 +114,8 @@ class RouteController extends Controller
             $Route = Routes::findOrFail($id);
             $data = $request->all();
             $Route->update($data);
-            return redirect()->route('route.index')->with('success', 'Route updated successfully.');
+            return response()->json(['message'=>'Route updated successfully.']);
+
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Failed to update route: '.$e->getMessage());
         }

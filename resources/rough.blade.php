@@ -57,3 +57,43 @@
             </div>
         </div>
     </div>
+
+
+
+    {{-- schedule  --}}
+
+    {{-- // Fetch active, accepted additional contracts
+    // $contractsAdditional = Contracts::where('status', 'active')
+    // ->where('type', 'additional')
+    // ->where('accepted_status', 'accepted')
+    // ->with('sender.shippingAddress')
+    // ->get();
+
+    //             Log::info('Contract Add: ' . $contractsAdditional);
+
+
+    // foreach ($contractsAdditional as $contractAdditional) {
+    //     $endDate = Carbon::parse($contractAdditional->date);
+    //     if ($today->greaterThan($endDate)) {
+    //         $contractAdditional->status = 'expired';
+    //         $contractAdditional->save();
+    //         continue;
+    //     }
+    //     Log::info('Contract ID: ' . $contractAdditional->sender);
+    //     $exists = Orders::whereDate('created_at', $today->toDateString())
+    //         ->where('contract_id', $contractAdditional->id)
+    //         ->where('shipping_id', $shipping->id) // Consider per shipping address
+    //         ->exists();
+
+    //     if (!$exists) {
+    //         Orders::create([
+    //             'customer_id' => $contract->customer_id,
+    //             'contract_id' => $contract->id,
+    //             'shipping_id' => $shipping->id,
+    //             'route_id' => $shipping->route_id,
+    //             'driver_id' => $shipping->driver_id,
+    //             'status' => 'pending',
+    //         ]);
+    //     }
+
+    // } --}}

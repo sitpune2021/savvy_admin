@@ -80,7 +80,7 @@
                         <table id="buttons-datatables" class="display table table-bordered" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th>#</th>
+                                    <th>Sr. No</th>
                                     <th>Customer</th>
                                     <th>shipping Address</th>
                                     <th>Driver</th>

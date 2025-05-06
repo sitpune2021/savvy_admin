@@ -160,7 +160,7 @@ class AuthController extends Controller
     {
         try {
             // Prepare the OTP message
-            $message = "Please use this OTP $otp to login Savvy Water application";
+            $message = "Please use this OTP $otp to login Saavy Water application";
     
             // Send the request to the SMS API
             $response = Http::withoutVerifying()->asForm()->post('http://redirect.ds3.in/submitsms.jsp', [

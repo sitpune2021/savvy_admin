@@ -18,7 +18,7 @@ use Exception;
 use Illuminate\Support\Arr;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
-
+use Illuminate\Validation\Rule;
 
 class CustomerController extends Controller
 {
@@ -51,16 +51,34 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'customer_zohi_id' => 'required|string|unique:customers,customer_zohi_id',
-            'name' => 'required|string|max:255|unique:customers,name', 
-            'email' => 'nullable|email|unique:customers,email|max:255', 
-            'phone_no' => 'nullable|digits:10|unique:customers,phone_no',
+            'customer_zohi_id' => [
+                'required',
+                'string',
+                Rule::unique('customers')->whereNull('deleted_at'),
+            ],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('customers')->whereNull('deleted_at'),
+            ],
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('customers')->whereNull('deleted_at'),
+            ],
+            'phone_no' => [
+                'nullable',
+                'digits:10',
+                Rule::unique('customers')->whereNull('deleted_at'),
+            ],
             'billing_address' => 'required|string|max:255',
             'billing_country' => 'required|string|max:255',
             'billing_state' => 'nullable|string|max:255',
             'billing_city' => 'required|string|max:255',
             'billing_pincode' => 'required|digits:6|numeric',
-
+        
             'shipping.*.plant_id' => 'required|exists:plants,id',
             'shipping.*.route_id' => 'required|exists:routes,id',
             'shipping.*.driver_id' => 'required|exists:drivers,id',
@@ -69,11 +87,20 @@ class CustomerController extends Controller
             'shipping.*.shipping_state' => 'nullable|string|max:255',
             'shipping.*.shipping_city' => 'required|string|max:255',
             'shipping.*.shipping_pincode' => 'required|digits:6',
-
-            'shipping.*.shipping_contacts.*.name' => 'required|string|max:255|unique:shipping_contacts,name',
-            'shipping.*.shipping_contacts.*.phone' => 'required|digits:10|unique:shipping_contacts,phone',
+        
+            'shipping.*.shipping_contacts.*.name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('shipping_contacts', 'name')->whereNull('deleted_at'),
+            ],
+            'shipping.*.shipping_contacts.*.phone' => [
+                'required',
+                'digits:10',
+                Rule::unique('shipping_contacts', 'phone')->whereNull('deleted_at'),
+            ],
             'shipping.*.machine_deployed' => 'nullable|string|max:255',
-
+        
             'contract.*.product_id' => 'required|exists:products,id',
             'contract.*.quantity' => 'required|integer|min:1',
             'contract.*.price' => 'required|string|max:255',
@@ -294,10 +321,23 @@ class CustomerController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'customer_zohi_id' => 'required|string|unique:customers,customer_zohi_id,' . $id,
-            'name' => 'required|string|max:255', 
-            'email' => 'nullable|email|unique:customers,email,' . $id . '|max:255',
-            'phone_no' => 'nullable|digits:10|unique:customers,phone_no,' . $id . '|max:15',
+            'customer_zohi_id' => [
+                'required',
+                'string',
+                Rule::unique('customers')->ignore($id)->whereNull('deleted_at'),
+            ],
+            'name' => 'required|string|max:255',
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('customers')->ignore($id)->whereNull('deleted_at'),
+            ],
+            'phone_no' => [
+                'nullable',
+                'digits:10',
+                Rule::unique('customers')->ignore($id)->whereNull('deleted_at'),
+            ],
             'billing_address' => 'required|string|max:255',
             'billing_country' => 'required|string|max:255',
             'billing_state' => 'nullable|string|max:255',

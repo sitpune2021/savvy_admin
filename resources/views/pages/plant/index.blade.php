@@ -85,7 +85,7 @@
                         <table id="buttons-datatables" class="display table table-bordered" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th>Sr. No</th>
                                     <th>Name</th>
                                     <th>Manager</th>
                                     <th>Address</th>
@@ -96,7 +96,7 @@
                             <tbody>
                                 @foreach ($Plants as $plant)
                                     <tr>
-                                        <td>{{ $plant->id }}</td>
+                                        <td>{{ $loop->iteration }}</td>
                                         <td>{{ $plant->name }}</td>
                                         <td>{{ $plant->manager }}</td>
                                         <td>{{ $plant->address }}</td>
@@ -105,7 +105,7 @@
                                             <div class="hstack gap-3 flex-wrap">
                                                 <a href="{{ route('plant.edit', $plant->id) }}" class="link-success fs-15"><i class="ri-edit-2-line"></i></a>
                                                 <a href="{{ route('plant.show', $plant->id) }}" class="link-primary fs-15"><i class="ri-eye-line"></i></a>
-                                                <a href="javascript:void(0);" class="link-danger fs-15"><i class="ri-delete-bin-line"></i></a>
+                                                {{-- <a href="javascript:void(0);" class="link-danger fs-15"><i class="ri-delete-bin-line"></i></a> --}}
                                             </div>
                                         </td>
                                     </tr>

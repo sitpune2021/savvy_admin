@@ -7,6 +7,7 @@ use App\Models\Plant;
 use Illuminate\Support\Facades\Validator;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Validation\Rule;
 
 class PlantController extends Controller
 {
@@ -34,7 +35,12 @@ class PlantController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:plants',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('plants')->whereNull('deleted_at'),
+            ],
             'address' => 'required|string|max:255',
             'manager' => 'required|string|max:255',
             'location' => 'required|string|max:255',
@@ -50,8 +56,7 @@ class PlantController extends Controller
         try {
             $data = $request->all();
             Plant::create($data);
-            
-            return redirect()->route('plant.index')->with('success', 'Plant added successfully.');
+            return response()->json(['message' => 'Plant added successfully'], 200);
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Failed to add plant: '.$e->getMessage());
         }
@@ -89,7 +94,12 @@ class PlantController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:plants,name,' . $id,
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('plants', 'name')->ignore($id)->whereNull('deleted_at'),
+            ],
             'address' => 'required|string|max:255',
             'manager' => 'required|string|max:255',
             'location' => 'required|string|max:255',
@@ -105,10 +115,9 @@ class PlantController extends Controller
 
             $Plant = Plant::findOrFail($id);
             $Plant->update($request->all());
-            
-            return redirect()->route('plant.index')->with('success', 'Plant updated successfully.');
+            return response()->json(['message' => 'Plant updated successfully'], 200);
         } catch (Exception $e) {
-            return redirect()->back()->with('error', 'Failed to update plant: '.$e->getMessage());
+            return response()->json(['errors' => 'Failed to update plant: ' . $e->getMessage()], 500);
         }
     }
 

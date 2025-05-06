@@ -52,7 +52,7 @@ function handleFormSubmit(formId, actionUrl, method = 'POST', subPath = {}, succ
 				if (successCallback) {
 					successCallback(response);
 				} else {
-					window.location.href = window.Laravel.routeIndex;
+							showSuccessAlert(response.message);
 				}
 			},
 			error: function (xhr) {
@@ -81,11 +81,10 @@ function handleFormSubmit(formId, actionUrl, method = 'POST', subPath = {}, succ
 						}
 					});
 				} else {
-					console.log(xhr);
 					if (typeof errorCallback === 'function') {
 						showErrorAlert(xhr.responseJSON.error);
 					} else {
-						alert('An error occurred. Please try again.');
+						showErrorAlert('An error occurred. Please try again.');
 					}
 				}
 			}
@@ -133,16 +132,63 @@ function showErrorAlert(message) {
 	}, 5000);
 }
 
+function showSuccessAlert(message) {
+	const alertHTML = `
+		<div class="alert alert-success alert-dismissible fade show"
+			 role="alert"
+			 style="
+				position: fixed;
+				top: 80px;
+				right: 25px;
+				z-index: 1055;
+				max-width: 400px;
+				opacity: 0;
+				transform: translateX(100%);
+				transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+			 ">
+			<i class="ri-check-line me-2"
+			   style="font-size: 18px; vertical-align: middle; color:rgb(19, 70, 24);"></i>
+			<strong>Success:</strong> ${message}
+		
+		</div>
+	`;
+
+	const tempDiv = document.createElement('div');
+	tempDiv.innerHTML = alertHTML;
+	const thisAlert = tempDiv.firstElementChild;
+
+	document.body.appendChild(thisAlert);
+
+	// Trigger transition
+	requestAnimationFrame(() => {
+		thisAlert.style.transform = 'translateX(0)';
+		thisAlert.style.opacity = '1';
+	});
+
+	// Auto-dismiss after 5 seconds
+	setTimeout(() => {
+		thisAlert.style.transform = 'translateX(100%)';
+		thisAlert.style.opacity = '0';
+		setTimeout(() => {
+			thisAlert.remove();
+			if (window.Laravel?.routeIndex) {
+				window.location.href = window.Laravel.routeIndex;
+			}
+		}, 500);
+	}, 5000);
+}
+
+
 handleFormSubmit(
 	'#orderForm',
-	'/order', // URL to send data to
-	'POST', // default method
+	'/order', 
+	'POST', 
 	{},
 	function (response) { // success callback
-		console.log('Order saved successfully:', response);
-		window.location.href = window.Laravel.routeIndex;
+		showSuccessAlert(response.message);
 	},
-	function (xhr) { // error callback
+	function (xhr) { 
+		showErrorAlert('An error occurred. Please try again.');
 		console.log('Error occurred:', xhr);
 	}
 );
@@ -153,7 +199,7 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-		window.location.href = window.Laravel.routeIndex;
+				showSuccessAlert(response.message);
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -166,7 +212,7 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-		window.location.href = window.Laravel.routeIndex;
+				showSuccessAlert(response.message);
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -179,9 +225,10 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-		window.location.href = window.Laravel.routeIndex;
+		showSuccessAlert(response.message);
 	},
 	function (xhr) { // error callback
+		showErrorAlert('An error occurred. Please try again.');
 		console.log('Error occurred:', xhr);
 	}
 );
@@ -192,7 +239,7 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-		window.location.href = window.Laravel.routeIndex;
+				showSuccessAlert(response.message);
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -205,7 +252,7 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-		window.location.href = window.Laravel.routeIndex;
+				showSuccessAlert(response.message);
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -217,8 +264,8 @@ handleFormSubmit(
 	'/assign-route', // URL to send data to
 	'POST', // default method
 	{},
-	function (response) { // success callback
-		window.location.href = window.Laravel.routeIndex;
+	function (response) { 
+				showSuccessAlert(response.message);
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -234,7 +281,7 @@ handleFormSubmit(
 		method: 'Put',
 	},
 	function (response) {
-		window.location.href = window.Laravel.routeIndex;
+				showSuccessAlert(response.message);
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);

@@ -74,7 +74,7 @@
                         <table id="buttons-datatables" class="display table table-bordered" style="width:100%">
                             <thead class="thead-light">
                                 <tr>
-                                    <th>#</th>
+                                    <th>Sr. No</th>
                                     <th>Name</th>
                                     <th>Phone No.</th>
                                     <th>Actions</th>

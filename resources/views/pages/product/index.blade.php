@@ -82,7 +82,7 @@
                         <table id="buttons-datatables" class="display table table-bordered" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th>#</th>
+                                    <th>Sr. No</th>
                                     <th>Name</th>
                                     <th>Code</th>
                                     <th>Actions</th>

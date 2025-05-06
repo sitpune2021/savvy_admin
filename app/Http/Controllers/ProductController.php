@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-
+use Illuminate\Validation\Rule;
 use App\Models\Product;
 
 class ProductController extends Controller
@@ -37,10 +37,20 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:products,name',
-            'code' => 'required|string|max:255|unique:products,code',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('products')->whereNull('deleted_at'),
+            ],
+            'code' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('products')->whereNull('deleted_at'),
+            ],
             'description' => 'nullable|string|max:255',
-            'price' => 'required|numeric',
+            'price' => 'required|numeric|min:1',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
 
         ]);
@@ -60,8 +70,7 @@ class ProductController extends Controller
             $data = $request->all();
             $data['image'] = $image;
             $create = Product::create($data);
-
-            return redirect()->route('product.index')->with('success', 'Product added successfully.');
+            return  response()->json(['message' => 'Product added successfully.'], 200);
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Failed to add product: '.$e->getMessage());
         }
@@ -99,10 +108,20 @@ class ProductController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'code' => 'required|string|max:255|unique:products,code,' . $id,
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('products')->ignore($id)->whereNull('deleted_at'),
+            ],
+            'code' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('products')->ignore($id)->whereNull('deleted_at'),
+            ],
             'description' => 'nullable|string|max:255',
-            'price' => 'required|numeric',
+            'price' => 'required|numeric|min:1',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
         if ($validator->fails()) {
