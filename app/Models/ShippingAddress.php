@@ -45,6 +45,11 @@ class ShippingAddress extends Model
         return $this->hasMany(ShippingContact::class, 'shipping_id');
     }
 
+    public function driver()
+    {
+        return $this->belongsTo(Drivers::class, 'driver_id');
+    }
+
     protected $dates = ['deleted_at'];
 
 

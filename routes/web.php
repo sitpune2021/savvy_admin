@@ -10,6 +10,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\RequestOrdersController;
+use App\Http\Controllers\DispensaryController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -100,7 +101,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('customer', CustomerController::class);
     Route::resource('driver', DriverController::class);
     Route::resource('order', OrderController::class);
+    Route::resource('dispensary', DispensaryController::class);
     Route::resource('request-order', RequestOrdersController::class);
+    Route::put('/request-order/{id}/status', [RequestOrdersController::class, 'updateStatus'])->name('requestOrder.update.status');
     Route::resource('maintenance', MaintenanceController::class);
     Route::put('/maintenance/{id}/status', [MaintenanceController::class, 'updateStatus'])->name('maintenance.update.status');
 

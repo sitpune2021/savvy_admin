@@ -28,6 +28,7 @@ class Orders extends Model
         'return_qty',
         'delevered_card_img',
         'return_card_img',
+        'type',
     ];
    
 

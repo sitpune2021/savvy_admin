@@ -194,6 +194,20 @@ handleFormSubmit(
 );
 
 handleFormSubmit(
+	'#dispensaryForm',
+	'/dispensary', 
+	'POST', 
+	{},
+	function (response) { // success callback
+		showSuccessAlert(response.message);
+	},
+	function (xhr) { 
+		showErrorAlert('An error occurred. Please try again.');
+		console.log('Error occurred:', xhr);
+	}
+);
+
+handleFormSubmit(
 	'#customerForm', // form ID
 	'/customer', // URL to send data to
 	'POST', // default method
@@ -716,6 +730,7 @@ $(document).ready(function () {
 	const selectedDeliveryId = window.orderData?.deliveryId || '';
 
 	function populateShippings(shippings, selectedId = null) {
+		$('#shipping-select').empty();
 		shippings.forEach(shipping => {
 			const isSelected = shipping.id == selectedId ? 'selected' : '';
 			$('#shipping-select').append(`

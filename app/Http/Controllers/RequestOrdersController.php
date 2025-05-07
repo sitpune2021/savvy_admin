@@ -17,6 +17,19 @@ class RequestOrdersController extends Controller
         return  view('pages.requestOrders.index', compact('contracts'));
     }
 
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'accepted_status' => 'required|in:pending,accepted,rejected',
+        ]);
+
+        $maintenance = Contracts::findOrFail($id);
+        $maintenance->accepted_status = $request->input('accepted_status');
+        $maintenance->save();
+
+        return redirect()->back()->with('success', 'Status updated.');
+    }
+
     /**
      * Show the form for creating a new resource.
      */

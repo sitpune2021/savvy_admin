@@ -35,6 +35,7 @@ class GenerateContractOrders extends Command
         $today = Carbon::today(); // only the date part
         $contracts = Contracts::where('status', 'active')->where('type', 'contracts')->get();
 
+
         foreach ($contracts as $contract) {
             $startDate = Carbon::parse($contract->created_at);
             $endDate = (clone $startDate)->add($contract->duration, $contract->duration_type);
@@ -63,33 +64,45 @@ class GenerateContractOrders extends Command
                     break;
             }
         }
+
+        $contractsAdditional = Contracts::whereIn('status', ['active', 'in-progress'])
+        ->where('type', 'additional')
+        ->with('sender.shippingAddress')
+        ->get();
+
+
+        foreach ($contractsAdditional as $contractAdditional) {
+            $endDate = Carbon::parse($contractAdditional->date);
+
+            if ($today->greaterThan($endDate)) {
+                $contractAdditional->status = 'expired';
+                $contractAdditional->save();
+                continue;
+            }
+            $exists = $contractAdditional->status == 'in-progress';
+            
+
+            if (!$exists && $contractAdditional->accepted_status == 'accepted') {
+                Orders::create([
+                    'customer_id' => $contractAdditional->customer_id,
+                    'contract_id' => $contractAdditional->id,
+                    'shipping_id' => $contractAdditional->sender->shippingAddress->id,
+                    'route_id' => $contractAdditional->sender->shippingAddress->route_id,
+                    'driver_id' => $contractAdditional->sender->shippingAddress->driver_id,
+                    'status' => 'pending',
+                    'type' => 'additional',
+                ]);
+                $contractAdditional->status = 'in-progress';
+                $contractAdditional->save();
+            }
+        } 
+        
         Log::info('Scheduler command completed at: ' . now()); // ✅ ADD THIS LINE
         $this->info('Orders generated successfully based on contract frequency.');
     }
 
     protected function createOrderIfNotExists($contract, Carbon $today)
     {
-        // $shipping = ShippingAddress::where('customer_id', $contract->customer_id)
-        //     ->where('contract_id', $contract->id)
-        //     ->first();
-
-        // if (!$shipping) return;
-
-        // // Check if an order already exists for this contract and date (date-only check)
-        // $exists = Orders::whereDate('created_at', $today->toDateString())
-        //     ->where('contract_id', $contract->id)
-        //     ->exists();
-
-        // if (!$exists) {
-        //     Orders::create([
-        //         'customer_id' => $contract->customer_id,
-        //         'contract_id' => $contract->id,
-        //         'shipping_id' => $shipping->id,
-        //         'route_id' => $shipping->route_id,
-        //         'driver_id' => $shipping->driver_id,
-        //         'status' => 'pending',
-        //     ]);
-        // }
         $shippings = ShippingAddress::where('customer_id', $contract->customer_id)
             ->where('contract_id', $contract->id)
             ->get();
@@ -97,7 +110,6 @@ class GenerateContractOrders extends Command
         if ($shippings->isEmpty()) return;
 
         foreach ($shippings as $shipping) {
-            // Check if an order already exists for this contract and date (date-only check)
             $exists = Orders::whereDate('created_at', $today->toDateString())
                 ->where('contract_id', $contract->id)
                 ->where('shipping_id', $shipping->id) // Consider per shipping address
