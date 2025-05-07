@@ -133,7 +133,6 @@
                                                 value="{{ old('documents', $Dispensary->documents ?? '') }}"
                                                 @if ($show) disabled @endif>
                                         @endif
-                                        @if ($show)
                                             @if (isset($Dispensary->documents) && $Dispensary->documents)
                                                 <a href="{{ asset('storage/dispensary/' . $Dispensary->documents) }}"
                                                     data-fancybox="gallery"
@@ -143,7 +142,6 @@
                                                         style="cursor: pointer;" class="img-thumbnail">
                                                 </a>
                                             @endif
-                                        @endif
                                     </div>
                                 </div>
 

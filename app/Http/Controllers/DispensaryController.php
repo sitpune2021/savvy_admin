@@ -8,6 +8,8 @@ use App\Models\Customers;
 use App\Models\ShippingAddress;
 use Illuminate\Support\Facades\Validator;
 use Exception;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 
 class DispensaryController extends Controller
@@ -50,7 +52,7 @@ class DispensaryController extends Controller
             'machine_type' => 'required|in:2_tab,3_tab',
             'customer_id' => 'required|exists:customers,id',
             'shipping_id' => 'required|exists:shipping_addresses,id',
-            'documents' => 'nullable|string',
+            'documents' => 'nullable|mimes:jpg,jpeg,png,gif',
             'warranty' => 'required|string',
             'garanty' => 'required|string',
       
@@ -132,7 +134,7 @@ class DispensaryController extends Controller
             'machine_type' => 'required|in:2_tab,3_tab',
             'customer_id' => 'required|exists:customers,id',
             'shipping_id' => 'required|exists:shipping_addresses,id',
-            'documents' => 'nullable|string',
+            'documents' => 'nullable||mimes:jpg,jpeg,png,gif',
             'warranty' => 'required|string',
             'garanty' => 'required|string',
         ]);
