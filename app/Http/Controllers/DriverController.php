@@ -53,6 +53,7 @@ class DriverController extends Controller
             'email' => [
                 'required',
                 'email',
+                'regex:/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/',
                 Rule::unique('drivers')->whereNull('deleted_at'),
             ],
             'phone_no' => [
@@ -66,13 +67,18 @@ class DriverController extends Controller
             'state' => 'required|string|max:255',
             'city' => 'required|string|max:255',
             'pincode' => 'required|digits:6',
-            'license_no' => 'nullable|string|max:255',
-            'vehicle_no' => 'nullable|string|max:255',
+            'license_no' => 'nullable|string|max:255|regex:/^[A-Z]{2}[0-9]{6}$/',
+            'vehicle_no' => 'nullable|string|max:255|regex:/^[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}$/',
             'vehicle_name' => 'nullable|string|max:255',
-            'pan_card' => 'nullable|string|max:255',
-            'aadhar_card' => 'nullable|string|max:255',
+            'pan_card' => 'nullable|string|max:255|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
+            'aadhar_card' => 'nullable|string|max:255|regex:/^[0-9]{12}$/',
             'pan_card_FILE' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'aadhar_card_FILE' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ], [
+            'license_no.regex' => 'License No must be 2 uppercase letters followed by 6 digits.',
+            'vehicle_no.regex' => 'Invalid vehicle number format. Use format like MH12AB1234.',
+            'pan_card.regex' => 'Invalid PAN card format. Use format like ABCDE1234F.',
+            'aadhar_card.regex' => 'Aadhaar number must be exactly 12 digits.',
         ]);
 
     
@@ -156,6 +162,7 @@ class DriverController extends Controller
             'email' => [
                 'required',
                 'email',
+                'regex:/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/',
                 Rule::unique('drivers')->ignore($id)->whereNull('deleted_at'),
             ],
             'phone_no' => [
@@ -169,13 +176,20 @@ class DriverController extends Controller
             'state' => 'required|string|max:255',
             'city' => 'required|string|max:255',
             'pincode' => 'required|digits:6',
-            'license_no' => 'nullable|string|max:255',
-            'vehicle_no' => 'nullable|string|max:255',
+            'license_no' => 'nullable|string|max:255|regex:/^[A-Z]{2}[0-9]{6}$/',
+            'vehicle_no' => 'nullable|string|max:255|regex:/^[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}$/',
             'vehicle_name' => 'nullable|string|max:255',
-            'pan_card' => 'nullable|string|max:255',
-            'aadhar_card' => 'nullable|string|max:255',
+            'pan_card' => 'nullable|string|max:255|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
+            'aadhar_card' => 'nullable|string|max:255|regex:/^[0-9]{12}$/',
             'pan_card_FILE' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'aadhar_card_FILE' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ], [
+            'license_no.regex' => 'License No must be 2 uppercase letters followed by 6 digits.',
+            'vehicle_no.regex' => 'Invalid vehicle number format. Use format like MH12AB1234.',
+            'pan_card.regex' => 'Invalid PAN card format. Use format like ABCDE1234F.',
+            'aadhar_card.regex' => 'Aadhaar number must be exactly 12 digits.',
+
+
         ]);
 
         

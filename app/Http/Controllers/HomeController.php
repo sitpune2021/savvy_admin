@@ -45,7 +45,8 @@ class HomeController extends Controller
         $allPendingOrders = Orders::whereDate('created_at','!=', $today)->where('status', 'pending')->get();
         $todayPendingOrders = Orders::whereDate('created_at', $today)->where('status', 'pending')->count();
         $todayCompletedOrders = Orders::whereDate('created_at', $today)->where('status', 'completed')->count();
-    
+        $todayInProgressOrders = Orders::whereDate('created_at', $today)->where('status', 'in-progress')->count();
+
         // Monthly customers
         $thisMonthCustomers = Customers::whereBetween('created_at', [$startOfThisMonth, $endOfThisMonth])->count();
         $lastMonthCustomers = Customers::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->count();
@@ -79,6 +80,6 @@ class HomeController extends Controller
 
 
     return view('home', compact('thisMonthOrders', 'todayOrders', 'todayPendingOrders','allPendingOrders', 'yesterdayPendingOrders',
-    'todayCompletedOrders', 'orderChange',  'customerChange', 'thisMonthCustomers', 'ordersCountByPlant', 'plants'));
+    'todayCompletedOrders', 'todayInProgressOrders', 'orderChange',  'customerChange', 'thisMonthCustomers', 'ordersCountByPlant', 'plants'));
     }
 }

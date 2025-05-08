@@ -101,6 +101,10 @@
                                                     class="mdi mdi-circle fs-14 align-middle text-danger me-1"></i><span
                                                     class="counter-value" data-target="{{ $todayPendingOrders }}">0</span>
                                             </p>
+                                            <p class="fs-16 mb-0 text-muted"><i
+                                                class="mdi mdi-circle fs-14 align-middle text-warning me-1"></i><span
+                                                class="counter-value" data-target="{{ $todayInProgressOrders }}">0</span>
+                                        </p>
                                         </a>
                                     </div>
                                     <div class="avatar-sm flex-shrink-0">
@@ -283,9 +287,6 @@
                             <div class="card-body">
                                 <div id="store-visits-source"
                                     data-colors='["--vz-primary", "--vz-success", "--vz-warning", "--vz-danger", "--vz-info"]'
-                                    data-colors-minimal='["--vz-primary", "--vz-primary-rgb, 0.85", "--vz-primary-rgb, 0.70", "--vz-primary-rgb, 0.60", "--vz-primary-rgb, 0.45"]'
-                                    data-colors-interactive='["--vz-primary", "--vz-primary-rgb, 0.85", "--vz-primary-rgb, 0.70", "--vz-primary-rgb, 0.60", "--vz-primary-rgb, 0.45"]'
-                                    data-colors-galaxy='["--vz-primary", "--vz-primary-rgb, 0.85", "--vz-primary-rgb, 0.70", "--vz-primary-rgb, 0.60", "--vz-primary-rgb, 0.45"]'
                                     class="apex-charts" dir="ltr"></div>
                             </div>
                         </div>
@@ -370,6 +371,5 @@
         window.labels = @json(collect($ordersCountByPlant->keys())->map(function ($id) use ($plants) {
                     return $plants[$id] ?? 'Unknown';
                 })->values());
-        console.log(window.seriesData, window.labels);
     </script>
 @endsection
