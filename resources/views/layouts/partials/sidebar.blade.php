@@ -31,98 +31,26 @@
         <div class="container-fluid">
             <div id="two-column-menu"></div>
             <ul class="navbar-nav" id="navbar-nav">
-                <li class="menu-title"><span data-key="t-menu">Menu</span></li>
-                <li class="nav-item">
-                    <a class="nav-link menu-link {{ Request::is('/') ? 'active' : '' }}" href="{{ url('/') }}">
-                        <i class="ri-dashboard-2-line"></i>
-                        <span data-key="t-dashboards">Dashboards</span>
-                    </a>
-                </li>
-                <!-- end Dashboard Menu -->
-
-                <li class="menu-title">
-                    <i class="ri-more-fill"></i>
-                    <span data-key="t-pages">Customers</span>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link menu-link {{ Request::is('plant*') ? 'active' : '' }}"
-                        href="{{ url('plant') }}">
-                        <i class="ri-building-2-line"></i>
-                        <span data-key="t-dashboards">Plants</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link menu-link {{ Request::is('product*') ? 'active' : '' }}"
-                        href="{{ url('product') }}">
-                        <i class="ri-dashboard-2-line"></i>
-                        <span data-key="t-dashboards">Products</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link menu-link {{ Request::is('route*') ? 'active' : '' }}"
-                        href="{{ url('route') }}">
-                        <i class="ri-building-2-line"></i>
-                        <span data-key="t-dashboards">Routes</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link menu-link {{ Request::is('driver*') ? 'active' : '' }}"
-                        href="{{ url('driver') }}">
-                        <i class="ri-dashboard-2-line"></i>
-                        <span data-key="t-dashboards">Drivers</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link menu-link {{ Request::is('customer*') ? 'active' : '' }}"
-                        href="{{ url('customer') }}">
-                        <i class="ri-dashboard-2-line"></i>
-                        <span data-key="t-dashboards">Customers</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link menu-link {{ Request::is('dispensary*') ? 'active' : '' }}"
-                        href="{{ url('dispensary') }}">
-                        <i class="ri-dashboard-2-line"></i>
-                        <span data-key="t-dashboards">Dispensary</span>
-                    </a>
-                </li>
-
-                <li class="menu-title">
-                    <i class="ri-more-fill"></i>
-                    <span data-key="t-pages">Purchases</span>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link menu-link {{ Request::is('order*') ? 'active' : '' }}"
-                        href="{{ url('order') }}">
-                        <i class="ri-dashboard-2-line"></i>
-                        <span data-key="t-dashboards">Orders</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link menu-link {{ Request::is('request-order*') ? 'active' : '' }}"
-                        href="{{ url('request-order') }}">
-                        <i class="ri-dashboard-2-line"></i>
-                        <span data-key="t-dashboards">Orders Request</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link menu-link {{ Request::is('maintenance*') ? 'active' : '' }}"
-                        href="{{ url('maintenance') }}">
-                        <i class="ri-dashboard-2-line"></i>
-                        <span data-key="t-dashboards">maintenance</span>
-                    </a>
-                </li>
-
+                @foreach (config('menu') as $item)
+                    @if (auth()->check() && auth()->user()->hasAnyRole($item['roles']))
+                        @if (isset($item['type']) && $item['type'] === 'section')
+                            <li class="menu-title">
+                                <i class="ri-more-fill"></i>
+                                <span data-key="t-pages">{{ $item['label'] }}</span>
+                            </li>
+                        @else
+                            <li class="nav-item">
+                                <a class="nav-link menu-link {{ Request::is($item['url'] . '*') ? 'active' : '' }}"
+                                    href="{{ url($item['url']) }}">
+                                    <i class="{{ $item['icon'] }}"></i>
+                                    <span data-key="t-dashboards">{{ $item['label'] }}</span>
+                                </a>
+                            </li>
+                        @endif
+                    @endif
+                @endforeach
             </ul>
+
         </div>
         <!-- Sidebar -->
     </div>

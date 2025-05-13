@@ -168,7 +168,7 @@
 
                         <div class="text-end">
                             <button type="button" class="btn btn-primary cancel me-2"
-                                onclick="window.location='{{ route('order.index') }}'">Cancel</button>
+                                onclick="window.location='{{ route('dispensary.index') }}'">Cancel</button>
                             @if (!$show)
                                 <button type="submit"
                                     class="btn btn-primary">{{ isset($Order) ? 'Update' : 'Save' }}</button>

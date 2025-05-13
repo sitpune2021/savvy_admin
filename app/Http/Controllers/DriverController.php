@@ -12,14 +12,21 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Exception;
 
-class DriverController extends Controller
+class DriverController extends BaseController
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $drivers = Drivers::orderBy('created_at', 'desc')->get();
+        $query = Drivers::orderBy('created_at', 'desc');
+        if ($this->vendorId !== null) {
+            $query->where('vendor_id', $this->vendorId);
+        }
+        else{
+            $query->where('vendor_id', null);
+        }
+        $drivers = $query->get();
         return view('pages.driver.index', compact('drivers'));
     }
 
@@ -30,7 +37,14 @@ class DriverController extends Controller
     {
         $show = false;  
         $routes = Routes::with('plant')->get();
-        $plants = Plant::all();
+        $query = Plant::orderBy('created_at', 'desc');
+        if ($this->vendorId !== null) {
+            $query->where('vendor_id', $this->vendorId);
+        }
+        else{
+            $query->where('vendor_id', null);
+        }
+        $plants = $query->get();
         return view('pages.driver.add-edit',compact('show', 'routes', 'plants'));      
     }
 
@@ -105,6 +119,9 @@ class DriverController extends Controller
             $data = $request->all();
             $data['pan_card_FILE'] = $pan_card_FILE;
             $data['aadhar_card_FILE'] = $aadhar_card_FILE;
+            if ($this->vendorId !== null) {
+                $data['vendor_id'] = $this->vendorId;
+            }
             Drivers::create($data);
             return response()->json([
                 'message' => 'Driver created successfully!',
@@ -122,7 +139,14 @@ class DriverController extends Controller
         $show = true;
         $Driver = Drivers::findOrFail($id);
         $routes = Routes::all();
-        $plants = Plant::all();
+        $query = Plant::orderBy('created_at', 'desc');
+        if ($this->vendorId !== null) {
+            $query->where('vendor_id', $this->vendorId);
+        }
+        else{
+            $query->where('vendor_id', null);
+        }
+        $plants = $query->get();
         return view('pages.driver.add-edit',compact('show', 'Driver', 'routes', 'plants'));
     }
 
@@ -135,7 +159,14 @@ class DriverController extends Controller
             $show = false;
             $Driver = Drivers::findOrFail($id);
             $routes = Routes::all();
-            $plants = Plant::all();
+            $query = Plant::orderBy('created_at', 'desc');
+            if ($this->vendorId !== null) {
+                $query->where('vendor_id', $this->vendorId);
+            }
+            else{
+                $query->where('vendor_id', null);
+            }
+            $plants = $query->get();
             return view('pages.driver.add-edit',compact('show', 'Driver', 'routes', 'plants'));
         } catch (ModelNotFoundException $e) {
             return back()->withErrors(['error' => 'Driver not found.']);

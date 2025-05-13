@@ -8,15 +8,25 @@ use Illuminate\Support\Facades\Validator;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 
-class PlantController extends Controller
+
+class PlantController extends BaseController
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $Plants = Plant::orderBy('created_at', 'desc')->get();
+        $query = Plant::orderBy('created_at', 'desc');
+
+        if ($this->vendorId !== null) {
+            $query->where('vendor_id', $this->vendorId);
+        }else{
+            $query->where('vendor_id', null);
+        }
+
+        $Plants = $query->get();
         return view('pages.plant.index', compact('Plants'));
     }
 
@@ -56,6 +66,9 @@ class PlantController extends Controller
 
         try {
             $data = $request->all();
+            if ($this->vendorId !== null) {
+                $data['vendor_id'] = $this->vendorId;
+            }
             Plant::create($data);
             return response()->json(['message' => 'Plant added successfully'], 200);
         } catch (Exception $e) {

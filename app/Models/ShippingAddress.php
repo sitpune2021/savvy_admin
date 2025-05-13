@@ -27,7 +27,9 @@ class ShippingAddress extends Model
         'shipping_city',
         'shipping_pincode',
         'machine_deployed',
-        'machine_deployed_date'
+        'machine_deployed_date',
+        'type',
+        'vendor_id',
     ];
 
     public function Customers()

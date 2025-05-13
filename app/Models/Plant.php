@@ -17,6 +17,7 @@ class Plant extends Model
         'location',
         'pincode',
         'details',
+        'vendor_id',
     ];
 
     protected $dates = ['deleted_at'];

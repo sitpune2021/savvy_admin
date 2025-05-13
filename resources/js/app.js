@@ -11,6 +11,7 @@ select2();// does nothing
 })(jQuery);
 
 function handleFormSubmit(formId, actionUrl, method = 'POST', subPath = {}, successCallback = null, errorCallback = null) {
+	
 	$(formId).on('submit', function (e) {
 		e.preventDefault();
 
@@ -22,6 +23,7 @@ function handleFormSubmit(formId, actionUrl, method = 'POST', subPath = {}, succ
 		let formData = new FormData(this);
 		let currentMethod = method;
 		let Id = $('#id').val();
+	console.log($('#id').val());
 
 		if (Id != null && Id != '') {
 			if (!actionUrl.includes(`/${Id}`)) {
@@ -52,7 +54,7 @@ function handleFormSubmit(formId, actionUrl, method = 'POST', subPath = {}, succ
 				if (successCallback) {
 					successCallback(response);
 				} else {
-							showSuccessAlert(response.message);
+					showSuccessAlert(response.message);
 				}
 			},
 			error: function (xhr) {
@@ -181,13 +183,13 @@ function showSuccessAlert(message) {
 
 handleFormSubmit(
 	'#orderForm',
-	'/order', 
-	'POST', 
+	'/order',
+	'POST',
 	{},
 	function (response) { // success callback
 		showSuccessAlert(response.message);
 	},
-	function (xhr) { 
+	function (xhr) {
 		showErrorAlert('An error occurred. Please try again.');
 		console.log('Error occurred:', xhr);
 	}
@@ -195,13 +197,13 @@ handleFormSubmit(
 
 handleFormSubmit(
 	'#dispensaryForm',
-	'/dispensary', 
-	'POST', 
+	'/dispensary',
+	'POST',
 	{},
 	function (response) { // success callback
 		showSuccessAlert(response.message);
 	},
-	function (xhr) { 
+	function (xhr) {
 		showErrorAlert('An error occurred. Please try again.');
 		console.log('Error occurred:', xhr);
 	}
@@ -213,7 +215,7 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-				showSuccessAlert(response.message);
+		showSuccessAlert(response.message);
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -226,7 +228,20 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-				showSuccessAlert(response.message);
+		showSuccessAlert(response.message);
+	},
+	function (xhr) { // error callback
+		console.log('Error occurred:', xhr);
+	}
+);
+
+handleFormSubmit(
+	'#vendorForm', // form ID
+	'/vendor', // URL to send data to
+	'POST', // default method
+	{},
+	function (response) { // success callback
+		showSuccessAlert(response.message);
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -253,7 +268,7 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-				showSuccessAlert(response.message);
+		showSuccessAlert(response.message);
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -266,7 +281,7 @@ handleFormSubmit(
 	'POST', // default method
 	{},
 	function (response) { // success callback
-				showSuccessAlert(response.message);
+		showSuccessAlert(response.message);
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -278,8 +293,8 @@ handleFormSubmit(
 	'/assign-route', // URL to send data to
 	'POST', // default method
 	{},
-	function (response) { 
-				showSuccessAlert(response.message);
+	function (response) {
+		showSuccessAlert(response.message);
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -295,7 +310,23 @@ handleFormSubmit(
 		method: 'Put',
 	},
 	function (response) {
-				showSuccessAlert(response.message);
+		showSuccessAlert(response.message);
+	},
+	function (xhr) { // error callback
+		console.log('Error occurred:', xhr);
+	}
+);
+
+handleFormSubmit(
+	'#vendorShippingForm', // form ID
+	'/customer', // URL to send data to
+	'POST', // default method
+	{
+		subPath: 'vendor-shipping-address',
+		method: 'Put',
+	},
+	function (response) {
+		showSuccessAlert(response.message);
 	},
 	function (xhr) { // error callback
 		console.log('Error occurred:', xhr);
@@ -337,13 +368,15 @@ $(document).ready(function () {
 	}
 
 	function generateAddressBlock(index, contactIndex, data = {}, isEdit = false) {
+		console.log(data.address);
+		
 		const routes = window.routeData || [];
 		const drivers = window.driverData || [];
 		const filteredRoutes = routes.filter(route => route.plant_id == data?.address?.plant_id);
 		const filteredDrivers = drivers.filter(driver => driver.route_id == data?.address?.route_id);
-
+		const isVender = window.isvender;
 		const deployedSelect = $(`
-			<select class="select js-example-basic-single form-control" name="shipping[${index}][machine_deployed]">
+			<select class="select js-example-basic-single form-control" name="shipping[${index}][machine_deployed]"  ${isVender !== null ? 'disabled' : ''}>
 				<option value="Yes" ${data?.address?.machine_deployed === 'Yes' ? 'selected' : ''}>Yes</option>
 				<option value="No" ${data?.address?.machine_deployed === 'No' ? 'selected' : ''}>No</option>
 			</select>
@@ -354,6 +387,14 @@ $(document).ready(function () {
 				<option value="">Select Plant</option>
 				${window.plants.map(plant => `
 					<option value="${plant.id}" ${data?.address?.plant_id === plant.id ? 'selected' : ''}>${plant.name}</option>
+				`).join('')}
+			</select>
+		`);
+		const vendorSelect = $(`
+			<select class="select js-example-basic-single form-control" name="shipping[${index}][vendor_id]" id="vendor_id_${index}" ${window.show ? 'disabled' : ''}>
+				<option value="">Select Vendor</option>
+				${window.vendors.map(vendor => `
+					<option value="${vendor.id}" ${data?.address?.vendor_id === vendor.id ? 'selected' : ''}>${vendor.user.name}</option>
 				`).join('')}
 			</select>
 		`);
@@ -381,7 +422,7 @@ $(document).ready(function () {
 		`);
 		// ${data?.address?.contracts.product_id === product.id ? 'selected' : ''}
 		const productSelect = $(`
-            <select class="select js-example-basic-single" name="contract[${index}][product_id]"${window.show ? 'disabled' : ''}>
+            <select class="select js-example-basic-single" name="contract[${index}][product_id]"${window.show ? 'disabled' : ''}  ${isVender !== null ? 'disabled' : ''}>
                 <option value="">Select Product</option>
 				${window.products.map(product => `
 					<option value="${product.id}" ${data?.contract?.product_id === product.id ? 'selected' : ''} >${product.name}</option>
@@ -400,7 +441,7 @@ $(document).ready(function () {
 		const durationType = ['years', 'months', 'weeks', 'days'];
 
 		const frequencySelect = $(`
-			<select class="select js-example-basic-single" name="contract[${index}][frequency]" id="frequency_${index}">
+			<select class="select js-example-basic-single" name="contract[${index}][frequency]" id="frequency_${index}"  ${isVender !== null ? 'disabled' : ''}>
 				${frequencies.map(freq => `
 					<option value="${freq}" ${data?.contract?.frequency === freq ? 'selected' : ''} >${formatFrequency(freq)}</option>
 				`).join('')}
@@ -410,7 +451,7 @@ $(document).ready(function () {
 		const selectedDays = data?.contract?.days ? data?.contract?.days.split('|') : [];
 
 		const frequencyDaysSelect = $(`
-			<select class="select js-example-basic-single" name="contract[${index}][days][]" multiple>
+			<select class="select js-example-basic-single" name="contract[${index}][days][]" multiple  ${isVender !== null ? 'disabled' : ''}>
 				${frequencieDays.map(fday => `
 					<option value="${fday}" ${selectedDays.includes(fday) ? 'selected' : ''}>${fday.toUpperCase()}</option>
 				`).join('')}
@@ -419,7 +460,7 @@ $(document).ready(function () {
 
 
 		const durationTypeSelect = $(`
-			<select class="select js-example-basic-single" name="contract[${index}][duration_type]">
+			<select class="select js-example-basic-single" name="contract[${index}][duration_type]"  ${isVender !== null ? 'disabled' : ''}>
 				${durationType.map(dtyp => `
 					<option value="${dtyp}" ${data?.contract?.duration_type === dtyp ? 'selected' : ''}>${dtyp.toUpperCase()}</option>
 				`).join('')}
@@ -435,52 +476,77 @@ $(document).ready(function () {
 				<div class="row align-item-center card-body">
 					<input type="hidden" name="shipping[${index}][id]" value="${data?.address?.id || ''}">
 					<input type="hidden" name="contract[${index}][id]" value="${data?.contract?.id || ''}">
+					${isVender === null ? `
+					<div class="col-sm-12">
+						<div class="input-block mb-3">
+							<div class="d-flex align-items-center gap-3 pt-2 pb-2">
+								<div class="form-check form-check-outline form-check-dark">
+									<input class="form-check-input type-checkbox checkbox_${index}" type="checkbox"
+										name="shipping[${index}][type]" id="typeLocal_${index}" value="local" data-index="${index}"  ${(data?.address?.type === 'local' || !data?.address?.type) ? 'checked' : ''}>
+									<label class="form-check-label" for="typeLocal_${index}">Local</label>
+								</div>
+								<div class="form-check form-check-outline form-check-dark">
+									<input class="form-check-input type-checkbox checkbox_${index}" type="checkbox"
+										name="shipping[${index}][type]" id="typePanIndia_${index}" value="pan_india" data-index="${index}" ${data?.address?.type === 'pan_india' ? 'checked' : ''}>
+									<label class="form-check-label" for="typePanIndia_${index}">Pan India</label>
+								</div>
+							</div>
+						</div>
+					</div>
+					` : ``}
 					<div class="col-sm-12">
 						<div class="input-block mb-3">
 							<label>Address</label>
 							<input name="shipping[${index}][shipping_address]" type="text" class="form-control"
-								placeholder="Enter Shipping Address" value="${data?.address?.shipping_address || ''}">
+								placeholder="Enter Shipping Address" value="${data?.address?.shipping_address || ''}" ${isVender !== null ? 'disabled' : ''}>
 						</div>
 					</div>
 					<div class="col-lg-3 col-md-6 col-sm-12">
 						<div class="input-block mb-3">
 							<label>Country</label>
 							<input name="shipping[${index}][shipping_country]" type="text" class="form-control"
-								placeholder="Enter Shipping Country" value="${data?.address?.shipping_country || ''}">
+								placeholder="Enter Shipping Country" value="${data?.address?.shipping_country || ''}" ${isVender !== null ? 'disabled' : ''}>
 						</div>
 					</div>
 					<div class="col-lg-3 col-md-6 col-sm-12">
 						<div class="input-block mb-3">
 							<label>State</label>
 							<input name="shipping[${index}][shipping_state]" type="text" class="form-control"
-								placeholder="Enter Shipping State" value="${data?.address?.shipping_state || ''}">
+								placeholder="Enter Shipping State" value="${data?.address?.shipping_state || ''}" ${isVender !== null ? 'disabled' : ''}>
 						</div>
 					</div>
 					<div class="col-lg-3 col-md-6 col-sm-12">
 						<div class="input-block mb-3">
 							<label>City</label>
 							<input name="shipping[${index}][shipping_city]" type="text" class="form-control"
-								placeholder="Enter Shipping City" value="${data?.address?.shipping_city || ''}">
+								placeholder="Enter Shipping City" value="${data?.address?.shipping_city || ''}" ${isVender !== null ? 'disabled' : ''}>
 						</div>
 					</div>
 					<div class="col-lg-3 col-md-6 col-sm-12">
 						<div class="input-block mb-3">
 							<label>Pin Code</label>
 							<input name="shipping[${index}][shipping_pincode]" type="number" class="form-control"
-								placeholder="Enter Shipping Pin Code" value="${data?.address?.shipping_pincode || ''}">
+								placeholder="Enter Shipping Pin Code" value="${data?.address?.shipping_pincode || ''}" ${isVender !== null ? 'disabled' : ''}>
 						</div>
 					</div>
-					<div class="col-lg-4 col-md-6 col-sm-12" id="plant_select">
+					${isVender === null ? `
+					<div class="col-lg-4 col-md-6 col-sm-12" id="vendor_select_${index}">
+						<div class="input-block mb-3 vendor-container">
+							<label>vendor</label>
+						</div>
+					</div>
+					` : ``}
+					<div class="col-lg-4 col-md-6 col-sm-12" id="plant_select_${index}">
 						<div class="input-block mb-3 plant-container">
 							<label>Plant</label>
 						</div>
 					</div>
-					<div class="col-lg-4 col-md-6 col-sm-12" id="route_select">
+					<div class="col-lg-4 col-md-6 col-sm-12" id="route_select_${index}">
 						<div class="input-block mb-3 route-container">
 							<label>Routes</label>
 						</div>
 					</div>
-					<div class="col-lg-4 col-md-6 col-sm-12" id="driver_select">
+					<div class="col-lg-4 col-md-6 col-sm-12" id="driver_select_${index}">
 						<div class="input-block mb-3 driver-container">
 							<label>Drivers</label>
 						</div>
@@ -493,14 +559,14 @@ $(document).ready(function () {
 								<div class="input-block mb-3">
 									<label>Name</label>
 									<input name="shipping[${index}][shipping_contacts][${contactIndex}][name]" type="text" class="form-control"
-										placeholder="Enter Name" value="${data?.address?.name || ''}">
+										placeholder="Enter Name" value="${data?.address?.name || ''}" ${isVender !== null ? 'disabled' : ''}>
 								</div>
 							</div>
 							<div class="col-lg-5 col-md-6 col-sm-12">
 								<div class="input-block mb-3">
 									<label>Mobile No</label>
 									<input name="shipping[${index}][shipping_contacts][${contactIndex}][phone]" type="text" class="form-control"
-										placeholder="Enter Mobile No" value="${data?.address?.phone || ''}">
+										placeholder="Enter Mobile No" value="${data?.address?.phone || ''}" ${isVender !== null ? 'disabled' : ''}>
 								</div>
 							</div>
 							<div class="col-lg-2 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
@@ -511,23 +577,24 @@ $(document).ready(function () {
 							</div>
 						</div>
 						`}
-						 ${data?.address?.contacts?.map((contact, contactIndex) => `
+						 ${data?.address?.contacts?.length > 0 ? data?.address?.contacts?.map((contact, contactIndex) => `
 							<div class="row align-items-center address-contact-block" >
 								<input name="shipping[${index}][shipping_contacts][${contactIndex}][id]" type="hidden" value="${contact.id}">
 								<div class="col-lg-5 col-md-6 col-sm-12">
 									<div class="input-block mb-3">
 										<label>Name</label>
 										<input name="shipping[${index}][shipping_contacts][${contactIndex}][name]" type="text" class="form-control"
-											placeholder="Enter Name" value="${contact.name || ''}">
+											placeholder="Enter Name" value="${contact.name || ''}" ${isVender !== null ? 'disabled' : ''}>
 									</div>
 								</div>
 								<div class="col-lg-5 col-md-6 col-sm-12">
 									<div class="input-block mb-3">
 										<label>Mobile No</label>
 										<input name="shipping[${index}][shipping_contacts][${contactIndex}][phone]" type="text" class="form-control"
-											placeholder="Enter Mobile No" value="${contact.phone || ''}">
+											placeholder="Enter Mobile No" value="${contact.phone || ''}" ${isVender !== null ? 'disabled' : ''}>
 									</div>
 								</div>
+								${isVender === null ? `
 								${contactIndex === 0 ? `
 									<div class="col-lg-2 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
 										<button type="button" class="btn btn-sm btn-success" id="add-address-contacts_${index}">
@@ -540,8 +607,9 @@ $(document).ready(function () {
                                             - remove Contact
                                         </button>
                                     </div>`}
+									` : ''}
 							</div>
-						`).join('')}
+						`).join('') : ''}
 					</div>
 					<div class="col-lg-4 col-md-6 col-sm-12" id="product_select">
                         <div class="input-block mb-3 product-container">
@@ -551,7 +619,7 @@ $(document).ready(function () {
 					<div class="col-lg-4 col-md-6 col-sm-12">
 						<div class="input-block mb-3">
 							<label>Stock</label>
-							<input name="contract[${index}][quantity]" type="number" class="form-control" placeholder="Enter Stock" value="${data?.contract?.quantity || '1'}">
+							<input name="contract[${index}][quantity]" type="number" class="form-control" placeholder="Enter Stock" value="${data?.contract?.quantity || '1'}"  ${isVender !== null ? 'disabled' : ''}>
 						</div>
 					</div>
 					
@@ -559,7 +627,7 @@ $(document).ready(function () {
 						<div class="input-block mb-3">
 							<label>Price /-</label>
 							<input name="contract[${index}][price]" type="number" class="form-control" placeholder="Enter Price"
-								value="${data?.contract?.price || '1'}">
+								value="${data?.contract?.price || '1'}"  ${isVender !== null ? 'disabled' : ''}>
 						</div>
 					</div>
 
@@ -572,7 +640,7 @@ $(document).ready(function () {
 					<div class="col-lg-4 col-md-6 col-sm-12" id="frequency_count_${index}">
 						<div class="input-block mb-3">
 							<label>Frequency Count</label>
-							<input name="contract[${index}][frequency_count]" type="number" class="form-control" value="${data?.contract?.frequency_count || '1'}">
+							<input name="contract[${index}][frequency_count]" type="number" class="form-control" value="${data?.contract?.frequency_count || '1'}"  ${isVender !== null ? 'disabled' : ''}>
 						</div>
 					</div>
 
@@ -586,7 +654,7 @@ $(document).ready(function () {
 						<div class="input-block mb-3">
 							<label>Duration</label>
 							<input name="contract[${index}][duration]" type="number" class="form-control" placeholder="Enter Duration"
-								value="${data?.contract?.duration || '1'}">
+								value="${data?.contract?.duration || '1'}"  ${isVender !== null ? 'disabled' : ''}>
 						</div>
 					</div>
 
@@ -608,6 +676,7 @@ $(document).ready(function () {
 
 		block.find('.deployed-container').append(deployedSelect);
 		block.find('.plant-container').append(plantSelect);
+		block.find('.vendor-container').append(vendorSelect);
 		block.find('.route-container').append(routeSelect);
 		block.find('.driver-container').append(driverSelect);
 		block.find('.product-container').append(productSelect);
@@ -620,6 +689,15 @@ $(document).ready(function () {
 			block.find(`#days_select_${index}`).show();
 		} else {
 			block.find(`#days_select_${index}`).hide();
+		}
+		const selectedType = block.find(`.checkbox_${index}:checked`).val();
+
+		if (selectedType === 'pan_india') {
+			block.find(`#vendor_select_${index}`).show();
+			block.find(`#plant_select_${index}, #route_select_${index}, #driver_select_${index}`).hide();
+		} else if (selectedType === 'local') {
+			block.find(`#vendor_select_${index}`).hide();
+			block.find(`#plant_select_${index}, #route_select_${index}, #driver_select_${index}`).show();
 		}
 
 		return block;
@@ -720,6 +798,39 @@ $(document).ready(function () {
 	$(document).on('click', '.cancel-all', function () {
 		$('#add-address-edit').show();
 		$('#address-container').empty();
+	});
+
+	function toggleShippingFields(index) {
+		const selectedType = $(`.checkbox_${index}:checked`).val();
+
+		if (selectedType === 'pan_india') {
+			$(`#vendor_select_${index}`).show();
+			$(`#plant_select_${index}, #route_select_${index}, #driver_select_${index}`).hide();
+		} else if (selectedType === 'local') {
+			$(`#vendor_select_${index}`).hide();
+			$(`#plant_select_${index}, #route_select_${index}, #driver_select_${index}`).show();
+		}
+	}
+
+	// Handle checkbox changes for each index group
+	$(document).on('change', '.type-checkbox', function () {
+		const index = $(this).data('index');
+
+		// Allow only one checked per index
+		$(`.checkbox_${index}`).not(this).prop('checked', false);
+
+		// If none checked after this action, force this one to remain checked
+		if (!$(`.checkbox_${index}:checked`).length) {
+			$(this).prop('checked', true);
+		}
+
+		toggleShippingFields(index);
+	});
+
+	// Initialize on page load
+	$('.type-checkbox:checked').each(function () {
+		const index = $(this).data('index');
+		toggleShippingFields(index);
 	});
 });
 

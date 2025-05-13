@@ -34,6 +34,7 @@ class Drivers extends Authenticatable
             'pan_card_FILE',
             'aadhar_card_FILE',
             'otp', 'otp_expires_at',
+            'vendor_id',
         ];
 
     public function routes()

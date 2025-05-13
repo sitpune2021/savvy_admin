@@ -1,14 +1,8 @@
 @extends('layouts.app')
 @php
-    $title = 'Orders - ' . config('app.name');
-    $PageTitle = 'Orders List';
+    $title = 'Vendors - ' . config('app.name');
+    $PageTitle = 'Vendors List';
     $breadcrumbs = [['name' => 'Home', 'url' => url('/')], ['name' => $PageTitle, 'url' => '']];
-    $statusClasses = [
-        'cancelled' => 'bg-danger-subtle text-danger',
-        'pending' => 'bg-warning-subtle text-warning',
-        'completed' => 'bg-success-subtle text-success',
-        'in_progress' => 'bg-info-subtle text-info',
-    ];
 @endphp
 
 @push('styles')
@@ -56,22 +50,21 @@
             </div>
         </div>
     </div>
-    @if (auth()->user()?->vendor?->id === null)
-        <div class="card">
-            <div class="card-body">
-                <div class="row g-2">
-                    <div class="col-sm-auto ms-auto">
-                        <div class="list-grid-nav hstack gap-1">
-                            <a class="btn btn-success" href="{{ route('order.create') }}">
-                                <i class="ri-add-fill me-1 align-bottom"></i> Add
-                                Order
-                            </a>
-                        </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-sm-auto ms-auto">
+                    <div class="list-grid-nav hstack gap-1">
+                        <a class="btn btn-success" href="{{ route('vendor.create') }}">
+                            <i class="ri-add-fill me-1 align-bottom"></i> Add
+                            Vendor
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
-    @endif
+    </div>
 
     <div class="row">
         <div class="col-lg-12">
@@ -79,46 +72,37 @@
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="buttons-datatables" class="display table table-bordered" style="width:100%">
-                            <thead>
+                            <thead class="thead-light">
                                 <tr>
                                     <th>Sr. No</th>
-                                    <th>Customer</th>
-                                    <th>shipping Address</th>
-                                    <th>Driver</th>
-                                    <th>Delivery Quantity</th>
-                                    <th>Status</th>
-                                    <th>Date</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone No.</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($orders as $order)
+                                @foreach ($vendors as $vendor)
                                     <tr>
-                                        <td>
-                                            {{ $loop->iteration }}
-                                            @if( auth()->user()?->vendor?->id === null && $order->drivers?->vendor_id != null)
-                                                <i class="ri-user-shared-line"></i>
-                                            @endif
-                                            @if( $order->type == 'additional')
-                                                <i class="ri-shopping-cart-line"></i>
-                                            @endif
-                                        </td>
-                                        <td>{{ $order->customers->name }}</td>
-                                        <td>{{ $order->shipping->shipping_address }}</td>
-                                        <td>{{ $order?->drivers?->name }}</td>
-                                        <td>{{ $order->develivered_qty }}</td>
-                                        <td>
-                                            <span
-                                                class="badge {{ $statusClasses[$order->status] ?? 'bg-secondary-subtle text-secondary' }} p-2">
-                                                {{ ucfirst(str_replace('_', ' ', $order->status)) }}
-                                            </span>
-                                        </td>
-                                        <td>{{ $order->created_at->format('d-m-Y') }}</td>
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $vendor?->user?->name }}</td>
+                                        <td>{{ $vendor->user?->email }}</td>
+                                        <td>{{ $vendor->phone_number }}</td>
                                         <td>
                                             <div class="hstack gap-3 flex-wrap">
-                                                {{-- <a href="{{ route('order.edit', $order->id) }}" class="link-success fs-15"><i class="ri-edit-2-line"></i></a> --}}
-                                                <a href="{{ route('order.show', $order->id) }}"
-                                                    class="link-primary fs-15"><i class="ri-eye-line"></i></a>
+                                                <a href="{{ route('vendor.edit', $vendor->id) }}" class="link-success fs-15"><i class="ri-edit-2-line"></i></a>
+                                                <a href="{{ route('vendor.show', $vendor->id) }}" class="link-primary fs-15"><i class="ri-eye-line"></i></a>
+                                                <form action="{{ route('vendor.destroy', $vendor->id) }}"
+                                                    method="POST" id="delete-form-{{ $vendor->id }}"
+                                                    style="display: none;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                </form>
+
+                                                <a href="javascript:void(0);" class="link-danger fs-15"
+                                                    onclick="if(confirm('Are you sure you want to delete this vendor?')) { document.getElementById('delete-form-{{ $vendor->id }}').submit(); }">
+                                                    <i class="ri-delete-bin-line"></i>
+                                                </a>
                                                 {{-- <a href="javascript:void(0);" class="link-danger fs-15"><i class="ri-delete-bin-line"></i></a> --}}
                                             </div>
                                         </td>

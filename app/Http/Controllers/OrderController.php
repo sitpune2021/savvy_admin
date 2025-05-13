@@ -16,15 +16,20 @@ use Illuminate\Validation\Rule;
 
 use Exception;
 
-class OrderController extends Controller
+class OrderController extends BaseController
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $orders = Orders::with('customers', 'drivers')->orderBy('created_at', 'desc') // or 'id', depending on your use case
-        ->get();
+       $ordersQuery = Orders::with(['customers', 'drivers']);
+        if ($this->vendorId !== null) {
+            $ordersQuery->whereHas('drivers', function ($query) {
+                $query->where('vendor_id', $this->vendorId);
+            });
+        }
+        $orders = $ordersQuery->orderBy('created_at', 'desc')->get();
         return view('pages.order.index', compact('orders'));
     }
 

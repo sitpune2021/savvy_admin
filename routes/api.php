@@ -12,7 +12,7 @@ use App\Http\Controllers\API\Driver\MaintenanceController;
 Route::post('send-otp', [AuthController::class, 'sendOtp']); 
 Route::post('verify-otp', [AuthController::class, 'verifyOtp']);
 
- // Customer 🔐 Auth Routes
+ // Customer and Vendor 🔐 Auth Routes
 Route::post('login', [AuthController::class, 'login'])->name('login');
 Route::post('verify-account', [AuthController::class, 'verifyAccount']); 
 Route::post('reset-password', [AuthController::class, 'resetPassword']); 

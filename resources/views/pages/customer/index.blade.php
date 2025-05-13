@@ -53,7 +53,7 @@
             </div>
         </div>
     </div>
-
+@if(auth()->user()?->vendor?->id === null)
     <div class="card">
         <div class="card-body">
             <div class="row g-2">
@@ -68,6 +68,7 @@
             </div>
         </div>
     </div>
+@endif
 
     <div class="row">
         <div class="col-lg-12">

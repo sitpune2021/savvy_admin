@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\Vendor;
 
 class User extends Authenticatable
 {
@@ -43,11 +44,6 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function getRoleAttribute($value)
-    {
-        return ucfirst($value);
-    }
-
     public function isAdmin()
     {
         return $this->role === 'admin';
@@ -66,5 +62,20 @@ class User extends Authenticatable
     public function isVendor()
     {
         return $this->role === 'vendor';
+    }
+
+    public function hasRole($role)
+    {
+        return strtolower($this->role) === strtolower($role);
+    }
+
+    public function hasAnyRole(array $roles)
+    {
+        return in_array(strtolower($this->role), array_map('strtolower', $roles));
+    }
+
+    public function Vendor()
+    {
+        return $this->hasOne(Vendor::class, 'user_id');
     }
 }

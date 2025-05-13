@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use App\Models\Drivers;
+use App\Models\Vendor;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -206,7 +207,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'phone_no' => 'required|digits:10',
             'password' => 'required|string|min:6',
-            'role' => 'required|string|in:customer',
+            'role' => 'required|string|in:customer,vendor',
         ]);
 
         if ($validator->fails()) {
@@ -217,47 +218,69 @@ class AuthController extends Controller
             ], 422);
         }
 
-        try {
-            $users = ShippingContact::where('phone', $request->phone_no)->with('shippingAddress:id,shipping_address')->get();
-            if ($users->count() === 0) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'User not found',
-                ], 404);
+         try {
+            $user = null;
+
+            if ($request->role === 'customer') {
+                $users = ShippingContact::where('phone', $request->phone_no)
+                    ->with('shippingAddress:id,shipping_address')
+                    ->get();
+
+                if ($users->count() === 0) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'User not found',
+                    ], 404);
+                }
+
+                if ($users->count() > 1) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Multiple users found with the same phone number. Cannot proceed with login.',
+                    ], 409); // 409 Conflict
+                }
+
+                $user = $users->first();
+
+            } elseif ($request->role === 'vendor') {
+                $vendor = Vendor::with('user')->where('phone_number', $request->phone_no)->first();
+
+                if (!$vendor || !$vendor->user) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'User not found',
+                    ], 404);
+                }
+
+                $user = $vendor->user;
+                $user->phone = $vendor->phone_number;
+                $user->address = $vendor->address;
+                $user->vendor_id = $vendor->id;
             }
 
-            if ($users->count() > 1) {
+            if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Multiple users found with the same phone number. Cannot proceed with login.',
-                ], 409); // 409 Conflict
-            }
-
-            $user = $users->first();
-
-            if (!Hash::check($request->password, $user->password)) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Invalid password',
+                    'message' => 'Invalid phone number or password',
                 ], 401);
             }
 
-            $token = $user->createToken('customer_token')->plainTextToken;
+            $token = $user->createToken($request->role . '_token')->plainTextToken;
 
             return response()->json([
                 'status' => true,
                 'message' => 'Login successful',
                 'data' => [
-                    'customer' => $user,
-                    'token' => $token
-                ]
+                    $request->role => $user,
+                    'token' => $token,
+                ],
             ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'An error occurred while logging in',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -266,7 +289,9 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'phone_no' => 'required|digits:10',
+            'role' => 'required|string|in:customer,vendor',
         ]);
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -276,28 +301,49 @@ class AuthController extends Controller
         }
 
         try {
-            $users = ShippingContact::where('phone', $request->phone_no)->get();
+            $user = null;
 
-            if ($users->count() === 0) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'User not found',
-                ], 404);
+            if ($request->role === 'customer') {
+                $users = ShippingContact::where('phone', $request->phone_no)
+                    ->with('shippingAddress:id,shipping_address')
+                    ->get();
+
+                if ($users->count() === 0) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'User not found',
+                    ], 404);
+                }
+
+                if ($users->count() > 1) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Multiple users found with the same phone number. Cannot proceed with login.',
+                    ], 409); // 409 Conflict
+                }
+
+                $user = $users->first();
+
+            } elseif ($request->role === 'vendor') {
+                $vendor = Vendor::with('user')->where('phone_number', $request->phone_no)->first();
+
+                if (!$vendor || !$vendor->user) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'User not found',
+                    ], 404);
+                }
+
+                $user = $vendor->user;
+                $user->phone = $vendor->phone_number;
+                $user->address = $vendor->address;
+                $user->vendor_id = $vendor->id;
             }
-
-            if ($users->count() > 1) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Multiple users found with the same phone number. Cannot proceed with verification.',
-                ], 409);
-            }
-
-            $user = $users->first();
             return response()->json([
                 'status' => true,
                 'message' => 'customer verified successfully',
                 'data' => [
-                    'customer' => $user,
+                    $request->role => $user,
                 ]
             ], 200);
 
@@ -316,7 +362,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'phone_no' => 'required|digits:10',
             'password' => 'required|string|min:6',
-            'role' => 'required|string|in:customer',
+            'role' => 'required|string|in:customer,vendor',
         ]);
         
         if ($validator->fails()) {
@@ -328,13 +374,36 @@ class AuthController extends Controller
         }
 
         try {
-            $users = ShippingContact::where('phone', $request->phone_no)->get();
+             $user = null;
 
-            if (!$user) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'User not found',
-                ], 404);
+            if ($request->role === 'customer') {
+                $users = ShippingContact::where('phone', $request->phone_no)->get();
+                if ($users->count() === 0) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'User not found',
+                    ], 404);
+                }
+
+                if ($users->count() > 1) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Multiple users found with the same phone number. Cannot proceed with login.',
+                    ], 409); // 409 Conflict
+                }
+
+                $user = $users->first();
+            }else if ($request->role === 'vendor') {
+                $vendor = Vendor::with('user')->where('phone_number', $request->phone_no)->first();
+
+                if (!$vendor || !$vendor->user) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Vendor not found',
+                    ], 404);
+                }
+
+                $user = $vendor->user;
             }
 
             $user->password = Hash::make($request->password);

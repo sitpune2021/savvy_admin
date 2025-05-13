@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PlantController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\Vendor\CustomerController as VendorCustomerController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\RouteController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\RequestOrdersController;
 use App\Http\Controllers\DispensaryController;
 use Illuminate\Support\Facades\Artisan;
+use App\Http\Controllers\VendorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -94,21 +96,31 @@ Route::get('/privicy-policy', function () {
 
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-    Route::resource('plant', PlantController::class);
-    Route::resource('route', RouteController::class);
-    Route::resource('product', ProductController::class);
-    Route::resource('customer', CustomerController::class);
-    Route::resource('driver', DriverController::class);
-    Route::resource('order', OrderController::class);
-    Route::resource('dispensary', DispensaryController::class);
-    Route::resource('request-order', RequestOrdersController::class);
-    Route::put('/request-order/{id}/status', [RequestOrdersController::class, 'updateStatus'])->name('requestOrder.update.status');
-    Route::resource('maintenance', MaintenanceController::class);
-    Route::put('/maintenance/{id}/status', [MaintenanceController::class, 'updateStatus'])->name('maintenance.update.status');
+    Route::middleware('role:admin|vendor')->group(function () {
+        Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+        Route::resource('plant', PlantController::class);
+        Route::resource('route', RouteController::class);
+        Route::resource('driver', DriverController::class);
+        Route::resource('customer', CustomerController::class);
+        Route::resource('order', OrderController::class);
 
-    Route::get('/order/{id}/assign-driver', [OrderController::class, 'assignDriver'])->name('order.assign-driver');
-    Route::get('customer/{id}/assign-route', [CustomerController::class, 'assignRoute'])->name('customer.assign-route');
-    Route::put('customer/{id}/shipping-address', [CustomerController::class, 'storeUpdateShippingAddress'])->name('customer.store-update-shipping-address');
-    Route::post('assign-route', [OrderController::class, 'storeRoute'])->name('order.store-route');
+        Route::put('customer/{id}/vendor-shipping-address', [CustomerController::class, 'updateShippingAddressForVendor'])->name('customer.update-shipping-address-forr-vendor');
+
+    });
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/order/{id}/assign-driver', [OrderController::class, 'assignDriver'])->name('order.assign-driver');
+        Route::get('customer/{id}/assign-route', [CustomerController::class, 'assignRoute'])->name('customer.assign-route');
+
+        Route::resource('product', ProductController::class);
+        Route::resource('dispensary', DispensaryController::class);
+        Route::resource('request-order', RequestOrdersController::class);
+        Route::resource('maintenance', MaintenanceController::class);
+        Route::resource('vendor', VendorController::class);
+
+        Route::put('/request-order/{id}/status', [RequestOrdersController::class, 'updateStatus'])->name('requestOrder.update.status');
+        Route::put('/maintenance/{id}/status', [MaintenanceController::class, 'updateStatus'])->name('maintenance.update.status');
+        Route::put('customer/{id}/shipping-address', [CustomerController::class, 'storeUpdateShippingAddress'])->name('customer.store-update-shipping-address');
+        
+        Route::post('assign-route', [OrderController::class, 'storeRoute'])->name('order.store-route');
+    });
 });

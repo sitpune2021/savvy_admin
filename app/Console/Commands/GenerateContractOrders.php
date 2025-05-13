@@ -83,17 +83,19 @@ class GenerateContractOrders extends Command
             
 
             if (!$exists && $contractAdditional->accepted_status == 'accepted') {
-                Orders::create([
-                    'customer_id' => $contractAdditional->customer_id,
-                    'contract_id' => $contractAdditional->id,
-                    'shipping_id' => $contractAdditional->sender->shippingAddress->id,
-                    'route_id' => $contractAdditional->sender->shippingAddress->route_id,
-                    'driver_id' => $contractAdditional->sender->shippingAddress->driver_id,
-                    'status' => 'pending',
-                    'type' => 'additional',
-                ]);
-                $contractAdditional->status = 'in-progress';
-                $contractAdditional->save();
+                if($contractAdditional->sender->shippingAddress->route_id != null && $contractAdditional->sender->shippingAddress->driver_id != null){
+                    Orders::create([
+                        'customer_id' => $contractAdditional->customer_id,
+                        'contract_id' => $contractAdditional->id,
+                        'shipping_id' => $contractAdditional->sender->shippingAddress->id,
+                        'route_id' => $contractAdditional->sender->shippingAddress->route_id,
+                        'driver_id' => $contractAdditional->sender->shippingAddress->driver_id,
+                        'status' => 'pending',
+                        'type' => 'additional',
+                    ]);
+                    $contractAdditional->status = 'in-progress';
+                    $contractAdditional->save();
+                }
             }
         } 
         
@@ -116,14 +118,16 @@ class GenerateContractOrders extends Command
                 ->exists();
 
             if (!$exists) {
-                Orders::create([
-                    'customer_id' => $contract->customer_id,
-                    'contract_id' => $contract->id,
-                    'shipping_id' => $shipping->id,
-                    'route_id' => $shipping->route_id,
-                    'driver_id' => $shipping->driver_id,
-                    'status' => 'pending',
-                ]);
+                if($shipping->route_id != null && $shipping->driver_id != null){
+                    Orders::create([
+                        'customer_id' => $contract->customer_id,
+                        'contract_id' => $contract->id,
+                        'shipping_id' => $shipping->id,
+                        'route_id' => $shipping->route_id,
+                        'driver_id' => $shipping->driver_id,
+                        'status' => 'pending',
+                    ]);
+                }
             }
         }
 

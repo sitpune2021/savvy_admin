@@ -9,17 +9,14 @@ use App\Models\Drivers;
 use App\Models\Plant;
 use Carbon\Carbon;
 
-class HomeController extends Controller
+class HomeController extends BaseController
 {
     /**
      * Create a new controller instance.
      *
      * @return void
      */
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
+    
 
     /**
      * Show the application dashboard.
@@ -38,18 +35,32 @@ class HomeController extends Controller
 
     
         // Monthly orders
-        $thisMonthOrders = Orders::whereBetween('created_at', [$startOfThisMonth, $endOfThisMonth])->count();
-        $lastMonthOrders = Orders::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->count();
-        $todayOrders = Orders::whereDate('created_at', $today)->count();
-        $yesterdayPendingOrders = Orders::whereDate('created_at', Carbon::yesterday())->where('status', 'pending')->count();
-        $allPendingOrders = Orders::whereDate('created_at','!=', $today)->where('status', 'pending')->get();
-        $todayPendingOrders = Orders::whereDate('created_at', $today)->where('status', 'pending')->count();
-        $todayCompletedOrders = Orders::whereDate('created_at', $today)->where('status', 'completed')->count();
-        $todayInProgressOrders = Orders::whereDate('created_at', $today)->where('status', 'in-progress')->count();
+        $thisMonthOrders = Orders::forVendor($this->vendorId)->whereBetween('created_at', [$startOfThisMonth, $endOfThisMonth])->count();
+        $lastMonthOrders = Orders::forVendor($this->vendorId)->whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->count();
+        $todayOrders = Orders::forVendor($this->vendorId)->whereDate('created_at', $today)->count();
+        $yesterdayPendingOrders = Orders::forVendor($this->vendorId)->whereDate('created_at', Carbon::yesterday())->where('status', 'pending')->count();
+        $allPendingOrders = Orders::forVendor($this->vendorId)->whereDate('created_at','!=', $today)->where('status', 'pending')->get();
+        $todayPendingOrders = Orders::forVendor($this->vendorId)->whereDate('created_at', $today)->where('status', 'pending')->count();
+        $todayCompletedOrders = Orders::forVendor($this->vendorId)->whereDate('created_at', $today)->where('status', 'completed')->count();
+        $todayInProgressOrders = Orders::forVendor($this->vendorId)->whereDate('created_at', $today)->where('status', 'in-progress')->count();
 
         // Monthly customers
-        $thisMonthCustomers = Customers::whereBetween('created_at', [$startOfThisMonth, $endOfThisMonth])->count();
-        $lastMonthCustomers = Customers::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->count();
+        $thisMonthCustomersQuery = Customers::whereBetween('created_at', [$startOfThisMonth, $endOfThisMonth]);
+        if ($this->vendorId !== null) {
+            $thisMonthCustomersQuery->whereHas('shippingAddresses', function($query) {
+                $query->where('type', 'pan_india')
+                    ->where('vendor_id', $this->vendorId);
+            });
+        }
+        $thisMonthCustomers = $thisMonthCustomersQuery->count();
+        $lastMonthCustomersQuery = Customers::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth]);
+         if ($this->vendorId !== null) {
+            $lastMonthCustomersQuery->whereHas('shippingAddresses', function($query) {
+                $query->where('type', 'pan_india')
+                    ->where('vendor_id', $this->vendorId);
+            });
+        }
+        $lastMonthCustomers = $lastMonthCustomersQuery->count();
     
         // Percent change helper
         function percentChange($current, $previous) {
@@ -60,23 +71,39 @@ class HomeController extends Controller
         // Calculate changes
         $orderChange = percentChange($thisMonthOrders, $lastMonthOrders);
         $customerChange = percentChange($thisMonthCustomers, $lastMonthCustomers);
-
-        $ordersCountByPlant = Orders::with('route')
-        ->get()
-        ->groupBy(function($order) {
-            return $order->route->plant_id; 
-        })
-        ->map(function($group) {
-            return $group->count(); 
+// Get orders with routes, filtered by vendor_id (either NULL or matching ID)
+$orders = Orders::whereHas('route', function ($query) {
+        $query->when($this->vendorId !== null, function ($q) {
+            $q->where('vendor_id', $this->vendorId);
+        }, function ($q) {
+            $q->whereNull('vendor_id');
         });
+    })
+    ->with('route')
+    ->get();
 
-    $plants = Plant::pluck('name', 'id'); 
+// Group and count orders by plant_id (safely handling null routes)
+$ordersCountByPlant = $orders->groupBy(function($order) {
+        return optional($order->route)->plant_id;
+    })
+    ->map(function($group) {
+        return $group->count();
+    });
 
-    foreach ($plants as $plantId => $plantName) {
-        if (!isset($ordersCountByPlant[$plantId])) {
-            $ordersCountByPlant[$plantId] = 0;
-        }
+// Get plants filtered by vendor_id (either NULL or matching)
+$plants = Plant::when($this->vendorId !== null, function ($query) {
+        $query->where('vendor_id', $this->vendorId);
+    }, function ($query) {
+        $query->whereNull('vendor_id');
+    })->pluck('name', 'id');
+
+// Make sure all plants are represented in the count, even if zero
+foreach ($plants as $plantId => $plantName) {
+    if (!isset($ordersCountByPlant[$plantId])) {
+        $ordersCountByPlant[$plantId] = 0;
     }
+}
+
 
 
     return view('home', compact('thisMonthOrders', 'todayOrders', 'todayPendingOrders','allPendingOrders', 'yesterdayPendingOrders',

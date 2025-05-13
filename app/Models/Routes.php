@@ -16,6 +16,7 @@ class Routes extends Model
         'plant_id',
         'name',
         'path',
+        'vendor_id',
     ];
 
     protected $dates = ['deleted_at'];

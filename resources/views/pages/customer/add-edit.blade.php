@@ -46,353 +46,397 @@
             </div>
         </div>
     </div>
-
-    <form id="customerForm" enctype="multipart/form-data">
-        <input type="hidden" id="id" name="id" value="{{ $Customer->id ?? null }}">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="form-group-item card">
-                    <div class="card-header">
-                        <h5 class="form-title">Basic Details</h5>
-                    </div>
-                    <div class="row align-item-center card-body">
-                        <div class=" col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Customer Zoho Id</label>
-                                <input name="customer_zohi_id" type="text" class="form-control"
-                                    placeholder="Enter Customer Zoho Id"
-                                    value="{{ old('customer_zohi_id', $Customer->customer_zohi_id ?? '') }}"
-                                    @if ($show) disabled @endif>
-                            </div>
+    @if (auth()->user()?->vendor?->id === null)
+        <form id="customerForm" enctype="multipart/form-data">
+            <input type="hidden" id="id" name="id" value="{{ $Customer->id ?? null }}">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group-item card">
+                        <div class="card-header">
+                            <h5 class="form-title">Basic Details</h5>
                         </div>
-                        <div class="col-lg-4 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Name</label>
-                                <input name="name" type="text" class="form-control" placeholder="Enter Customer Name"
-                                    value="{{ old('name', $Customer->name ?? '') }}"
-                                    @if ($show) disabled @endif>
+                        <div class="row align-item-center card-body">
+                            <div class=" col-sm-12">
+                                <div class="input-block mb-3">
+                                    <label>Customer Zoho Id</label>
+                                    <input name="customer_zohi_id" type="text" class="form-control"
+                                        placeholder="Enter Customer Zoho Id"
+                                        value="{{ old('customer_zohi_id', $Customer->customer_zohi_id ?? '') }}"
+                                        @if ($show) disabled @endif>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-lg-4 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>E-mail</label>
-                                <input name="email" type="email" class="form-control"
-                                    placeholder="Enter Customer E-mail" value="{{ old('email', $Customer->email ?? '') }}"
-                                    @if ($show) disabled @endif>
+                            <div class="col-lg-4 col-md-6 col-sm-12">
+                                <div class="input-block mb-3">
+                                    <label>Name</label>
+                                    <input name="name" type="text" class="form-control"
+                                        placeholder="Enter Customer Name" value="{{ old('name', $Customer->name ?? '') }}"
+                                        @if ($show) disabled @endif>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-lg-4 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Phone No</label>
-                                <input name="phone_no" type="number" class="form-control"
-                                    placeholder="Enter Customer Phone No"
-                                    value="{{ old('phone_no', $Customer->phone_no ?? '') }}"
-                                    @if ($show) disabled @endif>
+                            <div class="col-lg-4 col-md-6 col-sm-12">
+                                <div class="input-block mb-3">
+                                    <label>E-mail</label>
+                                    <input name="email" type="email" class="form-control"
+                                        placeholder="Enter Customer E-mail"
+                                        value="{{ old('email', $Customer->email ?? '') }}"
+                                        @if ($show) disabled @endif>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group-item card">
-                    <div class="card-header">
-                        <h5 class="form-title">Billing Address</h5>
-                    </div>
-                    <div class="row align-item-center  card-body">
-                        <div class="col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Address</label>
-                                <input name="billing_address" type="text" class="form-control"
-                                    placeholder="Enter Billing Address"
-                                    value="{{ old('billing_address', $Customer->billing_address ?? '') }}"
-                                    @if ($show) disabled @endif>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Country</label>
-                                <input name="billing_country" type="text" class="form-control"
-                                    placeholder="Enter Billing Country"
-                                    value="{{ old('billing_country', $Customer->billing_country ?? '') }}"
-                                    @if ($show) disabled @endif>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>State</label>
-                                <input name="billing_state" type="text" class="form-control"
-                                    placeholder="Enter Billing State"
-                                    value="{{ old('billing_state', $Customer->billing_state ?? '') }}"
-                                    @if ($show) disabled @endif>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-3 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>City</label>
-                                <input name="billing_city" type="text" class="form-control"
-                                    placeholder="Enter Billing City"
-                                    value="{{ old('billing_city', $Customer->billing_city ?? '') }}"
-                                    @if ($show) disabled @endif>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6 col-sm-12">
-                            <div class="input-block mb-3">
-                                <label>Pin Code</label>
-                                <input name="billing_pincode" type="number" class="form-control"
-                                    placeholder="Enter Billing Pin Code"
-                                    value="{{ old('billing_pincode', $Customer->billing_pincode ?? '') }}"
-                                    @if ($show) disabled @endif>
+                            <div class="col-lg-4 col-md-6 col-sm-12">
+                                <div class="input-block mb-3">
+                                    <label>Phone No</label>
+                                    <input name="phone_no" type="number" class="form-control"
+                                        placeholder="Enter Customer Phone No"
+                                        value="{{ old('phone_no', $Customer->phone_no ?? '') }}"
+                                        @if ($show) disabled @endif>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                @if (!isset($Customer))
-                    <div id="shipping_address_div">
-                        <div class="form-group-item card address-block">
-                            <div class="card-header d-flex justify-content-between align-items-center add-remove">
-                                <h5 class="form-title">Shipping Address</h5>
-                                <button type="button" class="btn btn-sm btn-success" id="add-address">
-                                    + Add Location
+                    <div class="form-group-item card">
+                        <div class="card-header">
+                            <h5 class="form-title">Billing Address</h5>
+                        </div>
+                        <div class="row align-item-center  card-body">
+                            <div class="col-sm-12">
+                                <div class="input-block mb-3">
+                                    <label>Address</label>
+                                    <input name="billing_address" type="text" class="form-control"
+                                        placeholder="Enter Billing Address"
+                                        value="{{ old('billing_address', $Customer->billing_address ?? '') }}"
+                                        @if ($show) disabled @endif>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-12">
+                                <div class="input-block mb-3">
+                                    <label>Country</label>
+                                    <input name="billing_country" type="text" class="form-control"
+                                        placeholder="Enter Billing Country"
+                                        value="{{ old('billing_country', $Customer->billing_country ?? '') }}"
+                                        @if ($show) disabled @endif>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-12">
+                                <div class="input-block mb-3">
+                                    <label>State</label>
+                                    <input name="billing_state" type="text" class="form-control"
+                                        placeholder="Enter Billing State"
+                                        value="{{ old('billing_state', $Customer->billing_state ?? '') }}"
+                                        @if ($show) disabled @endif>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3 col-md-6 col-sm-12">
+                                <div class="input-block mb-3">
+                                    <label>City</label>
+                                    <input name="billing_city" type="text" class="form-control"
+                                        placeholder="Enter Billing City"
+                                        value="{{ old('billing_city', $Customer->billing_city ?? '') }}"
+                                        @if ($show) disabled @endif>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-12">
+                                <div class="input-block mb-3">
+                                    <label>Pin Code</label>
+                                    <input name="billing_pincode" type="number" class="form-control"
+                                        placeholder="Enter Billing Pin Code"
+                                        value="{{ old('billing_pincode', $Customer->billing_pincode ?? '') }}"
+                                        @if ($show) disabled @endif>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!isset($Customer))
+                        <div id="shipping_address_div">
+                            <div class="form-group-item card address-block">
+                                <div class="card-header d-flex justify-content-between align-items-center add-remove">
+                                    <h5 class="form-title">Shipping Address</h5>
+                                    <button type="button" class="btn btn-sm btn-success" id="add-address">
+                                        + Add Location
+                                    </button>
+                                </div>
+                                <div class="row align-item-center card-body">
+
+                                    <div class="col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <div class="d-flex align-items-center gap-3 pt-2 pb-2">
+                                                <div class="form-check form-check-outline form-check-dark">
+                                                    <input class="form-check-input type-checkbox checkbox_0"
+                                                        type="checkbox" name="shipping[0][type]" id="typeLocal_0"
+                                                        value="local" data-index="0" checked>
+                                                    <label class="form-check-label" for="typeLocal_0">Local</label>
+                                                </div>
+                                                <div class="form-check form-check-outline form-check-dark">
+                                                    <input class="form-check-input type-checkbox checkbox_0"
+                                                        type="checkbox" name="shipping[0][type]" id="typePanIndia_0"
+                                                        value="pan_india" data-index="0">
+                                                    <label class="form-check-label" for="typePanIndia_0">Pan India</label>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>Address</label>
+                                            <input name="shipping[0][shipping_address]" type="text"
+                                                class="form-control" placeholder="Enter Shipping Address">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>Country</label>
+                                            <input name="shipping[0][shipping_country]" type="text"
+                                                class="form-control" placeholder="Enter Shipping Country">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>State</label>
+                                            <input name="shipping[0][shipping_state]" type="text" class="form-control"
+                                                placeholder="Enter Shipping State">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>City</label>
+                                            <input name="shipping[0][shipping_city]" type="text" class="form-control"
+                                                placeholder="Enter Shipping City">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>Pin Code</label>
+                                            <input name="shipping[0][shipping_pincode]" type="number"
+                                                class="form-control" placeholder="Enter Shipping Pin Code">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6 col-sm-12" id="vendor_select_0">
+                                        <div class="input-block mb-3">
+                                            <label>vendor</label>
+                                            <select class="select js-example-basic-single" name="shipping[0][vendor_id]"
+                                                id="vendor_id" @if ($show) disabled @endif>
+                                                <option value="">Select vendor</option>
+                                                @foreach ($vendors as $vendor)
+                                                    <option value="{{ $vendor->id }}"
+                                                        {{ isset($Customer) && $Customer->vendor_id == $vendor->id ? 'selected' : '' }}>
+                                                        {{ $vendor->user->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6 col-sm-12" id="plant_select_0">
+                                        <div class="input-block mb-3">
+                                            <label>Plant</label>
+                                            <select class="select js-example-basic-single" name="shipping[0][plant_id]"
+                                                id="plant_id" @if ($show) disabled @endif>
+                                                <option value="">Select Plant</option>
+                                                @foreach ($plants as $plant)
+                                                    <option value="{{ $plant->id }}"
+                                                        {{ isset($Customer) && $Customer->plant_id == $plant->id ? 'selected' : '' }}>
+                                                        {{ $plant->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6 col-sm-12" id="route_select_0">
+                                        <div class="input-block mb-3">
+                                            <label>Routes</label>
+                                            <select name="shipping[0][route_id]" class="select js-example-basic-single"
+                                                id="route_id" @if ($show) disabled @endif>
+                                                <option value="">Select Route</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6 col-sm-12" id="driver_select_0">
+                                        <div class="input-block mb-3">
+                                            <label>Drivers</label>
+                                            <select name="shipping[0][driver_id]" class="select js-example-basic-single"
+                                                id="driver_id" @if ($show) disabled @endif>
+                                                <option value="">Select Driver</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12" id="shipping_contact_div">
+                                        <div class="row align-item-center">
+                                            <input name="shipping[0][shipping_contacts][0][id]" type="hidden"
+                                                value="">
+
+                                            <div class="col-lg-5 col-md-6 col-sm-12">
+                                                <div class="input-block mb-3">
+                                                    <label>Name</label>
+                                                    <input name="shipping[0][shipping_contacts][0][name]" type="text"
+                                                        class="form-control" placeholder="Enter Name">
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-5 col-md-6 col-sm-12">
+                                                <div class="input-block mb-3">
+                                                    <label>Mobile No</label>
+                                                    <input name="shipping[0][shipping_contacts][0][phone]" type="text"
+                                                        class="form-control" placeholder="Enter Mobile No">
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="col-lg-2 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
+                                                <button type="button" class="btn btn-sm btn-success"
+                                                    id="add-address-contacts">
+                                                    + Add contact
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>Product</label>
+                                            <select class="select js-example-basic-single" name="contract[0][product_id]"
+                                                @if ($show) disabled @endif>
+                                                <option value="">Select Product</option>
+                                                @foreach ($products as $product)
+                                                    <option value="{{ $product->id }}"
+                                                        {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->product_id == $product->id ? 'selected' : '' }}>
+                                                        {{ $product->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>Stock</label>
+                                            <input name="contract[0][quantity]" type="number" class="form-control"
+                                                placeholder="Enter Stock"
+                                                value="{{ old('quantity', $Customer->contracts[0]->quantity ?? 1) }}"
+                                                @if ($show) disabled @endif>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>Price {{ '/-' }}</label>
+                                            <input name="contract[0][price]" type="number" class="form-control"
+                                                placeholder="Enter Price"
+                                                value="{{ old('price', $Customer->contracts[0]->price ?? 1) }}"
+                                                @if ($show) disabled @endif>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>Delivery Frequency</label>
+                                            <select class="select js-example-basic-single" name="contract[0][frequency]"
+                                                id="frequency">
+                                                @foreach (['daily', 'alternate_day', 'weekly'] as $freq)
+                                                    <option value="{{ $freq }}"
+                                                        {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->frequency == $freq ? 'selected' : '' }}>
+                                                        {{ ucwords(str_replace('_', ' ', $freq)) }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6 col-sm-12" id="frequency_count">
+                                        <div class="input-block mb-3">
+                                            <label>Frequency Count</label>
+                                            <input name="contract[0][frequency_count]" type="number"
+                                                class="form-control" value="1">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6 col-sm-12" id="days_select">
+                                        <div class="input-block mb-3">
+                                            <label>Delivery Day</label>
+                                            <select class="select js-example-basic-single" name="contract[0][days][]"
+                                                @if ($show) disabled @endif multiple>
+                                                @foreach (['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as $day)
+                                                    <option value="{{ $day }}"
+                                                        {{ in_array($day, $selectedDays) ? 'selected' : '' }}>
+                                                        {{ ucfirst($day) }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>Duration</label>
+                                            <input name="contract[0][duration]" type="number" class="form-control"
+                                                placeholder="Enter Duration"
+                                                value="{{ old('duration', $Customer->contracts[0]->duration ?? 1) }}"
+                                                @if ($show) disabled @endif>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>Duration Type</label>
+                                            <select class="select js-example-basic-single"
+                                                name="contract[0][duration_type]"
+                                                @if ($show) disabled @endif>
+                                                @foreach (['years', 'months', 'weeks', 'days'] as $type)
+                                                    <option value="{{ $type }}"
+                                                        {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->duration_type == $type ? 'selected' : '' }}>
+                                                        {{ ucfirst($type) }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>Deployed</label>
+                                            <select class="select js-example-basic-single"
+                                                name="shipping[0][machine_deployed]">
+                                                <option value="Yes">Yes</option>
+                                                <option value="No">No</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="shipping_address_div_contact">
+                            </div>
+                        </div>
+                    @endif
+                    <div class="form-group-item card mb-2">
+                        <div class="text-end m-3">
+                            <button type="button" class="btn btn-primary cancel me-2"
+                                onclick="window.location='{{ route('customer.index') }}'">Cancel</button>
+                            @if (!$show)
+                                <button type="submit" class="btn btn-primary">
+                                    {{ isset($Customer) ? 'Update' : 'Save' }}
                                 </button>
-                            </div>
-                            <div class="row align-item-center card-body">
-                                <div class="col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Address</label>
-                                        <input name="shipping[0][shipping_address]" type="text" class="form-control"
-                                            placeholder="Enter Shipping Address">
-                                    </div>
-                                </div>
-                                <div class="col-lg-3 col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Country</label>
-                                        <input name="shipping[0][shipping_country]" type="text" class="form-control"
-                                            placeholder="Enter Shipping Country">
-                                    </div>
-                                </div>
-                                <div class="col-lg-3 col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>State</label>
-                                        <input name="shipping[0][shipping_state]" type="text" class="form-control"
-                                            placeholder="Enter Shipping State">
-                                    </div>
-                                </div>
-                                <div class="col-lg-3 col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>City</label>
-                                        <input name="shipping[0][shipping_city]" type="text" class="form-control"
-                                            placeholder="Enter Shipping City">
-                                    </div>
-                                </div>
-                                <div class="col-lg-3 col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Pin Code</label>
-                                        <input name="shipping[0][shipping_pincode]" type="number" class="form-control"
-                                            placeholder="Enter Shipping Pin Code">
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-4 col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Plant</label>
-                                        <select class="select js-example-basic-single" name="shipping[0][plant_id]"
-                                            id="plant_id" @if ($show) disabled @endif>
-                                            <option value="">Select Plant</option>
-                                            @foreach ($plants as $plant)
-                                                <option value="{{ $plant->id }}"
-                                                    {{ isset($Customer) && $Customer->plant_id == $plant->id ? 'selected' : '' }}>
-                                                    {{ $plant->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-4 col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Routes</label>
-                                        <select name="shipping[0][route_id]" class="select js-example-basic-single"
-                                            id="route_id" @if ($show) disabled @endif>
-                                            <option value="">Select Route</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-4 col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Drivers</label>
-                                        <select name="shipping[0][driver_id]" class="select js-example-basic-single"
-                                            id="driver_id" @if ($show) disabled @endif>
-                                            <option value="">Select Driver</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-12" id="shipping_contact_div">
-                                    <div class="row align-item-center">
-                                        <input name="shipping[0][shipping_contacts][0][id]" type="hidden"
-                                            value="">
-
-                                        <div class="col-lg-5 col-md-6 col-sm-12">
-                                            <div class="input-block mb-3">
-                                                <label>Name</label>
-                                                <input name="shipping[0][shipping_contacts][0][name]" type="text"
-                                                    class="form-control" placeholder="Enter Name">
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-5 col-md-6 col-sm-12">
-                                            <div class="input-block mb-3">
-                                                <label>Mobile No</label>
-                                                <input name="shipping[0][shipping_contacts][0][phone]" type="text"
-                                                    class="form-control" placeholder="Enter Mobile No">
-                                            </div>
-                                        </div>
-                                        <div
-                                            class="col-lg-2 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
-                                            <button type="button" class="btn btn-sm btn-success"
-                                                id="add-address-contacts">
-                                                + Add contact
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Product</label>
-                                        <select class="select js-example-basic-single" name="contract[0][product_id]"
-                                            @if ($show) disabled @endif>
-                                            <option value="">Select Product</option>
-                                            @foreach ($products as $product)
-                                                <option value="{{ $product->id }}"
-                                                    {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->product_id == $product->id ? 'selected' : '' }}>
-                                                    {{ $product->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-4 col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Stock</label>
-                                        <input name="contract[0][quantity]" type="number" class="form-control"
-                                            placeholder="Enter Stock"
-                                            value="{{ old('quantity', $Customer->contracts[0]->quantity ?? 1) }}"
-                                            @if ($show) disabled @endif>
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-4 col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Price {{ '/-' }}</label>
-                                        <input name="contract[0][price]" type="number" class="form-control"
-                                            placeholder="Enter Price"
-                                            value="{{ old('price', $Customer->contracts[0]->price ?? 1) }}"
-                                            @if ($show) disabled @endif>
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-4 col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Delivery Frequency</label>
-                                        <select class="select js-example-basic-single" name="contract[0][frequency]"
-                                            id="frequency">
-                                            @foreach (['daily', 'alternate_day', 'weekly'] as $freq)
-                                                <option value="{{ $freq }}"
-                                                    {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->frequency == $freq ? 'selected' : '' }}>
-                                                    {{ ucwords(str_replace('_', ' ', $freq)) }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-4 col-md-6 col-sm-12" id="frequency_count">
-                                    <div class="input-block mb-3">
-                                        <label>Frequency Count</label>
-                                        <input name="contract[0][frequency_count]" type="number" class="form-control"
-                                            value="1">
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-4 col-md-6 col-sm-12" id="days_select">
-                                    <div class="input-block mb-3">
-                                        <label>Delivery Day</label>
-                                        <select class="select js-example-basic-single" name="contract[0][days][]"
-                                            @if ($show) disabled @endif multiple>
-                                            @foreach (['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as $day)
-                                                <option value="{{ $day }}"
-                                                    {{ in_array($day, $selectedDays) ? 'selected' : '' }}>
-                                                    {{ ucfirst($day) }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-4 col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Duration</label>
-                                        <input name="contract[0][duration]" type="number" class="form-control"
-                                            placeholder="Enter Duration"
-                                            value="{{ old('duration', $Customer->contracts[0]->duration ?? 1) }}"
-                                            @if ($show) disabled @endif>
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-4 col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Duration Type</label>
-                                        <select class="select js-example-basic-single" name="contract[0][duration_type]"
-                                            @if ($show) disabled @endif>
-                                            @foreach (['years', 'months', 'weeks', 'days'] as $type)
-                                                <option value="{{ $type }}"
-                                                    {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->duration_type == $type ? 'selected' : '' }}>
-                                                    {{ ucfirst($type) }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-md-6 col-sm-12">
-                                    <div class="input-block mb-3">
-                                        <label>Deployed</label>
-                                        <select class="select js-example-basic-single"
-                                            name="shipping[0][machine_deployed]">
-                                            <option value="Yes">Yes</option>
-                                            <option value="No">No</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
+                            @endif
                         </div>
-                        <div id="shipping_address_div_contact">
-                        </div>
-                    </div>
-                @endif
-                <div class="form-group-item card mb-2">
-                    <div class="text-end m-3">
-                        <button type="button" class="btn btn-primary cancel me-2"
-                            onclick="window.location='{{ route('customer.index') }}'">Cancel</button>
-                        @if (!$show)
-                            <button type="submit" class="btn btn-primary">
-                                {{ isset($Customer) ? 'Update' : 'Save' }}
-                            </button>
-                        @endif
                     </div>
                 </div>
             </div>
-        </div>
-    </form>
+        </form>
+    @else
+        <input type="hidden" id="id" name="id" value="{{ $Customer->id ?? null }}">
+    @endif
     @if (isset($Customer))
         <div class="row">
             <div class="col-md-12">
                 <div class="form-group-item card">
                     <div class="card-header d-flex justify-content-between align-items-center add-remove">
                         <h5 class="form-title">Shipping Address</h5>
-                        @if (!$show)
-                            <button type="button" class="btn btn-sm btn-success" id="add-address">
-                                + Add Location
-                            </button>
+                        @if (auth()->user()?->vendor?->id === null)
+                            @if (!$show)
+                                <button type="button" class="btn btn-sm btn-success" id="add-address">
+                                    + Add Location
+                                </button>
+                            @endif
                         @endif
                     </div>
                     <div class="row align-item-center card-body">
@@ -432,8 +476,7 @@
                                             <div class="hstack gap-2">
                                                 <a href="javascript:void(0);" class="link-success fs-15 edit-address"
                                                     data-address='@json($shippingAddress)'
-                                                    data-contract='@json($shippingAddress->Contract)'
-                                                    >
+                                                    data-contract='@json($shippingAddress->Contract)'>
                                                     <i class="ri-edit-2-line"></i>
                                                 </a>
                                                 <a href="javascript:void(0);" class="link-danger fs-15 remove-address">
@@ -471,7 +514,8 @@
     </div>
     </div>
     @if (!$show)
-        <form id="shippingForm" enctype="multipart/form-data">
+        <form id="{{ auth()->user()?->vendor?->id ? 'vendorShippingForm' : 'shippingForm' }}"
+            enctype="multipart/form-data">
             <div class="row">
                 <div class="col-md-12">
                     <div id="address-container">
@@ -488,9 +532,11 @@
     <script>
         window.show = @json($show);
         window.plants = @json($plants);
+        window.vendors = @json($vendors);
         window.products = @json($products);
         window.routeData = @json($routes);
         window.driverData = @json($drivers);
+        window.isvender = @json(auth()->user()?->vendor?->id);
         window.locationData = false;
         window.CustomerExists = {{ isset($Customer) ? 'true' : 'false' }}
         window.Laravel = {

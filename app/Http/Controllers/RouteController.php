@@ -11,14 +11,21 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Exception;
 
-class RouteController extends Controller
+class RouteController extends BaseController
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $routes = Routes::orderBy('created_at', 'desc')->get();
+        $query = Routes::orderBy('created_at', 'desc');
+        if ($this->vendorId !== null) {
+            $query->where('vendor_id', $this->vendorId);
+        }
+        else{
+            $query->where('vendor_id', null);
+        }
+        $routes = $query->get();
         return view('pages.route.index', compact('routes'));
     }
 
@@ -28,7 +35,14 @@ class RouteController extends Controller
     public function create()
     {
         $show = false;   
-        $plants = Plant::all();     
+        $query = Plant::orderBy('created_at', 'desc');
+        if ($this->vendorId !== null) {
+            $query->where('vendor_id', $this->vendorId);
+        }
+        else{
+            $query->where('vendor_id', null);
+        }
+        $plants = $query->get();    
         return view('pages.route.add-edit',compact('show' , 'plants'));
     }
 
@@ -56,6 +70,9 @@ class RouteController extends Controller
 
         try {
             $data = $request->all();
+            if ($this->vendorId !== null) {
+                $data['vendor_id'] = $this->vendorId;
+            }
             Routes::create($data);
             return response()->json(['message'=>'Route added successfully.']);
         } catch (Exception $e) {
@@ -70,7 +87,14 @@ class RouteController extends Controller
     {
         $show = true;
         $Route = Routes::findOrFail($id);
-        $plants = Plant::all();
+        $query = Plant::orderBy('created_at', 'desc');
+        if ($this->vendorId !== null) {
+            $query->where('vendor_id', $this->vendorId);
+        }
+        else{
+            $query->where('vendor_id', null);
+        }
+        $plants = $query->get();    
         return view('pages.route.add-edit',compact('show', 'Route', 'plants'));
     }
 
@@ -82,7 +106,14 @@ class RouteController extends Controller
         try {
             $show = false;
             $Route = Routes::findOrFail($id);
-            $plants = Plant::all();
+            $query = Plant::orderBy('created_at', 'desc');
+            if ($this->vendorId !== null) {
+                $query->where('vendor_id', $this->vendorId);
+            }
+            else{
+                $query->where('vendor_id', null);
+            }
+            $plants = $query->get();    
             return view('pages.route.add-edit',compact('show', 'Route', 'plants'));
         } catch (ModelNotFoundException $e) {
             return back()->withErrors(['error' => 'Route not found.']);

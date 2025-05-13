@@ -61,6 +61,16 @@ class Orders extends Model
         return $this->belongsTo(Drivers::class, 'driver_id')->withTrashed();
     }
 
+    public function scopeForVendor($query, $vendorId)
+    {
+        if ($vendorId !== null) {
+            return $query->whereHas('drivers', function ($q) use ($vendorId) {
+                $q->where('vendor_id', $vendorId);
+            });
+        }
+        return $query;
+    }
+
 
     protected $dates = ['deleted_at'];
 }

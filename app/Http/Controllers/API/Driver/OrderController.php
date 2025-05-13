@@ -37,7 +37,7 @@ class OrderController extends Controller
                 'all_orders' => $baseQuery->count(),
                 'todays_orders' => $todayQuery->count(),
                 'total_delivery_count' => $totalContractQuantityToday,
-                'total_deliverd_count' => $baseQuery->sum('return_qty'),
+                'total_deliverd_count' => $todayQuery->sum('return_qty'),
             ];
     
             foreach ($statuses as $status) {
