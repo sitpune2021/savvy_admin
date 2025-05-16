@@ -32,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('routes/{plantId}', [CustomController::class, 'getRoutesByPlant']);
     Route::get('drivers/{routeId}', [CustomController::class, 'getDriversByRoute']);
     Route::get('shipping-address', [CustomController::class, 'getShipingAddress']);
+    Route::post('shipping-address/{id}', [CustomController::class, 'updateShippingAddressForVendor']);
 
 });
 
