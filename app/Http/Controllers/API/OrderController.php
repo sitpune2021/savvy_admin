@@ -1,74 +1,42 @@
 <?php
 
-namespace App\Http\Controllers\API\Driver;
+namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Orders;
-use Carbon\Carbon;
+use App\Http\Controllers\BaseController;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use App\Models\Orders;
+use Carbon\Carbon;
 use Exception;
 
-
-class OrderController extends Controller
+class OrderController extends BaseController
 {
-    
+    /**
+     * Display a listing of the resource.
+     */
     public function index(Request $request)
     {
-        $user = Auth::user();
-        $driverId = $user->id;
-        $count = $request->count;
         $status = $request->status;
-    
-        if ($count) {
-            $today = Carbon::today();
-            $baseQuery = Orders::where('driver_id', $driverId);
-            $todayQuery = (clone $baseQuery)->whereDate('created_at', $today);
-
-            $totalContractQuantityToday = $todayQuery->with('contract')->get()->sum(function ($order) {
-                return optional($order->contract)->quantity;
+        $count = $request->count;
+        $today = Carbon::today();
+        $ordersQuery = Orders::with(['customers', 'drivers','shipping' ]);
+        if ($this->vendorId !== null) {
+            $ordersQuery->whereHas('drivers', function ($query) {
+                $query->where('vendor_id', $this->vendorId);
             });
-            $statuses = ['pending', 'completed', 'in_progress', 'cancelled'];
-            $data = [
-                'all_orders' => $baseQuery->count(),
-                'todays_orders' => $todayQuery->count(),
-                'total_delivery_count' => $totalContractQuantityToday,
-                'total_deliverd_count' => $todayQuery->sum('return_qty'),
-            ];
-    
-            foreach ($statuses as $status) {
-                $data["all_{$status}_orders"] = (clone $baseQuery)->where('status', $status)->count();
-                $data["todays_{$status}_orders"] = (clone $todayQuery)->where('status', $status)->count();
-            }
-    
-            return response()->json([
-                'status' => true,
-                'message' => 'Order statistics retrieved successfully.',
-                'data' => $data
-            ], 200);
         }
-    
+        if($this->driverId){
+            $ordersQuery->where('driver_id', $this->driverId);
+        }
         if ($status) {
-            $ordersQuery = Orders::where('driver_id', $driverId)->with(['customers:id,name', 'shipping:id,shipping_address', 'shipping.contacts:id,shipping_id,name,phone', 'contract:id,quantity']);
-    
             if ($status !== 'all') {
                 $ordersQuery->where('status', $status);
             }
-    
-            $orders = $ordersQuery->latest()->get();
-    
-            if ($orders->isEmpty()) {
-                return response()->json([
-                    'status' => true,
-                    'message' => 'No orders found for the given status.',
-                    'data' => []
-                ], 200);
-            }
-    
+            $orders = $ordersQuery->orderBy('created_at', 'desc')->get();
+
             $transformedOrders = $orders->map(function ($order) {
                 return [
                     'id' => $order->id,
@@ -99,43 +67,131 @@ class OrderController extends Controller
                     })
                 ];
             });
+
+            return response()->json([
+                'status' => true,
+                'message' =>$status.' Order retrieved successfully.',
+                'data' => $transformedOrders,
+            ]);
+        }
+        if ($count) {
+            $todayQuery = (clone $ordersQuery)->whereDate('created_at', $today);
+            $totalContractQuantityToday = $todayQuery->with('contract')->get()->sum(function ($order) {
+                            return optional($order->contract)->quantity;
+                        });
+                        $statuses = ['pending', 'completed', 'in_progress', 'cancelled'];
+            $data = [
+                'all_orders' => $ordersQuery->count(),
+                'todays_orders' => $todayQuery->count(),
+            ];
+    
+            foreach ($statuses as $status) {
+                $data["all_{$status}_orders"] = (clone $ordersQuery)->where('status', $status)->count();
+                $data["todays_{$status}_orders"] = (clone $ordersQuery)->where('status', $status)->count();
+            }
     
             return response()->json([
                 'status' => true,
-                'message' => 'Orders retrieved successfully.',
-                'data' => $transformedOrders
+                'message' => 'Order statistics retrieved successfully.',
+                'data' => $data
             ], 200);
         }
-    
         return response()->json([
             'status' => false,
             'message' => 'Please provide either a count flag or a status value.',
         ], 400);
-    
     }
 
-    public function show(string $id, Request $request)
+
+    public function show(string $id)
     {
-        $user = Auth::user();
-        $driverId = $user->id;
-        $order = Orders::where('driver_id', $driverId)->with('shipping.contacts')->find($id);
+        $with = ['shipping.contacts']; // Always load shipping.contacts if any role is active
+
+        if ($this->vendorId !== null) {
+            $with = array_merge($with, ['drivers:id,name', 'customers:id,name']);
+        }
+
+        $orderQuery = Orders::with($with)->where('id', $id);
+
+        if ($this->driverId) {
+            $orderQuery->where('driver_id', $this->driverId);
+        }
+
+        if ($this->vendorId !== null) {
+            $orderQuery->whereHas('drivers', function ($query) {
+                $query->where('vendor_id', $this->vendorId);
+            });
+        }
+
+        $order = $orderQuery->first();
+
         if (!$order) {
             return response()->json([
                 'status' => false,
                 'message' => 'Order not found.',
             ], 404);
         }
-        $order->delevered_card_img =  $order->delevered_card_img 
-                    ? url('storage/OrderCard/' . $order->delevered_card_img) 
-                    : null;
-        $order->return_card_img =   $order->return_card_img 
-                    ? url('storage/OrderCard/' . $order->return_card_img) 
-                    : null;
+
+        $order->delevered_card_img = $order->delevered_card_img 
+            ? url('storage/OrderCard/' . $order->delevered_card_img) 
+            : null;
+
+        $order->return_card_img = $order->return_card_img 
+            ? url('storage/OrderCard/' . $order->return_card_img) 
+            : null;
+
+           
+
+        if ($this->driverId) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Order retrieved successfully.',
+                'data' => $order
+            ], 200);
+
+        }
+
+        if ($this->vendorId !== null) {
+             $transformedOrder = [
+                'id' => $order->id,
+                'customer_id' => $order->customer_id,
+                'customer_name' => optional($order->customers)->name,
+                'shipping_id' => $order->shipping_id,
+                'shipping_address' => optional($order->shipping)->shipping_address,
+                'contract_id' => $order->contract_id,
+                'driver_id' => $order->driver_id,
+                'driver_name' => optional($order->drivers)->name,
+                'shipping_contacts' => $order->shipping->contacts->map(function ($contact) {
+                    return [
+                        'name' => $contact->name,
+                        'phone' => $contact->phone,
+                    ];
+                }),
+                
+                'status' => $order->status,
+                'develivered_qty' => $order->develivered_qty,
+                'return_qty' => $order->return_qty,
+                'balance' => strval(optional($order->contract)->quantity),
+                'delevered_card_img' => $order->delevered_card_img,
+                'return_card_img' => $order->return_card_img,
+                'created_at' => $order->created_at,
+                'updated_at' => $order->updated_at,
+            ];
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Order retrieved successfully.',
+                'data' => $transformedOrder
+            ], 200);
+        } 
+
         return response()->json([
-            'status' => true,
-            'message' => 'Order retrieved successfully.',
-            'data' => $order
-        ], 200);
+            'status' => false,
+            'message' => 'Unauthorized access or invalid role.',
+        ], 403);
+
+       
+
     }
 
     public function update(Request $request, string $id)
@@ -204,5 +260,4 @@ class OrderController extends Controller
             ], 500);
         }
     }
-
 }

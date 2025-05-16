@@ -1,56 +1,44 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API;
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\BaseController;
+
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
 use App\Models\Drivers;
 use App\Models\Routes;
 use App\Models\Plant;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
+
 use Exception;
 
 class DriverController extends BaseController
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $query = Drivers::orderBy('created_at', 'desc');
         if ($this->vendorId !== null) {
             $query->where('vendor_id', $this->vendorId);
         }
-        else{
-            $query->where('vendor_id', null);
-        }
         $drivers = $query->get();
-        return view('pages.driver.index', compact('drivers'));
+        if ($drivers->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No drivers found'
+            ], 404);
+        }
+        return response()->json([
+            'status' => true,
+            'message' => 'Drivers retrieved successfully',
+            'data' => $drivers
+        ], 200);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        $show = false;  
-        $routes = Routes::with('plant')->get();
-        $query = Plant::orderBy('created_at', 'desc');
-        if ($this->vendorId !== null) {
-            $query->where('vendor_id', $this->vendorId);
-        }
-        else{
-            $query->where('vendor_id', null);
-        }
-        $plants = $query->get();
-        return view('pages.driver.add-edit',compact('show', 'routes', 'plants'));      
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -97,7 +85,11 @@ class DriverController extends BaseController
 
     
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
         try {
@@ -124,63 +116,37 @@ class DriverController extends BaseController
             }
             Drivers::create($data);
             return response()->json([
+                'status' => true,
                 'message' => 'Driver created successfully!',
             ], 201);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while processing your request. Please try again later.',
+                'error' => $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
-        $show = true;
-        $Driver = Drivers::findOrFail($id);
-        $routes = Routes::all();
-        $query = Plant::orderBy('created_at', 'desc');
-        if ($this->vendorId !== null) {
-            $query->where('vendor_id', $this->vendorId);
-        }
-        else{
-            $query->where('vendor_id', null);
-        }
-        $plants = $query->get();
-        return view('pages.driver.add-edit',compact('show', 'Driver', 'routes', 'plants'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
         try {
-            $show = false;
             $Driver = Drivers::findOrFail($id);
-            $routes = Routes::all();
-            $query = Plant::orderBy('created_at', 'desc');
-            if ($this->vendorId !== null) {
-                $query->where('vendor_id', $this->vendorId);
-            }
-            else{
-                $query->where('vendor_id', null);
-            }
-            $plants = $query->get();
-            return view('pages.driver.add-edit',compact('show', 'Driver', 'routes', 'plants'));
+            return response()->json([
+                'status' => true,
+                'message' => 'Driver retrieved successfully.',
+                'data' => $Driver
+            ], 200);
         } catch (ModelNotFoundException $e) {
-            return back()->withErrors(['error' => 'Driver not found.']);
-        } catch (Exception $e) {
-            return back()->withErrors(['error' => 'An error occurred while fetching the Driver for editing: ' . $e->getMessage()]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Driver not found.',
+                'data' => null
+            ], 404);
         }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
-
         $validator = Validator::make($request->all(), [
             'plant_id' => 'required|exists:plants,id',
             'route_id' => 'required|exists:routes,id',
@@ -227,7 +193,11 @@ class DriverController extends BaseController
 
         
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
         }
         
         try {
@@ -261,18 +231,23 @@ class DriverController extends BaseController
             $Driver->update($request->except('aadhar_card_FILE', 'pan_card_FILE'));
         
             return response()->json([
+                'status' => true,
                 'message' => 'Driver updated successfully!',
             ]);
         
         } catch (ModelNotFoundException $e) {
-            return response()->json(['error' => 'Driver not found.'], 404);
+            return response()->json([
+                'status' => false,
+                'message' => 'Driver not found.',
+                'error' => 'Driver not found.'], 404);
         } catch (Exception $e) {
-            return response()->json(['error' => 'An error occurred while updating the Driver: ' . $e->getMessage()], 500);
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while updating the Driver.',
+                'error' => 'An error occurred while updating the Driver: ' . $e->getMessage()], 500);
         }
     }
 
-    /**
-     */
     public function destroy(string $id)
     {
         try {
@@ -284,25 +259,22 @@ class DriverController extends BaseController
                 Storage::delete('public/driver/' . $driver->aadhar_card_FILE);
             }
                 $driver->delete();
-                // return response()->json([
-                //     'message' => 'Driver  deleted successfully.',
-                // ], 200);
-            return back()->with('success', 'Customer deleted successfully.');
-
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Driver  deleted successfully.',
+                ], 200);
         } catch (ModelNotFoundException $e) {
-                // return response()->json([
-                //     'error' => 'Driver not found.',
-                //     'message' => $e->getMessage(),
-                // ], 404); 
-                return back()->with('error', 'Driver not found.'.$e->getMessage());
-
+                return response()->json([
+                    'status' => false,
+                    'error' => 'Driver not found.',
+                    'message' => $e->getMessage(),
+                ], 404); 
         } catch (Exception $e) {
-                // return response()->json([
-                //     'error' => 'An error occurred while deleting the  Driver.',
-                //     'message' => $e->getMessage(),
-                // ], 500);
-                return back()->with('error', 'An error occurred while deleting the  Driver.'.$e->getMessage());
-
+                return response()->json([
+                    'status' => false,
+                    'error' => 'An error occurred while deleting the  Driver.',
+                    'message' => $e->getMessage(),
+                ], 500);
         }
     }
 }

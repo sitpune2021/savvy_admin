@@ -43,7 +43,11 @@ class CustomerController extends BaseController
     public function create()
     {
         $show = false;
-        $plants = Plant::all();
+        $query = Plant::orderBy('created_at', 'desc');
+            if ($this->vendorId !== null) {
+                $query->where('vendor_id', $this->vendorId);
+            }
+            $plants = $query->get();    
         $products = Product::all();
         $routes = Routes::with('plant')->whereHas('drivers')->get();
         $drivers = Drivers::with('routes')->get();
@@ -152,7 +156,11 @@ class CustomerController extends BaseController
                             }
                         }
                     ])->findOrFail($id);
-        $plants = Plant::all();
+        $query = Plant::orderBy('created_at', 'desc');
+            if ($this->vendorId !== null) {
+                $query->where('vendor_id', $this->vendorId);
+            }
+            $plants = $query->get();    
         $products = Product::all();
         $routes = Routes::with('plant')->whereHas('drivers')->get();
         $drivers = Drivers::with('routes')->get();
