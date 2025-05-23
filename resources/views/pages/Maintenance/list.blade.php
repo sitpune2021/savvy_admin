@@ -97,24 +97,28 @@
                                                 <td>{{ $maintenance->description }} ltr</td>
                                                 <td>{{ $maintenance->amount }}</td>
                                                 <td>
-                                                    @if (is_array($maintenance->image) && count($maintenance->image))
-                                                        @if (!empty($maintenance->image['metercopy']))
-                                                            <a href="{{ asset('storage/fuel/' . $maintenance->image['metercopy']) }}"
-                                                                target="_blank">
-                                                                <img src="{{ asset('storage/fuel/' . $maintenance->image['metercopy']) }}"
-                                                                    alt="Meter Copy" width="50">
+                                                    @php
+                                                        $images = is_array($maintenance->image)
+                                                            ? $maintenance->image
+                                                            : json_decode($maintenance->image, true);
+                                                    @endphp
+
+                                                    @if (is_array($images) && count($images))
+                                                        @if (!empty($images['metercopy']))
+                                                            <a href="{{ asset('storage/fuel/' . $images['metercopy']) }}" target="_blank">
+                                                                <img src="{{ asset('storage/fuel/' . $images['metercopy']) }}" alt="Meter Copy" width="50">
                                                             </a>
                                                         @endif
-                                                        @if (!empty($maintenance->image['recipt']))
-                                                            <a href="{{ asset('storage/fuel/' . $maintenance->image['recipt']) }}"
-                                                                target="_blank">
-                                                                <img src="{{ asset('storage/fuel/' . $maintenance->image['recipt']) }}"
-                                                                    alt="Receipt" width="50">
+
+                                                        @if (!empty($images['recipt']))
+                                                            <a href="{{ asset('storage/fuel/' . $images['recipt']) }}" target="_blank">
+                                                                <img src="{{ asset('storage/fuel/' . $images['recipt']) }}" alt="Receipt" width="50">
                                                             </a>
                                                         @endif
                                                     @else
                                                         <span>No image</span>
                                                     @endif
+
                                                 </td>
 
                                                 <td>
@@ -167,17 +171,22 @@
                                                 <td>{{ $maintenance->description }}</td>
                                                 <td>{{ $maintenance->amount }}</td>
                                                 <td>
-                                                    @if (is_array($maintenance->image) && count($maintenance->image))
-                                                        @if (!empty($maintenance->image['bill']))
-                                                            <a href="{{ asset('storage/other/' . $maintenance->image['bill']) }}"
-                                                                target="_blank">
-                                                                <img src="{{ asset('storage/other/' . $maintenance->image['bill']) }}"
-                                                                    alt="Bill" width="50">
+                                                    @php
+                                                        $images = is_array($maintenance->image)
+                                                            ? $maintenance->image
+                                                            : json_decode($maintenance->image, true);
+                                                    @endphp
+
+                                                    @if (is_array($images) && count($images))
+                                                        @if (!empty($images['bill']))
+                                                            <a href="{{ asset('storage/other/' . $images['bill']) }}" target="_blank">
+                                                                <img src="{{ asset('storage/other/' . $images['bill']) }}" alt="Bill" width="50">
                                                             </a>
                                                         @endif
                                                     @else
                                                         <span>No image</span>
                                                     @endif
+
                                                 </td>
                                                 <td>
                                                     {{-- <span

@@ -247,7 +247,14 @@ class OrderController extends Controller
     public function getRequestedOrders()
     {
         $user = auth()->user();
-        $orders = Contracts::where('send_by', $user->id)->get();
+        $orders = Contracts::where('send_by', $user->id)
+                    ->whereHas('sender.shippingAddress', function ($query) {
+                        $query->whereNotNull('plant_id')
+                            ->whereNotNull('route_id')
+                            ->whereNotNull('driver_id');
+                    })
+                    ->get();
+
         return response()->json([
             'status' => true,
             'message' => 'Requested orders retrieved successfully',

@@ -34,7 +34,7 @@
             @include('layouts.partials.sidebar') <!-- Sidebar menu -->
             <div class="main-content">
                 <div class="page-content">
-                    <div class="container-fluid">
+                    <div class="container-fluid" id="main-content">
                         @yield('content')
                     </div>
                 </div>

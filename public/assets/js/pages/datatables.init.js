@@ -29,6 +29,14 @@ function initializeTables() {
         ]
     });
 
+    new DataTable("#yesterdayPendingOrders", {
+        dom: "frtip",
+        fixedHeader: true,
+        order: [],
+        pagingType: "full_numbers",
+        pageLength: 25,
+    });
+
     new DataTable("#buttons-datatables-2", {
         dom: "Bfrtip",
         fixedHeader: true,

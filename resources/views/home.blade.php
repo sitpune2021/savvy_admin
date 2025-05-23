@@ -15,16 +15,27 @@
     ];
 @endphp
 @push('styles')
-    <link href="{{ asset('/assets/libs/jsvectormap/jsvectormap.min.css') }}" rel="stylesheet" type="text/css" />
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css">
+       <link href="{{ asset('/assets/libs/jsvectormap/jsvectormap.min.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('/assets/libs/swiper/swiper-bundle.min.css') }}" rel="stylesheet" type="text/css" />
 @endpush
 
 @push('scripts')
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <!--datatable js-->
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+    
     <script src="{{ asset('/assets/libs/apexcharts/apexcharts.min.js') }}"></script>
     <script src="{{ asset('/assets/libs/jsvectormap/jsvectormap.min.js') }}"></script>
     <script src="{{ asset('/assets/libs/jsvectormap/maps/world-merc.js') }}"></script>
     <script src="{{ asset('/assets/libs/swiper/swiper-bundle.min.js') }}"></script>
     <script src="{{ asset('/assets/js/pages/dashboard-ecommerce.init.js') }}"></script>
+    <script src="{{ asset('/assets/js/pages/datatables.init.js') }}"></script>
     <script src="{{ asset('/assets/js/app.js') }}"></script>
 @endpush
 @section('content')
@@ -102,9 +113,10 @@
                                                     class="counter-value" data-target="{{ $todayPendingOrders }}">0</span>
                                             </p>
                                             <p class="fs-16 mb-0 text-muted"><i
-                                                class="mdi mdi-circle fs-14 align-middle text-warning me-1"></i><span
-                                                class="counter-value" data-target="{{ $todayInProgressOrders }}">0</span>
-                                        </p>
+                                                    class="mdi mdi-circle fs-14 align-middle text-warning me-1"></i><span
+                                                    class="counter-value"
+                                                    data-target="{{ $todayInProgressOrders }}">0</span>
+                                            </p>
                                         </a>
                                     </div>
                                     <div class="avatar-sm flex-shrink-0">
@@ -136,11 +148,8 @@
                                         </h4>
 
                                         <a href="#yesterdayPendingOrders" class="text-decoration-underline text-white">
-                                            <i class="mdi mdi-circle fs-14 align-middle text-success me-1"></i><span
-                                                class="counter-value" data-target="{{ count($allPendingOrders) }}">0</span>
+                                            <span class="counter-value" data-target="{{ count($allPendingOrders) }}">0</span>
                                             view pending orders
-
-
                                         </a>
                                     </div>
                                     <div class="avatar-sm flex-shrink-0">
@@ -307,7 +316,7 @@
                                 <div class="card-body">
                                     <div class="table-responsive table-card">
                                         <table class="table table-borderless table-centered align-middle table-nowrap mb-0"
-                                            id="yesterdayPendingOrders">
+                                            id="yesterdayPendingOrders" >
                                             <thead class="text-muted table-light">
                                                 <tr>
                                                     <th scope="col">Order ID</th>
@@ -323,18 +332,27 @@
                                                     <tr>
                                                         <td>
                                                             <a href="{{ url('order/' . $order->id) }}"
-                                                                class="fw-medium link-primary">#{{ $order->id }}</a>
+                                                                class="fw-medium link-primary">#{{ $order->id }}
+                                                                @if( auth()->user()?->vendor?->id === null && $order->drivers?->vendor_id != null)
+                                                                    <i class="ri-user-shared-line"></i>
+                                                                @endif
+                                                                @if( $order->type == 'additional')
+                                                                    <i class="ri-shopping-cart-line"></i>
+                                                                @endif
+                                                            </a>
                                                         </td>
                                                         <td>
                                                             <div class="d-flex align-items-center">
-                                                                <div class="flex-grow-1">{{ $order->customers->name }}
+                                                                <div class="flex-grow-1">
+                                                                    <span style="white-space: pre-wrap;">{{ $order->customers->name }}</span>
                                                                 </div>
                                                             </div>
                                                         </td>
                                                         <td>
                                                             <div class="d-flex align-items-center">
                                                                 <div class="flex-grow-1">
-                                                                    {{ $order->shipping->shipping_address }}</div>
+                                                                    <span style="white-space: pre-wrap;">{{ $order->shipping->shipping_address }}</span>
+                                                                </div>
                                                             </div>
                                                         </td>
                                                         <td>{{ $order?->drivers?->name }}</td>

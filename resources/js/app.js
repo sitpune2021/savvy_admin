@@ -11,7 +11,7 @@ select2();// does nothing
 })(jQuery);
 
 function handleFormSubmit(formId, actionUrl, method = 'POST', subPath = {}, successCallback = null, errorCallback = null) {
-	
+
 	$(formId).on('submit', function (e) {
 		e.preventDefault();
 
@@ -23,7 +23,7 @@ function handleFormSubmit(formId, actionUrl, method = 'POST', subPath = {}, succ
 		let formData = new FormData(this);
 		let currentMethod = method;
 		let Id = $('#id').val();
-	console.log($('#id').val());
+		console.log($('#id').val());
 
 		if (Id != null && Id != '') {
 			if (!actionUrl.includes(`/${Id}`)) {
@@ -369,7 +369,7 @@ $(document).ready(function () {
 
 	function generateAddressBlock(index, contactIndex, data = {}, isEdit = false) {
 		console.log(data.address);
-		
+
 		const routes = window.routeData || [];
 		const drivers = window.driverData || [];
 		const filteredRoutes = routes.filter(route => route.plant_id == data?.address?.plant_id);

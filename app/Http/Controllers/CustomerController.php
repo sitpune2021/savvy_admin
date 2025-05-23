@@ -47,8 +47,11 @@ class CustomerController extends BaseController
             if ($this->vendorId !== null) {
                 $query->where('vendor_id', $this->vendorId);
             }
+            else{
+                $query->where('vendor_id', null);
+            }
             $plants = $query->get();    
-        $products = Product::all();
+        $products = Product::latest()->get();
         $routes = Routes::with('plant')->whereHas('drivers')->get();
         $drivers = Drivers::with('routes')->get();
         $vendors = Vendor::with('user:id,name')->get();
@@ -160,7 +163,10 @@ class CustomerController extends BaseController
             if ($this->vendorId !== null) {
                 $query->where('vendor_id', $this->vendorId);
             }
-            $plants = $query->get();    
+            else{
+                $query->where('vendor_id', null);
+            }
+        $plants = $query->get();    
         $products = Product::all();
         $routes = Routes::with('plant')->whereHas('drivers')->get();
         $drivers = Drivers::with('routes')->get();
@@ -185,6 +191,10 @@ class CustomerController extends BaseController
             if ($this->vendorId !== null) {
                 $query->where('vendor_id', $this->vendorId);
             }
+            else{
+                $query->where('vendor_id', null);
+            }
+
             $plants = $query->get();    
             $products = Product::all();
             $routes = Routes::with('plant')->whereHas('drivers')->get();
@@ -374,11 +384,6 @@ class CustomerController extends BaseController
                             'status'         => 'pending',
                         ]);
                         $orders[] = $order;
-                    }
-                }
-                else{
-                    if ($existingOrder && $existingOrder->status === 'pending') {
-                        $existingOrder->delete();
                     }
                 }
             }

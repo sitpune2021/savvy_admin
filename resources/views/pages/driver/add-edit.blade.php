@@ -206,7 +206,7 @@
 
                                 <div class=" col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
-                                        <label>Pan Card FILE</label>
+                                        @if (!$show) <label>Pan Card FILE</label>  @endif
                                         @if (!$show)
                                             <input name="pan_card_FILE" type="file" class="form-control"
                                                 placeholder="Enter Pan Card"
@@ -237,7 +237,7 @@
 
                                 <div class=" col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
-                                        <label>Aadhar Card FILE</label>
+                                        @if (!$show) <label>Aadhar Card FILE</label> @endif
                                         @if (!$show)
                                             <input name="aadhar_card_FILE" type="file" class="form-control"
                                                 placeholder="Enter Aadhar Card"

@@ -116,12 +116,19 @@
                                 <div class="col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Description</label>
+                                        @if ($show)
+                                        <div name="description" class="form-control ql-editor" rows="10" style=" background-color: var(--vz-tertiary-bg); opacit: 1;"
+                                        >{!! $product->description !!}</div>
+                                        @else
                                         <div name="description" class="form-control snow-editor" rows="10" data-input-id="description"
                                             placeholder="Enter description"
                                             @if ($show) disabled @endif>
                                             {{ old('description', $product->description ?? '') }}</div>
                                         <input type="hidden" name="description" id="description"
                                             value="{{ old('description', $product->description ?? '') }}">
+                                        @endif
+
+                                        
                                     </div>
                                 </div>
                             </div>

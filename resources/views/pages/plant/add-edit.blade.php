@@ -114,13 +114,13 @@
                                     <div class="input-block mb-3">
                                         <label>Details</label>
                                         @if ($show)
-                                        <div name="details" class="form-control ql-editor" rows="10" 
+                                        <div name="details" class="form-control ql-editor" rows="10" style=" background-color: var(--vz-tertiary-bg); opacit: 1;"
                                         >{!! $Plant->details !!}</div>
                                         @else
                                         <div name="details" class="form-control snow-editor" rows="10" data-input-id="details"
                                             placeholder="Enter additional details about the plant">{{ old('details', $Plant->details ?? '') }}</div>
                                             <input type="hidden" name="details" id="details" value="{{ old('details', $Plant->details ?? '') }}">
-                                            @endif
+                                        @endif
                                     </div>
                                 </div>
                             </div>
