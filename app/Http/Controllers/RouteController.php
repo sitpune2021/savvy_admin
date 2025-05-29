@@ -77,7 +77,8 @@ class RouteController extends BaseController
             if ($this->vendorId !== null) {
                 $data['vendor_id'] = $this->vendorId;
             }
-            $Plant = Plant::findOrFail($data['plant_id']);
+
+            $plants = Plant::findOrFail($data['plant_id']);
             if($plants->vendor_id){
                 $data['vendor_id'] = $plants->vendor_id;
             }
@@ -154,7 +155,7 @@ class RouteController extends BaseController
         try {
             $Route = Routes::findOrFail($id);
             $data = $request->all();
-            $Plant = Plant::findOrFail($data['plant_id']);
+            $plants = Plant::findOrFail($data['plant_id']);
             if($plants->vendor_id){
                 $data['vendor_id'] = $plants->vendor_id;
             }else{
