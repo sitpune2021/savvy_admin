@@ -23,87 +23,180 @@ class HomeController extends BaseController
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Dates for monthly comparisons
         $startOfThisMonth = Carbon::now()->startOfMonth();
         $endOfThisMonth = Carbon::now()->endOfMonth();
         $startOfLastMonth = Carbon::now()->subMonth()->startOfMonth();
         $endOfLastMonth = Carbon::now()->subMonth()->endOfMonth();
         $today = Carbon::today();
-    
-        // Monthly orders
-        $thisMonthOrders = Orders::forVendor($this->vendorId)->whereBetween('created_at', [$startOfThisMonth, $endOfThisMonth])->count();
-        $lastMonthOrders = Orders::forVendor($this->vendorId)->whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->count();
-        $todayOrders = Orders::forVendor($this->vendorId)->whereDate('created_at', $today)->count();
-        $yesterdayPendingOrders = Orders::forVendor($this->vendorId)->whereDate('created_at', Carbon::yesterday())->where('status', 'pending')->count();
-        $allPendingOrders = Orders::forVendor($this->vendorId)->whereDate('created_at','!=', $today)->where('status', 'pending')->orderBy('created_at', 'desc')->get();
-        $todayPendingOrders = Orders::forVendor($this->vendorId)->whereDate('created_at', $today)->where('status', 'pending')->count();
-        $todayCompletedOrders = Orders::forVendor($this->vendorId)->whereDate('created_at', $today)->where('status', 'completed')->count();
-        $todayInProgressOrders = Orders::forVendor($this->vendorId)->whereDate('created_at', $today)->where('status', 'in-progress')->count();
 
-        // Monthly customers
+        $userRole = auth()->user()->role;
+        $isAdmin = ($userRole === 'admin');
+
+        $type = $request->query() ? $request->query('value') : 'all';
+        if($this->plantManagerId)
+        {
+            $baseQuery = Orders::forPlantManager($this->plantManagerId);
+        } else {
+            $baseQuery = Orders::forVendor($this->vendorId, $isAdmin, $type);
+        } 
+
+        $thisMonthOrders = (clone $baseQuery)->whereBetween('created_at', [$startOfThisMonth, $endOfThisMonth])->count();
+        $lastMonthOrders = (clone $baseQuery)->whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->count();
+        $todayOrders = (clone $baseQuery)->whereDate('created_at', $today)->count();
+
+        $yesterdayPendingOrders = (clone $baseQuery)->whereDate('created_at', Carbon::yesterday())
+            ->where('status', 'pending')->count();
+
+        $allPendingOrders = (clone $baseQuery)->whereDate('created_at', '!=', $today)
+            ->where('status', 'pending')->orderBy('created_at', 'desc')->get();
+
+        $todayPendingOrders = (clone $baseQuery)->whereDate('created_at', $today)
+            ->where('status', 'pending')->count();
+
+        $todayCompletedOrders = (clone $baseQuery)->whereDate('created_at', $today)
+            ->where('status', 'completed')->count();
+
+        $todayInProgressOrders = (clone $baseQuery)->whereDate('created_at', $today)
+            ->where('status', 'in-progress')->count();
+
         $thisMonthCustomersQuery = Customers::whereBetween('created_at', [$startOfThisMonth, $endOfThisMonth]);
-        if ($this->vendorId !== null) {
-            $thisMonthCustomersQuery->whereHas('shippingAddresses', function($query) {
-                $query->where('type', 'pan_india')
-                    ->where('vendor_id', $this->vendorId);
-            });
+        if ($this->plantManagerId) {
+            $thisMonthCustomersQuery->whereHas('shippingAddresses', function ($query) {
+                        $query->where('plant_id', $this->plantManagerId);
+                    });
+         }else{
+            if ($isAdmin) {
+                $thisMonthCustomersQuery->whereHas('shippingAddresses', function ($query) use ($type) {
+                    if ($type === 'pan_india') {
+                        $query->whereNotNull('vendor_id');
+                    } elseif($type === 'local') {
+                        $query->whereNull('vendor_id');
+                    }
+                    else{
+                        $query;
+                    }
+
+                });
+            } else {
+                if ($this->vendorId !== null) {
+                    $thisMonthCustomersQuery->whereHas('shippingAddresses', function ($query) {
+                        $query->where('vendor_id', $this->vendorId);
+                    });
+                }
+            }
         }
+
         $thisMonthCustomers = $thisMonthCustomersQuery->count();
+
         $lastMonthCustomersQuery = Customers::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth]);
-         if ($this->vendorId !== null) {
-            $lastMonthCustomersQuery->whereHas('shippingAddresses', function($query) {
-                $query->where('type', 'pan_india')
-                    ->where('vendor_id', $this->vendorId);
-            });
+         if ($this->plantManagerId) {
+            $lastMonthCustomersQuery->whereHas('shippingAddresses', function ($query) {
+                        $query->where('plant_id', $this->plantManagerId);
+                    });
+         }else{
+          if ($isAdmin) {
+                $lastMonthCustomersQuery->whereHas('shippingAddresses', function ($query) use ($type) {
+                    if ($type === 'pan_india') {
+                        $query->whereNotNull('vendor_id');
+                    } elseif($type === 'local') {
+                        $query->whereNull('vendor_id');
+                    } else {
+                        $query;
+                    }
+                });
+            } else {
+                if ($this->vendorId !== null) {
+                    $lastMonthCustomersQuery->whereHas('shippingAddresses', function ($query) {
+                        $query->where('vendor_id', $this->vendorId);
+                    });
+                }
+            }
         }
         $lastMonthCustomers = $lastMonthCustomersQuery->count();
-    
-        // Percent change helper
-        function percentChange($current, $previous) {
+
+        $percentChange = function ($current, $previous) {
             if ($previous == 0) return $current > 0 ? 100 : 0;
             return round((($current - $previous) / $previous) * 100, 2);
-        }
-    
-        // Calculate changes
-        $orderChange = percentChange($thisMonthOrders, $lastMonthOrders);
-        $customerChange = percentChange($thisMonthCustomers, $lastMonthCustomers);
+        };
 
-        // Get orders with routes, filtered by vendor_id (either NULL or matching ID)
-        $orders = Orders::whereHas('route', function ($query) {
+        $orderChange = $percentChange($thisMonthOrders, $lastMonthOrders);
+        $customerChange = $percentChange($thisMonthCustomers, $lastMonthCustomers);
+
+        if ($this->plantManagerId) {
+            $orders = Orders::whereHas('route', function ($query) {
+                $query->where('plant_id', $this->plantManagerId);
+            })->with('route')->get();
+
+            $ordersCountByPlant = $orders->groupBy(function ($order) {
+                return optional($order->route)->plant_id;
+            })->map->count();
+
+            $plants = Plant::where('id', $this->plantManagerId)->pluck('name', 'id');
+
+        } else {
+            $orders = Orders::whereHas('route', function ($query) use ($isAdmin, $type) {
+                if ($isAdmin) {
+                    if ($type === 'pan_india') {
+                        $query->whereNotNull('vendor_id');
+                    } elseif ($type === 'local') {
+                        $query->whereNull('vendor_id');
+                    }
+                } else {
+                    $query->when($this->vendorId !== null, function ($q) {
+                        $q->where('vendor_id', $this->vendorId);
+                    }, function ($q) {
+                        $q->whereNull('vendor_id');
+                    });
+                }
+            })->with('route')->get();
+
+            $ordersCountByPlant = $orders->groupBy(function ($order) {
+                return optional($order->route)->plant_id;
+            })->map->count();
+
+            $plants = Plant::when($isAdmin, function ($query) use ($type) {
+                if ($type === 'pan_india') {
+                    $query->whereNotNull('vendor_id');
+                } elseif ($type === 'local') {
+                    $query->whereNull('vendor_id');
+                }
+            }, function ($query) {
                 $query->when($this->vendorId !== null, function ($q) {
                     $q->where('vendor_id', $this->vendorId);
                 }, function ($q) {
                     $q->whereNull('vendor_id');
                 });
-            })
-            ->with('route')
-            ->get();
-
-        // Group and count orders by plant_id (safely handling null routes)
-        $ordersCountByPlant = $orders->groupBy(function($order) {
-                return optional($order->route)->plant_id;
-            })
-            ->map(function($group) {
-                return $group->count();
-            });
-
-        // Get plants filtered by vendor_id (either NULL or matching)
-        $plants = Plant::when($this->vendorId !== null, function ($query) {
-                $query->where('vendor_id', $this->vendorId);
-            }, function ($query) {
-                $query->whereNull('vendor_id');
             })->pluck('name', 'id');
+        }
 
-        // Make sure all plants are represented in the count, even if zero
         foreach ($plants as $plantId => $plantName) {
             if (!isset($ordersCountByPlant[$plantId])) {
                 $ordersCountByPlant[$plantId] = 0;
             }
         }
 
-        return view('home', compact('thisMonthOrders', 'todayOrders', 'todayPendingOrders','allPendingOrders', 'yesterdayPendingOrders',
-        'todayCompletedOrders', 'todayInProgressOrders', 'orderChange',  'customerChange', 'thisMonthCustomers', 'ordersCountByPlant', 'plants'));
+        $data = compact(
+            'thisMonthOrders',
+            'todayOrders',
+            'todayPendingOrders',
+            'allPendingOrders',
+            'yesterdayPendingOrders',
+            'todayCompletedOrders',
+            'todayInProgressOrders',
+            'orderChange',
+            'customerChange',
+            'thisMonthCustomers',
+            'ordersCountByPlant',
+            'plants'
+        );
+
+        if ($request->ajax()) {
+            return response()->json($data);
+        }
+
+        return view('home', $data);
     }
+
 }

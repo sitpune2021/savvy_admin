@@ -19,12 +19,14 @@ class RouteController extends BaseController
     public function index()
     {
         $query = Routes::orderBy('created_at', 'desc');
-        if ($this->vendorId !== null) {
-            $query->where('vendor_id', $this->vendorId);
+        if($this->plantManagerId){
+            $query->where('plant_id', $this->plantManagerId);
+        }else{
+            if ($this->vendorId !== null) {
+                $query->where('vendor_id', $this->vendorId);
+            }
         }
-        else{
-            $query->where('vendor_id', null);
-        }
+        
         $routes = $query->get();
         return view('pages.route.index', compact('routes'));
     }
@@ -36,12 +38,14 @@ class RouteController extends BaseController
     {
         $show = false;   
         $query = Plant::orderBy('created_at', 'desc');
-        if ($this->vendorId !== null) {
-            $query->where('vendor_id', $this->vendorId);
+        if($this->plantManagerId){
+            $query->where('id', $this->plantManagerId);
+        }else{
+            if ($this->vendorId !== null) {
+                $query->where('vendor_id', $this->vendorId);
+            }
         }
-        else{
-            $query->where('vendor_id', null);
-        }
+        
         $plants = $query->get();    
         return view('pages.route.add-edit',compact('show' , 'plants'));
     }
@@ -73,6 +77,10 @@ class RouteController extends BaseController
             if ($this->vendorId !== null) {
                 $data['vendor_id'] = $this->vendorId;
             }
+            $Plant = Plant::findOrFail($data['plant_id']);
+            if($plants->vendor_id){
+                $data['vendor_id'] = $plants->vendor_id;
+            }
             Routes::create($data);
             return response()->json(['message'=>'Route added successfully.']);
         } catch (Exception $e) {
@@ -88,11 +96,12 @@ class RouteController extends BaseController
         $show = true;
         $Route = Routes::findOrFail($id);
         $query = Plant::orderBy('created_at', 'desc');
-        if ($this->vendorId !== null) {
-            $query->where('vendor_id', $this->vendorId);
-        }
-        else{
-            $query->where('vendor_id', null);
+        if($this->plantManagerId){
+            $query->where('id', $this->plantManagerId);
+        }else{
+            if ($this->vendorId !== null) {
+                $query->where('vendor_id', $this->vendorId);
+            }
         }
         $plants = $query->get();    
         return view('pages.route.add-edit',compact('show', 'Route', 'plants'));
@@ -107,11 +116,12 @@ class RouteController extends BaseController
             $show = false;
             $Route = Routes::findOrFail($id);
             $query = Plant::orderBy('created_at', 'desc');
-            if ($this->vendorId !== null) {
-                $query->where('vendor_id', $this->vendorId);
-            }
-            else{
-                $query->where('vendor_id', null);
+            if($this->plantManagerId){
+                $query->where('id', $this->plantManagerId);
+            }else{
+                if ($this->vendorId !== null) {
+                    $query->where('vendor_id', $this->vendorId);
+                }
             }
             $plants = $query->get();    
             return view('pages.route.add-edit',compact('show', 'Route', 'plants'));
@@ -144,6 +154,12 @@ class RouteController extends BaseController
         try {
             $Route = Routes::findOrFail($id);
             $data = $request->all();
+            $Plant = Plant::findOrFail($data['plant_id']);
+            if($plants->vendor_id){
+                $data['vendor_id'] = $plants->vendor_id;
+            }else{
+                $data['vendor_id'] = null;
+            }
             $Route->update($data);
             return response()->json(['message'=>'Route updated successfully.']);
 

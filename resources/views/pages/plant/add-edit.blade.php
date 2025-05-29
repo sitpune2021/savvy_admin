@@ -12,14 +12,14 @@
     <link href="{{ asset('/assets/libs/quill/quill.core.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('/assets/libs/quill/quill.bubble.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('/assets/libs/quill/quill.snow.css') }}" rel="stylesheet" type="text/css" />
-    <link href="../../../../cdn.jsdelivr.net/npm/select2%404.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 @endpush
 @push('scripts')
     <script src="{{ asset('/assets/libs/quill/quill.min.js') }}"></script>
     <script src="{{ asset('/assets/js/pages/form-editor.init.js') }}"></script>
-
     <script src="{{ asset('/assets/js/app.js') }}"></script>
 @endpush
+
 
 @section('content')
     <div class="row">
@@ -52,7 +52,7 @@
                     <div class="col-md-12">
                         <div class="form-group-item">
                             <div class="row align-item-center">
-                                <div class="col-md-6 col-sm-12">
+                                <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Name</label>
                                         <input name="name" type="text" class="form-control"
@@ -61,8 +61,9 @@
                                             @if ($show) disabled @endif>
                                     </div>
                                 </div>
+                                
 
-                                <div class="col-md-6 col-sm-12">
+                                <div class="col-lg-4 col-md-6 col-sm-12">
                                     <div class="input-block mb-3">
                                         <label>Manager</label>
                                         <input name="manager" type="text" class="form-control"
@@ -71,6 +72,53 @@
                                             @if ($show) disabled @endif>
                                     </div>
                                 </div>
+
+                                <div class="col-lg-4 col-md-6 col-sm-12">
+                                    <div class="input-block mb-3">
+                                        <label>Manager Email</label>
+                                        <input name="email" type="text" class="form-control"
+                                            placeholder="Enter the email"
+                                            value="{{ old('email', $Plant->managerRecord->email ?? '') }}"
+                                            @if ($show) disabled @endif>
+                                    </div>
+                                </div>
+                                @if (auth()->user()?->role == 'admin' || auth()->user()?->role == 'super_admin')
+                                    <div class="col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <div class="d-flex align-items-center gap-3 pt-2 pb-2">
+                                                <div class="form-check form-check-outline form-check-dark">
+                                                    <input class="form-check-input type-checkbox checkbox" type="checkbox"
+                                                        id="typeLocal" value="local" name="type"
+                                                        {{ isset($Plant) && $Plant->vendor_id == null ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="typeLocal">Local</label>
+                                                </div>
+                                                <div class="form-check form-check-outline form-check-dark">
+                                                    <input class="form-check-input type-checkbox checkbox" type="checkbox"
+                                                        id="typePanIndia" value="pan_india" name="type"
+                                                        {{ isset($Plant) && $Plant->vendor_id != null ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="typePanIndia">Pan India</label>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                     <div class=" col-md-6 col-sm-12" id="vendor_select">
+                                        <div class="input-block mb-3">
+                                            <label>vendor</label>
+                                            <select class="select js-example-basic-single" name="vendor_id" id="vendor_id"
+                                                @if ($show) disabled @endif>
+                                                <option value="">Select vendor</option>
+                                                @foreach ($vendors as $vendor)
+                                                    <option value="{{ $vendor->id }}"
+                                                        {{ isset($Plant) && $Plant->vendor_id == $vendor->id ? 'selected' : '' }}>
+                                                        {{ $vendor->user->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                @endif
+                                <input type="hidden" id="manager_id" name="manager_id"
+                                    value="{{ old('type', $Plant->manager_id ?? '') }}">
                             </div>
                         </div>
 
@@ -114,12 +162,16 @@
                                     <div class="input-block mb-3">
                                         <label>Details</label>
                                         @if ($show)
-                                        <div name="details" class="form-control ql-editor" rows="10" style=" background-color: var(--vz-tertiary-bg); opacit: 1;"
-                                        >{!! $Plant->details !!}</div>
+                                            <div name="details" class="form-control ql-editor" rows="10"
+                                                style=" background-color: var(--vz-tertiary-bg); opacit: 1;">
+                                                {!! $Plant->details !!}</div>
                                         @else
-                                        <div name="details" class="form-control snow-editor" rows="10" data-input-id="details"
-                                            placeholder="Enter additional details about the plant">{{ old('details', $Plant->details ?? '') }}</div>
-                                            <input type="hidden" name="details" id="details" value="{{ old('details', $Plant->details ?? '') }}">
+                                            <div name="details" class="form-control snow-editor" rows="10"
+                                                data-input-id="details"
+                                                placeholder="Enter additional details about the plant">
+                                                {{ old('details', $Plant->details ?? '') }}</div>
+                                            <input type="hidden" name="details" id="details"
+                                                value="{{ old('details', $Plant->details ?? '') }}">
                                         @endif
                                     </div>
                                 </div>
@@ -132,7 +184,8 @@
                         <button type="button" class="btn btn-primary cancel me-2"
                             onclick="window.location='{{ route('plant.index') }}'">Cancel</button>
                         @if (!$show)
-                            <button type="submit" class="btn btn-primary">{{ isset($Plant) ? 'Update' : 'Save' }}</button>
+                            <button type="submit"
+                                class="btn btn-primary">{{ isset($Plant) ? 'Update' : 'Save' }}</button>
                         @endif
                     </div>
                 </div>

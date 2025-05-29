@@ -2,10 +2,7 @@
 @php
     $title = 'Customers - ' . config('app.name');
     $PageTitle = 'Customers List';
-    $breadcrumbs = [
-        ['name' => 'Home', 'url' => url('/')],
-        ['name' => $PageTitle, 'url' => ''],
-    ]
+    $breadcrumbs = [['name' => 'Home', 'url' => url('/')], ['name' => $PageTitle, 'url' => '']];
 @endphp
 
 @push('styles')
@@ -53,22 +50,22 @@
             </div>
         </div>
     </div>
-@if(auth()->user()?->vendor?->id === null)
-    <div class="card">
-        <div class="card-body">
-            <div class="row g-2">
-                <div class="col-sm-auto ms-auto">
-                    <div class="list-grid-nav hstack gap-1">
-                        <a class="btn btn-success" href="{{ route('customer.create') }}">
-                            <i class="ri-add-fill me-1 align-bottom"></i> Add
-                            Customer
-                        </a>
+    @if (auth()->user()?->vendor?->id === null && auth()->user()?->plantManager?->id == null)
+        <div class="card">
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-sm-auto ms-auto">
+                        <div class="list-grid-nav hstack gap-1">
+                            <a class="btn btn-success" href="{{ route('customer.create') }}">
+                                <i class="ri-add-fill me-1 align-bottom"></i> Add
+                                Customer
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-@endif
+    @endif
 
     <div class="row">
         <div class="col-lg-12">
@@ -90,10 +87,13 @@
                                         <td>{{ $customer->customer_zohi_id }}</td>
                                         <td>{{ $customer->name }}</td>
                                         <td>{{ $customer->phone_no }}</td>
+
                                         <td>
                                             <div class="hstack gap-3 flex-wrap">
-                                                <a href="{{ route('customer.edit', $customer->id) }}"
-                                                    class="link-success fs-15"><i class="ri-edit-2-line"></i></a>
+                                                @if (auth()->user()?->plantManager?->id == null)
+                                                    <a href="{{ route('customer.edit', $customer->id) }}"
+                                                        class="link-success fs-15"><i class="ri-edit-2-line"></i></a>
+                                                @endif
                                                 <a href="{{ route('customer.show', $customer->id) }}"
                                                     class="link-primary fs-15"><i class="ri-eye-line"></i></a>
                                                 {{-- <form action="{{ route('customer.destroy', $customer->id) }}"
@@ -107,9 +107,13 @@
                                                     onclick="if(confirm('Are you sure you want to delete this item?')) { document.getElementById('delete-form-{{ $customer->id }}').submit(); }">
                                                     <i class="ri-delete-bin-line"></i>
                                                 </a> --}}
-                                                <a href="javascript:void(0);" class="link-danger fs-15"><i class="ri-delete-bin-line"></i></a>
+                                                @if (auth()->user()?->plantManager?->id == null)
+                                                    <a href="javascript:void(0);" class="link-danger fs-15"><i
+                                                            class="ri-delete-bin-line"></i></a>
+                                                @endif
                                             </div>
                                         </td>
+
                                     </tr>
                                 @endforeach
                             </tbody>

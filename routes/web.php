@@ -96,7 +96,7 @@ Route::get('/privicy-policy', function () {
 
 
 Route::middleware(['auth'])->group(function () {
-    Route::middleware('role:admin|vendor')->group(function () {
+    Route::middleware('role:admin|vendor|plant-manager')->group(function () {
         Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
         Route::resource('plant', PlantController::class);
         Route::resource('route', RouteController::class);

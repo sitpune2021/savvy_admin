@@ -1042,6 +1042,72 @@ $(document).ready(function () {
 
 
 
+function toggleSelect() {
+	let selectedValue = $('.type-checkbox:checked').val();
+	if (!selectedValue) {
+		const firstCheckbox = $('.type-checkbox').first();
+		firstCheckbox.prop('checked', true);
+		selectedValue = firstCheckbox.val();
+	}
+
+	if (selectedValue === 'pan_india') {
+		$('#vendor_select').show();
+	} else {
+		$('#vendor_select').hide();
+		$('#vendor_id').val(null).trigger('change'); // Reset Select2 value
+	}
+}
+
+$(document).ready(function () {
+	$(document).on('change', '.type-checkbox', function () {
+		$('.type-checkbox').not(this).prop('checked', false);
+
+		if (!$('.type-checkbox:checked').length) {
+			$(this).prop('checked', true);
+		}
+
+		toggleSelect();
+	});
+
+	toggleSelect();
+});
+
+
+
+
+function toggleCheckBox() {
+	const selectedValue = $('.checkbox-home:checked').val();
+	localStorage.setItem('val', selectedValue);
+	window.location.href = `/?value=${selectedValue}`;
+}
+
+$(document).ready(function () {
+	const savedVal = localStorage.getItem('val');
+
+	if (savedVal) {
+		$(`.checkbox-home[value="${savedVal}"]`).prop('checked', true);
+	} else {
+		$('.checkbox-home').first().prop('checked', true);
+	}
+
+	$(document).on('change', '.checkbox-home', function () {
+		$('.checkbox-home').not(this).prop('checked', false);
+
+		if (!$('.checkbox-home:checked').length) {
+			$(this).prop('checked', true);
+		}
+
+		toggleCheckBox();
+	});
+});
+
+
+
+
+
+
+
+
 
 
 

@@ -20,11 +20,12 @@ class DriverController extends BaseController
     public function index()
     {
         $query = Drivers::orderBy('created_at', 'desc');
-        if ($this->vendorId !== null) {
-            $query->where('vendor_id', $this->vendorId);
-        }
-        else{
-            $query->where('vendor_id', null);
+        if($this->plantManagerId){
+            $query->where('plant_id', $this->plantManagerId);
+        }else{
+            if ($this->vendorId !== null) {
+                $query->where('vendor_id', $this->vendorId);
+            }
         }
         $drivers = $query->get();
         return view('pages.driver.index', compact('drivers'));
@@ -38,11 +39,12 @@ class DriverController extends BaseController
         $show = false;  
         $routes = Routes::with('plant')->get();
         $query = Plant::orderBy('created_at', 'desc');
-        if ($this->vendorId !== null) {
-            $query->where('vendor_id', $this->vendorId);
-        }
-        else{
-            $query->where('vendor_id', null);
+        if($this->plantManagerId){
+            $query->where('id', $this->plantManagerId);
+        }else{
+            if ($this->vendorId !== null) {
+                $query->where('vendor_id', $this->vendorId);
+            }
         }
         $plants = $query->get();
         return view('pages.driver.add-edit',compact('show', 'routes', 'plants'));      
@@ -122,6 +124,10 @@ class DriverController extends BaseController
             if ($this->vendorId !== null) {
                 $data['vendor_id'] = $this->vendorId;
             }
+            $Plant = Plant::findOrFail($data['plant_id']);
+            if($Plant->vendor_id){
+                $data['vendor_id'] = $Plant->vendor_id;
+            }
             Drivers::create($data);
             return response()->json([
                 'message' => 'Driver created successfully!',
@@ -140,11 +146,15 @@ class DriverController extends BaseController
         $Driver = Drivers::findOrFail($id);
         $routes = Routes::all();
         $query = Plant::orderBy('created_at', 'desc');
-        if ($this->vendorId !== null) {
-            $query->where('vendor_id', $this->vendorId);
-        }
-        else{
-            $query->where('vendor_id', null);
+        if($this->plantManagerId){
+            $query->where('id', $this->plantManagerId);
+        }else{
+            if ($this->vendorId !== null) {
+                $query->where('vendor_id', $this->vendorId);
+            }
+            else{
+                $query->where('vendor_id', null);
+            }
         }
         $plants = $query->get();
         return view('pages.driver.add-edit',compact('show', 'Driver', 'routes', 'plants'));
@@ -160,11 +170,12 @@ class DriverController extends BaseController
             $Driver = Drivers::findOrFail($id);
             $routes = Routes::all();
             $query = Plant::orderBy('created_at', 'desc');
-            if ($this->vendorId !== null) {
-                $query->where('vendor_id', $this->vendorId);
-            }
-            else{
-                $query->where('vendor_id', null);
+            if($this->plantManagerId){
+                $query->where('id', $this->plantManagerId);
+            }else{
+                if ($this->vendorId !== null) {
+                    $query->where('vendor_id', $this->vendorId);
+                }
             }
             $plants = $query->get();
             return view('pages.driver.add-edit',compact('show', 'Driver', 'routes', 'plants'));
@@ -232,10 +243,17 @@ class DriverController extends BaseController
         
         try {
             $Driver = Drivers::findOrFail($id);
-            $Driver->update($request->except('pan_card_FILE', 'aadhar_card_FILE'));
+            $plant = Plant::findOrFail($request->input('plant_id'));
+            $data = $request->except('pan_card_FILE', 'aadhar_card_FILE');
+            if ($plant->vendor_id) {
+                $data['vendor_id'] = $plant->vendor_id;
+            }else{
+                $data['vendor_id'] = null;
+            }
+            // $Driver->update($request->except('pan_card_FILE', 'aadhar_card_FILE'));
+            $Driver->update($data);
 
         
-            // Handle Pan Card Upload
             if ($request->hasFile('pan_card_FILE')) {
                 if ($Driver->pan_card_FILE) {
                     Storage::delete('public/driver/' . $Driver->pan_card_FILE); // Corrected $jobPost to $Driver
@@ -246,7 +264,6 @@ class DriverController extends BaseController
                 $Driver->pan_card_FILE = $panCardFile;
             }
         
-            // Handle Aadhar Card Upload
             if ($request->hasFile('aadhar_card_FILE')) {
                 if ($Driver->aadhar_card_FILE) {
                     Storage::delete('public/driver/' . $Driver->aadhar_card_FILE); // Corrected $jobPost to $Driver
@@ -257,8 +274,8 @@ class DriverController extends BaseController
                 $Driver->aadhar_card_FILE = $aadharCardFile;
             }
         
-            // Update other driver details
             $Driver->update($request->except('aadhar_card_FILE', 'pan_card_FILE'));
+            
         
             return response()->json([
                 'message' => 'Driver updated successfully!',

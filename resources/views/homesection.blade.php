@@ -1,80 +1,4 @@
-@extends('layouts.app')
-@php
-    $orderIsDown = $orderChange < 0;
-    $orderChangeClass = $orderIsDown ? 'text-danger' : 'text-success';
-    $orderIcon = $orderIsDown ? 'ri-arrow-right-down-line' : 'ri-arrow-right-up-line';
-
-    $customerIsDown = $customerChange < 0;
-    $customerChangeClass = $customerIsDown ? 'text-danger' : 'text-success';
-    $customerIcon = $customerIsDown ? 'ri-arrow-right-down-line' : 'ri-arrow-right-up-line';
-    $statusClasses = [
-        'cancelled' => 'bg-danger-subtle text-danger',
-        'pending' => 'bg-warning-subtle text-warning',
-        'completed' => 'bg-success-subtle text-success',
-        'in_progress' => 'bg-info-subtle text-info',
-    ];
-@endphp
-@push('styles')
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" />
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css">
-    <link href="{{ asset('/assets/libs/jsvectormap/jsvectormap.min.css') }}" rel="stylesheet" type="text/css" />
-    <link href="{{ asset('/assets/libs/swiper/swiper-bundle.min.css') }}" rel="stylesheet" type="text/css" />
-@endpush
-
-@push('scripts')
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
-        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-    <!--datatable js-->
-    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
-
-    <script src="{{ asset('/assets/libs/apexcharts/apexcharts.min.js') }}"></script>
-    <script src="{{ asset('/assets/libs/jsvectormap/jsvectormap.min.js') }}"></script>
-    <script src="{{ asset('/assets/libs/jsvectormap/maps/world-merc.js') }}"></script>
-    <script src="{{ asset('/assets/libs/swiper/swiper-bundle.min.js') }}"></script>
-    <script src="{{ asset('/assets/js/pages/dashboard-ecommerce.init.js') }}"></script>
-    <script src="{{ asset('/assets/js/pages/datatables.init.js') }}"></script>
-    <script src="{{ asset('/assets/js/app.js') }}"></script>
-@endpush
-@section('content')
-    <div class="row">
-        <div class="col">
-            <div class="h-100">
-                <div class="row mb-3 pb-1">
-                    <div class="col-12">
-                        <div class="d-flex align-items-lg-center flex-lg-row flex-column">
-                            <div class="flex-grow-1">
-                                <h4 class="fs-16 mb-1">Good Morning, {{ ucfirst(Auth::user()->name) }}</h4>
-                                <p class="text-muted mb-0">
-                                    Here's what's happening with your store today.
-                                </p>
-                            </div>
-                            @if (auth()->user()?->role == 'admin' || auth()->user()?->role == 'super_admin')
-                                <div class="d-flex align-items-center gap-3 pt-2 pb-2">
-                                    <div class="form-check form-check-outline form-check-dark">
-                                        <input class="form-check-input checkbox-home" type="checkbox"
-                                            id="All" value="all">
-                                        <label class="form-check-label" for="All">All</label>
-                                    </div>
-                                    <div class="form-check form-check-outline form-check-dark">
-                                        <input class="form-check-input checkbox-home" type="checkbox"
-                                            id="Local" value="local">
-                                        <label class="form-check-label" for="Local">Local</label>
-                                    </div>
-                                    <div class="form-check form-check-outline form-check-dark">
-                                        <input class="form-check-input checkbox-home" type="checkbox"
-                                            id="PanIndia" value="pan_india">
-                                        <label class="form-check-label" for="PanIndia">Pan India</label>
-                                    </div>
-                                </div>
-                            @endif
-
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
+  <div class="row">
                     <div class="col-xl-3 col-md-6">
                         <div class="card card-animate">
                             <div class="card-body">
@@ -354,7 +278,7 @@
                                                         <td>
                                                             <a href="{{ url('order/' . $order->id) }}"
                                                                 class="fw-medium link-primary">#{{ $order->id }}
-                                                                @if (auth()->user()?->vendor?->id === null && $order->drivers?->vendor_id != null && auth()->user()?->plantManager?->id == null)
+                                                                @if (auth()->user()?->vendor?->id === null && $order->drivers?->vendor_id != null)
                                                                     <i class="ri-user-shared-line"></i>
                                                                 @endif
                                                                 @if ($order->type == 'additional')
@@ -401,16 +325,3 @@
                         <!-- .col-->
                     </div>
                 @endif
-                <!-- end row-->
-            </div>
-            <!-- end .h-100-->
-        </div>
-        <!-- end col -->
-    </div>
-    <script>
-        window.seriesData = @json($ordersCountByPlant->values()); // Order counts (series data)
-        window.labels = @json(collect($ordersCountByPlant->keys())->map(function ($id) use ($plants) {
-                    return $plants[$id] ?? 'Unknown';
-                })->values());
-    </script>
-@endsection

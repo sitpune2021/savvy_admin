@@ -14,11 +14,17 @@ class Plant extends Model
         'name',
         'address',
         'manager',
+        'manager_id',
         'location',
         'pincode',
         'details',
         'vendor_id',
     ];
+
+    public function managerRecord()
+    {
+        return $this->belongsTo(User::class, 'manager_id');
+    }
 
     protected $dates = ['deleted_at'];
 

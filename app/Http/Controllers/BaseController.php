@@ -9,6 +9,7 @@ class BaseController extends Controller
 {
          protected $vendorId = null;
          protected $driverId = null;
+         protected $plantManagerId = null;
 
         public function __construct()
         {
@@ -21,6 +22,9 @@ class BaseController extends Controller
                         $this->role = $user->role;
                         if ($user->role === 'vendor' && $user->vendor) {
                             $this->vendorId = $user->vendor->id;
+                        }
+                        if ($user->role === 'plant-manager' && $user->plantManager) {
+                            $this->plantManagerId = $user->plantManager->id;
                         }
                     }
                     if($tableName === 'drivers')

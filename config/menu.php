@@ -4,19 +4,19 @@ return [
     [
         'type' => 'section',
         'label' => 'Menu',
-        'roles' => ['admin', 'vendor', 'user'],
+        'roles' => ['admin', 'vendor', 'plant-manager'],
     ],
     [
         'label' => 'Dashboards',
         'url' => '/',
         'icon' => 'ri-dashboard-2-line',
-        'roles' => ['admin', 'vendor', 'user'],
+        'roles' => ['admin', 'vendor', 'plant-manager'],
     ],
 
     [
         'type' => 'section',
         'label' => 'Customers',
-        'roles' => ['admin', 'vendor'],
+        'roles' => ['admin', 'vendor', 'plant-manager'],
     ],
     [
         'label' => 'Plants',
@@ -28,13 +28,13 @@ return [
         'label' => 'Routes',
         'url' => 'route',
         'icon' => 'ri-building-2-line',
-        'roles' => ['admin', 'vendor'],
+        'roles' => ['admin', 'vendor', 'plant-manager'],
     ],
     [
         'label' => 'Drivers',
         'url' => 'driver',
         'icon' => 'ri-dashboard-2-line',
-        'roles' => ['admin', 'vendor'],
+        'roles' => ['admin', 'vendor', 'plant-manager'],
     ],
     [
         'label' => 'Products',
@@ -46,7 +46,7 @@ return [
         'label' => 'Customers',
         'url' => 'customer',
         'icon' => 'ri-dashboard-2-line',
-        'roles' => ['admin','vendor'],
+        'roles' => ['admin','vendor', 'plant-manager'],
     ],
     [
         'label' => 'Dispensary',
@@ -58,13 +58,13 @@ return [
     [
         'type' => 'section',
         'label' => 'Purchases',
-        'roles' => ['admin' ,'vendor'],
+        'roles' => ['admin' ,'vendor', 'plant-manager'],
     ],
     [
         'label' => 'Orders',
         'url' => 'order',
         'icon' => 'ri-dashboard-2-line',
-        'roles' => ['admin' ,'vendor'],
+        'roles' => ['admin' ,'vendor', 'plant-manager'],
     ],
     [
         'label' => 'Orders Request',

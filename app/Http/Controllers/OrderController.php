@@ -24,11 +24,15 @@ class OrderController extends BaseController
     public function index()
     {
        $ordersQuery = Orders::with(['customers', 'drivers']);
-        if ($this->vendorId !== null) {
-            $ordersQuery->whereHas('drivers', function ($query) {
-                $query->where('vendor_id', $this->vendorId);
-            });
+       if($this->plantManagerId) {
+            $ordersQuery = Orders::forPlantManager($this->plantManagerId);
+
+        }else{
+            if ($this->vendorId !== null) {
+                $ordersQuery = Orders::forVendor($this->vendorId, false, false);
+            }
         }
+        
         $orders = $ordersQuery->orderBy('created_at', 'desc')->get();
         return view('pages.order.index', compact('orders'));
     }

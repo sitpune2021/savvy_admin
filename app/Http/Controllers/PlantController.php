@@ -4,6 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Plant;
+use App\Models\Vendor;
+use App\Models\User;
+use App\Models\Routes;
+use App\Models\Drivers;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -22,8 +27,6 @@ class PlantController extends BaseController
 
         if ($this->vendorId !== null) {
             $query->where('vendor_id', $this->vendorId);
-        }else{
-            $query->where('vendor_id', null);
         }
 
         $Plants = $query->get();
@@ -35,8 +38,9 @@ class PlantController extends BaseController
      */
     public function create()
     {
-        $show = false;        
-        return view('pages.plant.add-edit',compact('show'));
+        $show = false; 
+        $vendors = Vendor::with('user:id,name')->get();
+        return view('pages.plant.add-edit',compact('show', 'vendors'));
     }
 
     /**
@@ -54,9 +58,21 @@ class PlantController extends BaseController
             ],
             'address' => 'required|string|max:255',
             'manager' => 'required|string|max:255|regex:/^[a-zA-Z\s\-]+$/',
+            'email' => [
+                'required',
+                'email',
+                'regex:/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/',
+                Rule::unique('users', 'email')->where(function ($query) {
+                    return $query->where('role', 'plant-manager');
+                }),
+            ],
             'location' => 'required|string|max:255',
             'pincode' => 'required|string|digits:6',
             'details' => 'nullable|string|max:255',
+            'vendor_id' => (Auth::user()->role === 'admin' && $request->type === 'pan_india')
+                        ? 'required|exists:vendors,id'
+                        : 'nullable|exists:vendors,id',
+
         ]);
 
     
@@ -69,7 +85,15 @@ class PlantController extends BaseController
             if ($this->vendorId !== null) {
                 $data['vendor_id'] = $this->vendorId;
             }
+                $user = User::create([
+                    'name' => $request->manager,
+                    'email' => $request->email,
+                    'password' => Hash::make('Saavy@123'),
+                    'role' => 'plant-manager',
+                ]);
+                $data['manager_id'] = $user->id;
             Plant::create($data);
+            
             return response()->json(['message' => 'Plant added successfully'], 200);
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Failed to add plant: '.$e->getMessage());
@@ -83,7 +107,8 @@ class PlantController extends BaseController
     {
         $show = true;
         $Plant = Plant::findOrFail($id);
-        return view('pages.plant.add-edit',compact('show', 'Plant'));
+        $vendors = Vendor::with('user:id,name')->get();
+        return view('pages.plant.add-edit',compact('show', 'Plant', 'vendors'));
     }
 
     /**
@@ -94,7 +119,8 @@ class PlantController extends BaseController
         try {
             $show = false;
             $Plant = Plant::findOrFail($id);
-            return view('pages.plant.add-edit',compact('show', 'Plant'));
+            $vendors = Vendor::with('user:id,name')->get();
+            return view('pages.plant.add-edit',compact('show', 'Plant', 'vendors'));
         } catch (ModelNotFoundException $e) {
             return back()->withErrors(['error' => 'Plant not found.']);
         } catch (Exception $e) {
@@ -117,6 +143,15 @@ class PlantController extends BaseController
             ],
             'address' => 'required|string|max:255',
             'manager' => 'required|string|max:255|regex:/^[a-zA-Z\s\-]+$/',
+            'manager_id' => 'nullable|exists:users,id',
+            'email' => [
+                'required',
+                'email',
+                'regex:/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/',
+                Rule::unique('users', 'email')->ignore($request->manager_id)->where(function ($query) {
+                    return $query->where('role', 'plant-manager');
+                }),
+            ],
             'location' => 'required|string|max:255',
             'pincode' => 'required|string|digits:6',
             'details' => 'nullable|string|max:255',
@@ -129,6 +164,24 @@ class PlantController extends BaseController
         try {
 
             $Plant = Plant::findOrFail($id);
+            if($Plant->manager_id == null){
+                $user = User::create([
+                    'name' => $request->manager,
+                    'email' => $request->email,
+                    'password' => Hash::make('Saavy@123'),
+                    'role' => 'plant-manager',
+                ]);
+                $Plant->manager_id = $user->id;
+            }else{
+                $user = User::findOrFail($Plant->manager_id);
+                $user->name = $request->manager;
+                $user->email = $request->email;
+                $user->save();
+            }
+
+            Routes::where('plant_id', $id)->update(['vendor_id' => $request->vendor_id]);
+            Drivers::where('plant_id', $id)->update(['vendor_id' => $request->vendor_id]);
+            
             $Plant->update($request->all());
             return response()->json(['message' => 'Plant updated successfully'], 200);
         } catch (Exception $e) {

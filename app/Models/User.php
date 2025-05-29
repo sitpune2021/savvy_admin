@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Vendor;
+use App\Models\Plant;
 
 class User extends Authenticatable
 {
@@ -77,5 +78,9 @@ class User extends Authenticatable
     public function Vendor()
     {
         return $this->hasOne(Vendor::class, 'user_id');
+    }
+    public function plantManager()
+    {
+        return $this->hasOne(Plant::class, 'manager_id');
     }
 }

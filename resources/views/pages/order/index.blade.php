@@ -56,7 +56,7 @@
             </div>
         </div>
     </div>
-    @if (auth()->user()?->vendor?->id === null)
+    @if (auth()->user()?->vendor?->id === null && auth()->user()?->plantManager?->id == null)
         <div class="card">
             <div class="card-body">
                 <div class="row g-2">
@@ -96,7 +96,7 @@
                                     <tr>
                                         <td>
                                             {{ $loop->iteration }}
-                                            @if( auth()->user()?->vendor?->id === null && $order->drivers?->vendor_id != null)
+                                            @if( auth()->user()?->vendor?->id === null && $order->drivers?->vendor_id != null && auth()->user()?->plantManager?->id == null)
                                                 <i class="ri-user-shared-line"></i>
                                             @endif
                                             @if( $order->type == 'additional')

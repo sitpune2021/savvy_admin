@@ -61,15 +61,40 @@ class Orders extends Model
         return $this->belongsTo(Drivers::class, 'driver_id')->withTrashed();
     }
 
-    public function scopeForVendor($query, $vendorId)
+    public function scopeForVendor($query, $vendorId, $isAdmin = false, $type = 'all')
     {
-        if ($vendorId !== null) {
-            return $query->whereHas('drivers', function ($q) use ($vendorId) {
-                $q->where('vendor_id', $vendorId);
+        if ($isAdmin) {
+            return $query->whereHas('drivers', function ($q) use ($type) {
+                if ($type === 'pan_india') {
+                    $q->whereNotNull('vendor_id');
+                } elseif ($type === 'local') {
+                    $q->whereNull('vendor_id');
+                } else {
+                    $q;
+                }
             });
+        } else {
+            if ($vendorId !== null) {
+                return $query->whereHas('drivers', function ($q) use ($vendorId) {
+                    $q->where('vendor_id', $vendorId);
+                });
+            }
         }
         return $query;
     }
+
+    public function scopeForPlantManager($query, $plantManagerId)
+    {
+        
+            if ($plantManagerId !== null) {
+                return $query->whereHas('shipping', function ($q) use ($plantManagerId) {
+                    $q->where('plant_id', $plantManagerId);
+                });
+            }
+        
+        return $query;
+    }
+
 
 
     protected $dates = ['deleted_at'];

@@ -30,12 +30,20 @@ class CustomerController extends BaseController
     public function index()
     {
         $query = Customers::orderBy('created_at', 'desc');
-        if ($this->vendorId !== null) {
+        if($this->plantManagerId){
+            $query->whereHas('shippingAddresses', function($query) {
+                $query->where('plant_id', $this->plantManagerId);
+
+            });
+        }else{
+           if ($this->vendorId !== null) {
             $query->whereHas('shippingAddresses', function($query) {
                 $query->where('type', 'pan_india')
                     ->where('vendor_id', $this->vendorId);
             });
         }
+        }
+        
         $customers = $query->get();
         return view('pages.customer.index', compact('customers'));
     }

@@ -96,7 +96,11 @@
                             <tbody>
                                 @foreach ($Plants as $plant)
                                     <tr>
-                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $loop->iteration }}
+                                            @if( auth()->user()?->vendor?->id === null && $plant?->vendor_id != null)
+                                                <i class="ri-user-shared-line"></i>
+                                            @endif
+                                        </td>
                                         <td>{{ $plant->name }}</td>
                                         <td>{{ $plant->manager }}</td>
                                         <td>{{ $plant->address }}</td>
