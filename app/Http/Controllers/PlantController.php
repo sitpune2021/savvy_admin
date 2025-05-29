@@ -162,8 +162,8 @@ class PlantController extends BaseController
         }
 
         try {
-
             $Plant = Plant::findOrFail($id);
+            $data = $request->all(); 
             if($Plant->manager_id == null){
                 $user = User::create([
                     'name' => $request->manager,
@@ -171,7 +171,7 @@ class PlantController extends BaseController
                     'password' => Hash::make('Saavy@123'),
                     'role' => 'plant-manager',
                 ]);
-                $Plant->manager_id = $user->id;
+                $data['manager_id'] = $user->id;
             }else{
                 $user = User::findOrFail($Plant->manager_id);
                 $user->name = $request->manager;
@@ -181,8 +181,7 @@ class PlantController extends BaseController
 
             Routes::where('plant_id', $id)->update(['vendor_id' => $request->vendor_id]);
             Drivers::where('plant_id', $id)->update(['vendor_id' => $request->vendor_id]);
-            
-            $Plant->update($request->all());
+            $Plant->update($data);
             return response()->json(['message' => 'Plant updated successfully'], 200);
         } catch (Exception $e) {
             return response()->json(['errors' => 'Failed to update plant: ' . $e->getMessage()], 500);
