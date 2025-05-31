@@ -152,9 +152,6 @@ class DriverController extends BaseController
             if ($this->vendorId !== null) {
                 $query->where('vendor_id', $this->vendorId);
             }
-            else{
-                $query->where('vendor_id', null);
-            }
         }
         $plants = $query->get();
         return view('pages.driver.add-edit',compact('show', 'Driver', 'routes', 'plants'));
