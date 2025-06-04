@@ -84,6 +84,7 @@ class MaintenanceController extends Controller
     }
     public function upload(Request $request)
     {
+        dd($request->all());
         // Validate the incoming request
         $request->validate([
             'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
