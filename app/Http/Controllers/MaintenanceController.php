@@ -77,4 +77,34 @@ class MaintenanceController extends Controller
     {
         //
     }
+
+    public function check(){
+        return view('image');
+
+    }
+    public function upload(Request $request)
+    {
+        // Validate the incoming request
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Handle the uploaded image
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+
+            // Generate a unique file name
+            $filename = time() . '.' . $image->getClientOriginalExtension();
+
+            // Save the image in the 'public/images' directory
+            $path = $image->storeAs('images', $filename, 'public');
+
+            // You can save $path to your database here if needed
+
+            return back()->with('success', 'Image uploaded successfully')->with('path', $path);
+        }
+
+        return back()->withErrors('No image selected');
+    }
 }
+

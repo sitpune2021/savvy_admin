@@ -26,6 +26,10 @@ use App\Http\Controllers\VendorController;
 |
 */
 
+Route::get('/image-check', [MaintenanceController::class, 'check']);
+Route::post('/upload-image', [MaintenanceController::class, 'upload'])->name('image.upload');
+
+
 Route::get('/clear-cache', function () {
     Artisan::call('config:clear');
     Artisan::call('cache:clear');
