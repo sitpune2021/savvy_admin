@@ -90,6 +90,7 @@ class MaintenanceController extends Controller
         ]);
 
         // Handle the uploaded image
+        dd($request->hasFile('image'));
         if ($request->hasFile('image')) {
             $image = $request->file('image');
 
