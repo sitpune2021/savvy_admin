@@ -84,14 +84,10 @@ class MaintenanceController extends Controller
     }
     public function upload(Request $request)
     {
-        dd($request->all());
-        // Validate the incoming request
-        $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+        dd($request->all(), $request->hasFile('image'), $request->file('image'));
+
 
         // Handle the uploaded image
-        dd($request->hasFile('image'));
         if ($request->hasFile('image')) {
             $image = $request->file('image');
 
@@ -100,6 +96,7 @@ class MaintenanceController extends Controller
 
             // Save the image in the 'public/images' directory
             $path = $image->storeAs('images', $filename, 'public');
+        dd($path);
 
             // You can save $path to your database here if needed
 
