@@ -32,6 +32,16 @@ class DriverController extends BaseController
                 'message' => 'No drivers found'
             ], 404);
         }
+
+        foreach ($drivers as $record) {
+            if ($record->pan_card_FILE) {
+                $record->$pan_card_FILE = url('storage/driver'. $$record->$pan_card_FILE) ;
+            }
+            if ($record->aadhar_card_FILE) {
+                $record->$aadhar_card_FILE = url('storage/driver'. $$record->$aadhar_card_FILE) ;
+            }
+        }
+
         return response()->json([
             'status' => true,
             'message' => 'Drivers retrieved successfully',
