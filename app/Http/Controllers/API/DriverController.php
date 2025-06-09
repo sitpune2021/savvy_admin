@@ -105,7 +105,7 @@ class DriverController extends BaseController
             return response()->json([
                 'status' => false,
                 'message' => 'Validation errors',
-                'errors' => $validator->errors()
+                'errors' => collect($validator->errors()->all())
             ], 422);
         }
 
