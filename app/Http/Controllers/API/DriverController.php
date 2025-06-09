@@ -35,10 +35,10 @@ class DriverController extends BaseController
 
         foreach ($drivers as $record) {
             if ($record->pan_card_FILE) {
-                $record->$pan_card_FILE = url('storage/driver'. $$record->$pan_card_FILE) ;
+                $record->pan_card_FILE = url('storage/driver'. $record->pan_card_FILE) ;
             }
             if ($record->aadhar_card_FILE) {
-                $record->$aadhar_card_FILE = url('storage/driver'. $$record->$aadhar_card_FILE) ;
+                $record->aadhar_card_FILE = url('storage/driver'. $record->aadhar_card_FILE) ;
             }
         }
 
