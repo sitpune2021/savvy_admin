@@ -35,10 +35,10 @@ class DriverController extends BaseController
 
         foreach ($drivers as $record) {
             if ($record->pan_card_FILE) {
-                $record->pan_card_FILE = url('storage/driver'. $record->pan_card_FILE) ;
+                $record->pan_card_FILE = url('storage/driver/'. $record->pan_card_FILE) ;
             }
             if ($record->aadhar_card_FILE) {
-                $record->aadhar_card_FILE = url('storage/driver'. $record->aadhar_card_FILE) ;
+                $record->aadhar_card_FILE = url('storage/driver/'. $record->aadhar_card_FILE) ;
             }
         }
 
@@ -95,13 +95,6 @@ class DriverController extends BaseController
 
     
         if ($validator->fails()) {
-            if ($this->vendorId !== null) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Validation errors',
-                    'errors' => collect($validator->errors()->all())
-                ], 422);
-            }
             return response()->json([
                 'status' => false,
                 'message' => 'Validation errors',
