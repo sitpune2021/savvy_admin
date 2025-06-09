@@ -85,6 +85,13 @@ class DriverController extends BaseController
 
     
         if ($validator->fails()) {
+            if ($this->vendorId !== null) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation errors',
+                    'errors' => collect($validator->errors()->all())
+                ], 422);
+            }
             return response()->json([
                 'status' => false,
                 'message' => 'Validation errors',
