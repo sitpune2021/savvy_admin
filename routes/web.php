@@ -109,6 +109,8 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('order', OrderController::class);
 
         Route::put('customer/{id}/vendor-shipping-address', [CustomerController::class, 'updateShippingAddressForVendor'])->name('customer.update-shipping-address-forr-vendor');
+        Route::get('/fetch-pending-orders', [App\Http\Controllers\HomeController::class, 'fetchPendingOrders'])->name('orders.fetch');
+
 
     });
     Route::middleware('role:admin')->group(function () {

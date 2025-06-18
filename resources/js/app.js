@@ -1103,6 +1103,27 @@ $(document).ready(function () {
 
 
 
+$(document).on('click', '.fetch-pending-orders', function (e) {
+	e.preventDefault();
+	const key = $(this).data('key');
+	const $table = $('#yesterdayPendingOrders');
+
+	$('html, body').animate({
+		scrollTop: $table.offset().top
+	}, 500);
+	$.ajax({
+		url: "fetch-pending-orders",
+		type: 'GET',
+		data: { key: key },
+		success: function (response) {
+			$('#pending-orders-table-body').html(response.html);
+		},
+		error: function (xhr) {
+			console.error("Failed to fetch pending orders:", xhr);
+		}
+	});
+});
+
 
 
 

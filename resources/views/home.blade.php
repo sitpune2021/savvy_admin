@@ -1,19 +1,4 @@
 @extends('layouts.app')
-@php
-    $orderIsDown = $orderChange < 0;
-    $orderChangeClass = $orderIsDown ? 'text-danger' : 'text-success';
-    $orderIcon = $orderIsDown ? 'ri-arrow-right-down-line' : 'ri-arrow-right-up-line';
-
-    $customerIsDown = $customerChange < 0;
-    $customerChangeClass = $customerIsDown ? 'text-danger' : 'text-success';
-    $customerIcon = $customerIsDown ? 'ri-arrow-right-down-line' : 'ri-arrow-right-up-line';
-    $statusClasses = [
-        'cancelled' => 'bg-danger-subtle text-danger',
-        'pending' => 'bg-warning-subtle text-warning',
-        'completed' => 'bg-success-subtle text-success',
-        'in_progress' => 'bg-info-subtle text-info',
-    ];
-@endphp
 @push('styles')
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap.min.css" />
@@ -51,171 +36,28 @@
                                     Here's what's happening with your store today.
                                 </p>
                             </div>
-                            @if (auth()->user()?->role == 'admin' || auth()->user()?->role == 'super_admin')
-                                <div class="d-flex align-items-center gap-3 pt-2 pb-2">
-                                    <div class="form-check form-check-outline form-check-dark">
-                                        <input class="form-check-input checkbox-home" type="checkbox"
-                                            id="All" value="all">
-                                        <label class="form-check-label" for="All">All</label>
-                                    </div>
-                                    <div class="form-check form-check-outline form-check-dark">
-                                        <input class="form-check-input checkbox-home" type="checkbox"
-                                            id="Local" value="local">
-                                        <label class="form-check-label" for="Local">Local</label>
-                                    </div>
-                                    <div class="form-check form-check-outline form-check-dark">
-                                        <input class="form-check-input checkbox-home" type="checkbox"
-                                            id="PanIndia" value="pan_india">
-                                        <label class="form-check-label" for="PanIndia">Pan India</label>
-                                    </div>
-                                </div>
-                            @endif
-
                         </div>
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-xl-3 col-md-6">
-                        <div class="card card-animate">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <p class="text-uppercase fw-medium text-muted text-truncate mb-0">
-                                            Orders
-                                        </p>
-                                    </div>
-                                    <div class="flex-shrink-0">
-                                        <h5 class="{{ $orderChangeClass }} fs-14 mb-0">
-                                            <i class="{{ $orderIcon }} fs-13 align-middle"></i>
-                                            {{ $orderChange }} %
-                                        </h5>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-end justify-content-between mt-4">
-                                    <div>
-                                        <h4 class="fs-22 fw-semibold ff-secondary mb-4">
-                                            <span class="counter-value" data-target="{{ $thisMonthOrders }}">0</span>
-                                        </h4>
-                                        <a href="{{ url('order') }}" class="text-decoration-underline">View all orders</a>
-                                    </div>
-                                    <div class="avatar-sm flex-shrink-0">
-                                        <span class="avatar-title bg-info-subtle rounded fs-3">
-                                            <i class="bx bx-shopping-bag text-info"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    @php
+                        $isGrouped =
+                            isset($record) &&
+                            is_array($record) &&
+                            collect($record)->every(
+                                fn($val) => is_array($val) || $val instanceof \Illuminate\Support\Collection,
+                            );
+                    @endphp
 
-                    <div class="col-xl-3 col-md-6">
-                        <div class="card card-animate">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <p class="text-uppercase fw-medium text-muted text-truncate mb-0">
-                                            Today Orders
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-end justify-content-between mt-4">
-                                    <div>
-                                        <h4 class="fs-22 fw-semibold ff-secondary mb-4">
-                                            <span class="counter-value" data-target="{{ $todayOrders }}">0</span>
-                                        </h4>
-                                        <a href="{{ url('order') }}" class="d-flex align-items-center gap-2">
-                                            <p class="fs-16 mb-0 text-muted"><i
-                                                    class="mdi mdi-circle fs-14 align-middle text-success me-1"></i><span
-                                                    class="counter-value"
-                                                    data-target="{{ $todayCompletedOrders }}">0</span> </p>
-                                            <p class="fs-16 mb-0 text-muted"><i
-                                                    class="mdi mdi-circle fs-14 align-middle text-danger me-1"></i><span
-                                                    class="counter-value" data-target="{{ $todayPendingOrders }}">0</span>
-                                            </p>
-                                            <p class="fs-16 mb-0 text-muted"><i
-                                                    class="mdi mdi-circle fs-14 align-middle text-warning me-1"></i><span
-                                                    class="counter-value"
-                                                    data-target="{{ $todayInProgressOrders }}">0</span>
-                                            </p>
-                                        </a>
-                                    </div>
-                                    <div class="avatar-sm flex-shrink-0">
-                                        <span class="avatar-title bg-info-subtle rounded fs-3">
-                                            <i class="bx bx-shopping-bag text-info"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <div class="col-xl-3 col-md-6">
-                        <div class="card card-animate bg-danger">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <p class="text-uppercase fw-medium text-white text-truncate mb-0">
-                                            Yesterday Orders
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-end justify-content-between mt-4">
-                                    <div>
-                                        <h4 class="fs-22 fw-semibold ff-secondary mb-4 text-white">
-                                            <span class="counter-value"
-                                                data-target="{{ $yesterdayPendingOrders }}">0</span>
-                                        </h4>
-
-                                        <a href="#yesterdayPendingOrders" class="text-decoration-underline text-white">
-                                            <span class="counter-value"
-                                                data-target="{{ count($allPendingOrders) }}">0</span>
-                                            view pending orders
-                                        </a>
-                                    </div>
-                                    <div class="avatar-sm flex-shrink-0">
-                                        <span class="avatar-title  bg-white bg-opacity-25 rounded fs-3">
-                                            <i class="bx bx-shopping-bag text-white"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-xl-3 col-md-6">
-                        <div class="card card-animate">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <p class="text-uppercase fw-medium text-muted text-truncate mb-0">
-                                            Customers
-                                        </p>
-                                    </div>
-                                    <div class="flex-shrink-0">
-                                        <h5 class="{{ $customerChangeClass }} fs-14 mb-0">
-                                            <i class="{{ $customerIcon }} fs-13 align-middle"></i>
-                                            {{ $customerChange }} %
-                                        </h5>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-end justify-content-between mt-4">
-                                    <div>
-                                        <h4 class="fs-22 fw-semibold ff-secondary mb-4">
-                                            <span class="counter-value" data-target="{{ $thisMonthCustomers }}">0</span>
-                                        </h4>
-                                        <a href="{{ url('customer') }}" class="text-decoration-underline">See details</a>
-                                    </div>
-                                    <div class="avatar-sm flex-shrink-0">
-                                        <span class="avatar-title bg-warning-subtle rounded fs-3">
-                                            <i class="bx bx-user-circle text-warning"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    @if ($isGrouped)
+                        @foreach ($record as $key => $regionData)
+                            @include('components.dashbordCard', ['region' => $key, 'data' => $regionData])
+                        @endforeach
+                    @else
+                        @include('components.dashbordCards')
+                    @endif
                 </div>
+
 
                 <div class="row">
                     <div class="col-xl-8">
@@ -325,81 +167,7 @@
                     <!-- end col -->
                 </div>
                 @if (count($allPendingOrders) > 0)
-                    <div class="row">
-                        <div class="col-xl-12">
-                            <div class="card">
-                                <div class="card-header align-items-center d-flex">
-                                    <h4 class="card-title mb-0 flex-grow-1">
-                                        Yesterday Orders
-                                    </h4>
-                                </div>
-
-                                <div class="card-body">
-                                    <div class="table-responsive table-card">
-                                        <table class="table table-borderless table-centered align-middle table-nowrap mb-0"
-                                            id="yesterdayPendingOrders">
-                                            <thead class="text-muted table-light">
-                                                <tr>
-                                                    <th scope="col">Order ID</th>
-                                                    <th scope="col">Customer</th>
-                                                    <th scope="col">shipping Address</th>
-                                                    <th scope="col">Driver</th>
-                                                    <th scope="col">Delivery Quantity</th>
-                                                    <th scope="col">Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach ($allPendingOrders as $order)
-                                                    <tr>
-                                                        <td>
-                                                            <a href="{{ url('order/' . $order->id) }}"
-                                                                class="fw-medium link-primary">#{{ $order->id }}
-                                                                @if (auth()->user()?->vendor?->id === null && $order->drivers?->vendor_id != null && auth()->user()?->plantManager?->id == null)
-                                                                    <i class="ri-user-shared-line"></i>
-                                                                @endif
-                                                                @if ($order->type == 'additional')
-                                                                    <i class="ri-shopping-cart-line"></i>
-                                                                @endif
-                                                            </a>
-                                                        </td>
-                                                        <td>
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="flex-grow-1">
-                                                                    <span
-                                                                        style="white-space: pre-wrap;">{{ $order->customers->name }}</span>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="flex-grow-1">
-                                                                    <span
-                                                                        style="white-space: pre-wrap;">{{ $order->shipping->shipping_address }}</span>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>{{ $order?->drivers?->name }}</td>
-                                                        <td>{{ $order->develivered_qty }}</td>
-                                                        <td>
-                                                            <span
-                                                                class="badge {{ $statusClasses[$order->status] ?? 'bg-secondary-subtle text-secondary' }} p-2">
-                                                                {{ ucfirst(str_replace('_', ' ', $order->status)) }}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                                <!-- end tr -->
-                                            </tbody>
-                                            <!-- end tbody -->
-                                        </table>
-                                        <!-- end table -->
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- .card-->
-                        </div>
-                        <!-- .col-->
-                    </div>
+                    @include('components.dashbordTable', ['allPendingOrders' => $allPendingOrders])
                 @endif
                 <!-- end row-->
             </div>
