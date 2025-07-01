@@ -82,9 +82,9 @@ class MaintenanceController extends Controller
             'type' => 'required|string|in:fuel,other',
             'description' => 'required|string|max:1000',
             'amount' => 'required|numeric|min:0',
-            'images.bill' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // for fuel
-            'images.metercopy' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // for other
-            'images.recipt' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // for other
+            'images.bill' => 'nullable|image|mimes:jpeg,png,jpg,gif', // for fuel
+            'images.metercopy' => 'nullable|image|mimes:jpeg,png,jpg,gif', // for other
+            'images.recipt' => 'nullable|image|mimes:jpeg,png,jpg,gif', // for other
             'date' => 'required',
         ]);
     

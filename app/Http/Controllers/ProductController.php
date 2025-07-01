@@ -51,7 +51,7 @@ class ProductController extends Controller
             ],
             'description' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:1',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
 
         ]);
 
@@ -122,7 +122,7 @@ class ProductController extends Controller
             ],
             'description' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:1',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
