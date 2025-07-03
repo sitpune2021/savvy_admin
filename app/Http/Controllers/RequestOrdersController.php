@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Contracts;
+use Illuminate\Support\Facades\Http;
 
 class RequestOrdersController extends Controller
 {
@@ -26,6 +27,7 @@ class RequestOrdersController extends Controller
         $maintenance = Contracts::findOrFail($id);
         $maintenance->accepted_status = $request->input('accepted_status');
         $maintenance->save();
+        Http::get('https://savvywater.demosoftware.co.in/schedule');
 
         return redirect()->back()->with('success', 'Status updated.');
     }
