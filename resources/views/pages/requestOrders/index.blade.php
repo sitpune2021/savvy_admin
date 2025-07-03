@@ -93,7 +93,7 @@
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $contract->customer->name }}</td>
-                                        <td>{{ $contract->sender->shippingAddress->shipping_address }}</td>
+                                        <td>{{ $contract->sender?->shippingAddress?->shipping_address }}</td>
                                         <td>{{ $contract->sender->name }}</td>
                                         <td>{{ $contract->product->name }}</td>
                                         <td>{{ $contract->quantity }}</td>
@@ -125,7 +125,7 @@
                                             </div>
                                         </td>
                                         <td>{{ $contract->date }}</td>
-                                        <td>{{ $contract->sender->shippingAddress->driver->name }}</td>
+                                        <td>{{ $contract->sender?->shippingAddress?->driver->name }}</td>
                                         <td>
                                             <span
                                                 class="badge {{ $statusClasses[$contract->status] ?? 'bg-secondary-subtle text-secondary' }} p-2 status-badge">

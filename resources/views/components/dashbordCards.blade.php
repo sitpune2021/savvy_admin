@@ -97,7 +97,10 @@
                          <span class="counter-value" data-target="{{ $yesterdayPendingOrders }}">0</span>
                      </h4>
 
-                     <a href="#yesterdayPendingOrders" class="text-decoration-underline text-white fetch-pending-orders" data-key="{{$key}}">
+                     <a href="#yesterdayPendingOrders" class="text-decoration-underline text-white fetch-pending-orders"@if(isset($key))
+    data-key="{{ $key }}"
+@endif
+>
                          <span class="counter-value" data-target="{{ $allPendingOrdersCount }}">0</span>
                          view pending orders
                      </a>
