@@ -94,7 +94,7 @@
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $contract->customer->name }}</td>
                                         <td>{{ $contract->sender?->shippingAddress?->shipping_address }}</td>
-                                        <td>{{ $contract->sender->name }}</td>
+                                        <td>{{ $contract->sender?->name }}</td>
                                         <td>{{ $contract->product->name }}</td>
                                         <td>{{ $contract->quantity }}</td>
                                         <td>
