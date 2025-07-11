@@ -193,21 +193,20 @@ class HomeController extends BaseController
         return $summary;
     }
 
-    public function downloadCardZip(Request $request)
+  public function downloadCardZip(Request $request)
     {
         // Accept comma-separated string from hidden input
         $customerIdsRaw = $request->input('customer_id', '');
         $customerIds = array_filter(explode(',', $customerIdsRaw));
 
-        $monthYear = $request->input('month_year', now()->format('Y-m')); // "2025-03"
+        $monthYear = $request->input('month_year', now()->format('Y-m'));
         $dt = Carbon::createFromFormat('Y-m', $monthYear);
 
-        $month = $dt->format('m'); // "03"
-        $year  = $dt->format('Y'); // "2025"
+        $month = $dt->format('m');
+        $year  = $dt->format('Y');
 
         $startDate = Carbon::createFromDate($year, $month, 1)->startOfDay();
         $endDate = (clone $startDate)->endOfMonth()->endOfDay();
-
         $period = CarbonPeriod::create($startDate, $endDate);
 
         $cardsQuery = DigitalCard::query()
@@ -230,9 +229,8 @@ class HomeController extends BaseController
             return response()->json(['message' => 'No cards found for the given criteria.'], 404);
         }
 
-        $filesystem = new Filesystem();
-        $folderPath = storage_path('app/public/digital_cards_' . now()->timestamp);
-        $filesystem->mkdir($folderPath);
+        $folderPath = storage_path('app/tmp/digital_cards_' . now()->timestamp);
+        File::makeDirectory($folderPath, 0755, true);
 
         $cardsGrouped = $cards->groupBy(function ($card) {
             $shippingName = optional($card->order->shipping)->shipping_address ?? 'unknown_shipping';
@@ -248,17 +246,12 @@ class HomeController extends BaseController
 
             $cardsByDate = $cardsGroup->keyBy(fn($card) => $card->created_at->toDateString());
 
-            // Fill in missing dates
             $fullCards = [];
             foreach ($period as $date) {
                 $dateKey = $date->toDateString();
-                if ($cardsByDate->has($dateKey)) {
-                    $fullCards[] = $cardsByDate[$dateKey];
-                } else {
-                    $dummy = new \stdClass();
-                    $dummy->created_at = $date;
-                    $fullCards[] = $dummy;
-                }
+                $fullCards[] = $cardsByDate->get($dateKey) ?? (object)[
+                    'created_at' => $date
+                ];
             }
 
             $pdf = PDF::loadView('pdf.delivery_card', [
@@ -267,21 +260,31 @@ class HomeController extends BaseController
                 'customer_name' => $customerName,
                 'customer_zohi_id' => $customerZohiId,
             ]);
+
             $fileName = Str::slug("digital_cards_{$shippingName}_{$customerName}_{$customerZohiId}") . '.pdf';
             file_put_contents("{$folderPath}/{$fileName}", $pdf->output());
         }
 
+        // Create ZIP using ZipArchive
         $zipName = 'digital_cards_' . now()->format('Ymd_His') . '.zip';
         $zipPath = storage_path("app/public/{$zipName}");
 
-        $escapedFolderPath = str_replace('/', '\\', $folderPath);
-        $escapedZipPath = str_replace('/', '\\', $zipPath);
-        \exec("powershell Compress-Archive -Path {$escapedFolderPath}\\* -DestinationPath {$escapedZipPath}");
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            foreach (File::files($folderPath) as $file) {
+                $zip->addFile($file->getRealPath(), $file->getFilename());
+            }
+            $zip->close();
+        } else {
+            File::deleteDirectory($folderPath);
+            return response()->json(['message' => 'Failed to create zip archive.'], 500);
+        }
 
-        $filesystem->remove($folderPath);
+        File::deleteDirectory($folderPath);
 
         return response()->download($zipPath)->deleteFileAfterSend(true);
     }
+
 
 
 
