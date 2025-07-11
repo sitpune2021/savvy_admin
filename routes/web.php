@@ -68,6 +68,9 @@ Route::get('/dev/run/{action}', function ($action) {
                 Artisan::call('storage:link');
                 $output = Artisan::output();
                 return "Storage link created!"  . nl2br($output);
+            case 'install':
+                exec('composer install');
+                return "composer install executed!";
             default:
                 return "Invalid action: $action";
         }
