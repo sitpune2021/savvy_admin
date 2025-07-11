@@ -276,7 +276,7 @@ class HomeController extends BaseController
 
         $escapedFolderPath = str_replace('/', '\\', $folderPath);
         $escapedZipPath = str_replace('/', '\\', $zipPath);
-        exec("powershell Compress-Archive -Path {$escapedFolderPath}\\* -DestinationPath {$escapedZipPath}");
+        \exec("powershell Compress-Archive -Path {$escapedFolderPath}\\* -DestinationPath {$escapedZipPath}");
 
         $filesystem->remove($folderPath);
 
