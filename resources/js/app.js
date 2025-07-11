@@ -3,6 +3,30 @@ window.$ = window.jQuery = $;
 import select2 from 'select2';
 select2();// does nothing
 
+const formConfigs = [
+	{ selector: '#orderForm', url: '/order' },
+	{ selector: '#dispensaryForm', url: '/dispensary' },
+	{ selector: '#customerForm', url: '/customer' },
+	{ selector: '#driverForm', url: '/driver' },
+	{ selector: '#vendorForm', url: '/vendor' },
+	{ selector: '#plantForm', url: '/plant' },
+	{ selector: '#productForm', url: '/product' },
+	{ selector: '#routeForm', url: '/route' },
+	{ selector: '#assignRoutesForm', url: '/assign-route' },
+	{ selector: '#reasonForm', url: '/reasons' },
+
+	{
+		selector: '#shippingForm',
+		url: '/customer',
+		options: { subPath: 'shipping-address', method: 'Put' }
+	},
+	{
+		selector: '#vendorShippingForm',
+		url: '/customer',
+		options: { subPath: 'vendor-shipping-address', method: 'Put' }
+	},
+];
+
 (function ($) {
 	"use strict";
 	if ($('.js-example-basic-single').length > 0) {
@@ -180,158 +204,21 @@ function showSuccessAlert(message) {
 	}, 5000);
 }
 
-
-handleFormSubmit(
-	'#orderForm',
-	'/order',
-	'POST',
-	{},
-	function (response) { // success callback
-		showSuccessAlert(response.message);
-	},
-	function (xhr) {
-		showErrorAlert('An error occurred. Please try again.');
-		console.log('Error occurred:', xhr);
-	}
-);
-
-handleFormSubmit(
-	'#dispensaryForm',
-	'/dispensary',
-	'POST',
-	{},
-	function (response) { // success callback
-		showSuccessAlert(response.message);
-	},
-	function (xhr) {
-		showErrorAlert('An error occurred. Please try again.');
-		console.log('Error occurred:', xhr);
-	}
-);
-
-handleFormSubmit(
-	'#customerForm', // form ID
-	'/customer', // URL to send data to
-	'POST', // default method
-	{},
-	function (response) { // success callback
-		showSuccessAlert(response.message);
-	},
-	function (xhr) { // error callback
-		console.log('Error occurred:', xhr);
-	}
-);
-
-handleFormSubmit(
-	'#driverForm', // form ID
-	'/driver', // URL to send data to
-	'POST', // default method
-	{},
-	function (response) { // success callback
-		showSuccessAlert(response.message);
-	},
-	function (xhr) { // error callback
-		console.log('Error occurred:', xhr);
-	}
-);
-
-handleFormSubmit(
-	'#vendorForm', // form ID
-	'/vendor', // URL to send data to
-	'POST', // default method
-	{},
-	function (response) { // success callback
-		showSuccessAlert(response.message);
-	},
-	function (xhr) { // error callback
-		console.log('Error occurred:', xhr);
-	}
-);
-
-handleFormSubmit(
-	'#plantForm', // form ID
-	'/plant', // URL to send data to
-	'POST', // default method
-	{},
-	function (response) { // success callback
-		showSuccessAlert(response.message);
-	},
-	function (xhr) { // error callback
-		showErrorAlert('An error occurred. Please try again.');
-		console.log('Error occurred:', xhr);
-	}
-);
-
-handleFormSubmit(
-	'#productForm', // form ID
-	'/product', // URL to send data to
-	'POST', // default method
-	{},
-	function (response) { // success callback
-		showSuccessAlert(response.message);
-	},
-	function (xhr) { // error callback
-		console.log('Error occurred:', xhr);
-	}
-);
-
-handleFormSubmit(
-	'#routeForm', // form ID
-	'/route', // URL to send data to
-	'POST', // default method
-	{},
-	function (response) { // success callback
-		showSuccessAlert(response.message);
-	},
-	function (xhr) { // error callback
-		console.log('Error occurred:', xhr);
-	}
-);
-
-handleFormSubmit(
-	'#assignRoutesForm', // form ID
-	'/assign-route', // URL to send data to
-	'POST', // default method
-	{},
-	function (response) {
-		showSuccessAlert(response.message);
-	},
-	function (xhr) { // error callback
-		console.log('Error occurred:', xhr);
-	}
-);
-
-handleFormSubmit(
-	'#shippingForm', // form ID
-	'/customer', // URL to send data to
-	'POST', // default method
-	{
-		subPath: 'shipping-address',
-		method: 'Put',
-	},
-	function (response) {
-		showSuccessAlert(response.message);
-	},
-	function (xhr) { // error callback
-		console.log('Error occurred:', xhr);
-	}
-);
-
-handleFormSubmit(
-	'#vendorShippingForm', // form ID
-	'/customer', // URL to send data to
-	'POST', // default method
-	{
-		subPath: 'vendor-shipping-address',
-		method: 'Put',
-	},
-	function (response) {
-		showSuccessAlert(response.message);
-	},
-	function (xhr) { // error callback
-		console.log('Error occurred:', xhr);
-	}
-);
+formConfigs.forEach(({ selector, url, options = {} }) => {
+	handleFormSubmit(
+		selector,
+		url,
+		'POST',
+		options,
+		function (response) {
+			showSuccessAlert(response.message);
+		},
+		function (xhr) {
+			showErrorAlert('An error occurred. Please try again.');
+			console.log('Error occurred:', xhr);
+		}
+	);
+});
 
 $('input, select, textarea').on('focus', function () {
 	$(this).removeClass('is-invalid');
@@ -344,6 +231,27 @@ $('.js-example-basic-single').on('select2:open', function () {
 	var select2Container = $(this).next('.select2-container');
 	select2Container.css('--vz-input-border-custom', '');
 	select2Container.next('.invalid-feedback').remove();
+});
+
+$(document).on('click', '.fetch-pending-orders', function (e) {
+	e.preventDefault();
+	const key = $(this).data('key');
+	const $table = $('#yesterdayPendingOrders');
+
+	$('html, body').animate({
+		scrollTop: $table.offset().top
+	}, 500);
+	$.ajax({
+		url: "fetch-pending-orders",
+		type: 'GET',
+		data: { key: key },
+		success: function (response) {
+			$('#pending-orders-table-body').html(response.html);
+		},
+		error: function (xhr) {
+			console.error("Failed to fetch pending orders:", xhr);
+		}
+	});
 });
 
 $(document).ready(function () {
@@ -368,13 +276,25 @@ $(document).ready(function () {
 	}
 
 	function generateAddressBlock(index, contactIndex, data = {}, isEdit = false) {
-		console.log(data.address);
-
 		const routes = window.routeData || [];
 		const drivers = window.driverData || [];
 		const filteredRoutes = routes.filter(route => route.plant_id == data?.address?.plant_id);
 		const filteredDrivers = drivers.filter(driver => driver.route_id == data?.address?.route_id);
 		const isVender = window.isvender;
+		const shippingContacts = window.contacts || [];
+
+		const formatFrequency = (str) => {
+			return str
+				.replace(/_/g, ' ') // Replace underscores with spaces
+				.replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word
+		};
+
+		const frequencies = ['daily', 'alternate_day', 'weekly', 'monthly'];
+		const frequencieDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+		const frequencieDates = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
+		const durationType = ['years', 'months', 'weeks', 'days'];
+		const selectedDays = data?.contract?.days ? data?.contract?.days.split('|') : [];
+
 		const deployedSelect = $(`
 			<select class="select js-example-basic-single form-control" name="shipping[${index}][machine_deployed]"  ${isVender !== null ? 'disabled' : ''}>
 				<option value="Yes" ${data?.address?.machine_deployed === 'Yes' ? 'selected' : ''}>Yes</option>
@@ -420,7 +340,7 @@ $(document).ready(function () {
 			}
 			</select>
 		`);
-		// ${data?.address?.contracts.product_id === product.id ? 'selected' : ''}
+
 		const productSelect = $(`
             <select class="select js-example-basic-single" name="contract[${index}][product_id]"${window.show ? 'disabled' : ''}  ${isVender !== null ? 'disabled' : ''}>
                 <option value="">Select Product</option>
@@ -430,30 +350,29 @@ $(document).ready(function () {
             </select>
 		`)
 
-		const formatFrequency = (str) => {
-			return str
-				.replace(/_/g, ' ') // Replace underscores with spaces
-				.replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word
-		};
 
-		const frequencies = ['daily', 'alternate_day', 'weekly'];
-		const frequencieDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-		const durationType = ['years', 'months', 'weeks', 'days'];
 
 		const frequencySelect = $(`
-			<select class="select js-example-basic-single" name="contract[${index}][frequency]" id="frequency_${index}"  ${isVender !== null ? 'disabled' : ''}>
+			<select class="select js-example-basic-single" name="contract[${index}][frequency]" id="frequency_enum_${index}"  ${isVender !== null ? 'disabled' : ''}>
 				${frequencies.map(freq => `
 					<option value="${freq}" ${data?.contract?.frequency === freq ? 'selected' : ''} >${formatFrequency(freq)}</option>
 				`).join('')}
 			</select>
 		`);
 
-		const selectedDays = data?.contract?.days ? data?.contract?.days.split('|') : [];
 
 		const frequencyDaysSelect = $(`
 			<select class="select js-example-basic-single" name="contract[${index}][days][]" multiple  ${isVender !== null ? 'disabled' : ''}>
 				${frequencieDays.map(fday => `
 					<option value="${fday}" ${selectedDays.includes(fday) ? 'selected' : ''}>${fday.toUpperCase()}</option>
+				`).join('')}
+			</select>
+		`);
+
+		const frequencyDatesSelect = $(`
+			<select class="select js-example-basic-single" name="contract[${index}][days][]" multiple  ${isVender !== null ? 'disabled' : ''}>
+				${frequencieDates.map(fdate => `
+					<option value="${fdate}" ${selectedDays.includes(fdate) ? 'selected' : ''}>${fdate.toUpperCase()}</option>
 				`).join('')}
 			</select>
 		`);
@@ -551,12 +470,21 @@ $(document).ready(function () {
 							<label>Drivers</label>
 						</div>
 					</div>
+
+					<div class="col-sm-12" >
+						
+					</div>
+
 					<div class="col-12" id="shipping_contact_div_${index}">
-					${data?.address?.id && data?.address?.contacts?.length > 0 ? '' : `
-                        <div class="row align-item-center ">
+					    ${data?.address?.id && data?.address?.contacts?.length > 0 ? '' : `
+                        <div class="row align-item-center">
 							<input name="shipping[${index}][shipping_contacts][${contactIndex}][id]" type="hidden" value="" >
+							<input 
+									name="shipping[${index}][shipping_contacts][${contactIndex}][multiple_id]" 
+									type="hidden" 
+									value="">
 							<div class="col-lg-5 col-md-6 col-sm-12">
-								<div class="input-block mb-3">
+								<div class="input-block mb-3 shipping-contacts-container_${index}_${contactIndex}">
 									<label>Name</label>
 									<input name="shipping[${index}][shipping_contacts][${contactIndex}][name]" type="text" class="form-control"
 										placeholder="Enter Name" value="${data?.address?.name || ''}" ${isVender !== null ? 'disabled' : ''}>
@@ -569,47 +497,117 @@ $(document).ready(function () {
 										placeholder="Enter Mobile No" value="${data?.address?.phone || ''}" ${isVender !== null ? 'disabled' : ''}>
 								</div>
 							</div>
-							<div class="col-lg-2 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
+							${shippingContacts.length > 0 ? `
+							<div class="col-lg-1 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
+								<div class="form-check form-check-outline form-check-dark">
+									<input class="form-check-input is-active" type="checkbox" id="is_active_${contactIndex}" 
+										name="shipping[${index}][shipping_contacts][${contactIndex}][exit]" data-index="${index}" data-contact-index="${contactIndex}" data-is-exit="false"  >
+									<label class="form-check-label" for="is_active_${contactIndex}" >Exit</label>
+								</div>
+							</div>
+							` : ""}
+							<div class="${shippingContacts.length > 0 ? `col-lg-1` : 'col-lg-2'} col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
 								<button type="button" class="btn btn-sm btn-success"
-									id="add-address-contacts_${index}">
+									id="add-address-contacts_${index}" data-shipping-id="${data.shippingId}">
 									+ Add Contact
 								</button>
 							</div>
 						</div>
 						`}
-						 ${data?.address?.contacts?.length > 0 ? data?.address?.contacts?.map((contact, contactIndex) => `
-							<div class="row align-items-center address-contact-block" >
-								<input name="shipping[${index}][shipping_contacts][${contactIndex}][id]" type="hidden" value="${contact.id}">
+						${data?.address?.contacts?.length > 0 ? data?.address?.contacts?.map((contact, contactIndex) => `
+							<div class="row align-items-center address-contact-block">
+								<input 
+									name="shipping[${index}][shipping_contacts][${contactIndex}][id]" 
+									type="hidden" 
+									value="${contact?.shipping_contact?.id}">
+									<input 
+									name="shipping[${index}][shipping_contacts][${contactIndex}][multiple_id]" 
+									type="hidden" 
+									value="${contact?.id}">
+
 								<div class="col-lg-5 col-md-6 col-sm-12">
-									<div class="input-block mb-3">
+									<div class="input-block mb-3 shipping-contacts-container_${index}_${contactIndex}">
 										<label>Name</label>
-										<input name="shipping[${index}][shipping_contacts][${contactIndex}][name]" type="text" class="form-control"
-											placeholder="Enter Name" value="${contact.name || ''}" ${isVender !== null ? 'disabled' : ''}>
+										${contact.mode === 'exit' ? `
+											<select 
+												name="shipping[${index}][shipping_contacts][${contactIndex}][name]" 
+												class="select js-example-basic-single form-control" 
+												${isVender !== null ? 'disabled' : ''}>
+												<option value="">Select Name</option>
+												${data.available_contacts?.map(opt => `
+													<option value="${opt.name}"  data-id="${opt.id}" ${opt.id == contact?.shipping_contact?.id ? 'selected' : ''}>
+														${opt.name}
+													</option>
+												`).join('')}
+											</select>
+										` : `
+											<input 
+												name="shipping[${index}][shipping_contacts][${contactIndex}][name]" 
+												type="text" 
+												class="form-control" 
+												placeholder="Enter Name" 
+												value="${contact.shipping_contact?.name || ''}" 
+												${isVender !== null ? 'disabled' : ''}>
+										`}
 									</div>
 								</div>
+
+								
 								<div class="col-lg-5 col-md-6 col-sm-12">
 									<div class="input-block mb-3">
 										<label>Mobile No</label>
-										<input name="shipping[${index}][shipping_contacts][${contactIndex}][phone]" type="text" class="form-control"
-											placeholder="Enter Mobile No" value="${contact.phone || ''}" ${isVender !== null ? 'disabled' : ''}>
+										<input 
+											name="shipping[${index}][shipping_contacts][${contactIndex}][phone]" 
+											type="text" 
+											class="form-control" 
+											placeholder="Enter Mobile No" 
+											value="${contact.shipping_contact?.phone || ''}" 
+											${isVender !== null ? 'disabled' : ''}>
 									</div>
 								</div>
+
+								
 								${isVender === null ? `
-								${contactIndex === 0 ? `
-									<div class="col-lg-2 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
-										<button type="button" class="btn btn-sm btn-success" id="add-address-contacts_${index}">
-											+ Add Contact
-										</button>
-									</div>
-								` : `<div
-                                        class="col-lg-2 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
-                                        <button type="button" class="btn btn-sm btn-danger" id="remove-address-contacts" data-index="${index}" data-is-delete="${contact.id}">
-                                            - remove Contact
-                                        </button>
-                                    </div>`}
-									` : ''}
+									${contactIndex === 0 ? `
+										<div class="col-lg-2 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
+											<button type="button" class="btn btn-sm btn-success" id="add-address-contacts_${index}" data-shipping-id="${data.shippingId}">
+												+ Add Contact
+											</button>
+										</div>
+									` : `
+									${shippingContacts.length > 0 ? `
+										<div class="col-lg-1 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
+											<div class="form-check form-check-outline form-check-dark">
+												<input 
+													class="form-check-input is-active" 
+													type="checkbox" 
+													id="is_active_${contactIndex}"
+													name="shipping[${index}][shipping_contacts][${contactIndex}][exit]" 
+													data-index="${index}" 
+													data-contact-index="${contactIndex}" 
+													data-contact-id="${contact.shipping_contact?.id}"
+													data-contact-maltuple-id="${contact?.id}
+													data-is-exit="${contact.mode === 'exit' ? 'true' : 'false'}"
+													${contact.mode === 'exit' ? 'checked' : ''}>
+												<label class="form-check-label" for="is_active_${contactIndex}">Exit</label>
+											</div>
+										</div>
+										` : ''}
+										<div class="${shippingContacts.length > 0 ? `col-lg-1` : 'col-lg-2'} col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
+											<button 
+												type="button" 
+												class="btn btn-sm btn-danger" 
+												id="remove-address-contacts" 
+												data-index="${index}" 
+												data-is-delete="${contact.id}">
+												- remove Contact
+											</button>
+										</div>
+									`}
+								` : ''}
 							</div>
 						`).join('') : ''}
+
 					</div>
 					<div class="col-lg-4 col-md-6 col-sm-12" id="product_select">
                         <div class="input-block mb-3 product-container">
@@ -650,6 +648,12 @@ $(document).ready(function () {
 						</div>
 					</div>
 
+					<div class="col-lg-4 col-md-6 col-sm-12" id="dates_select_${index}">
+						<div class="input-block mb-3 dates-container">
+							<label>Delivery Dates</label>
+						</div>
+					</div>
+
 					<div class="col-lg-4 col-md-6 col-sm-12">
 						<div class="input-block mb-3">
 							<label>Duration</label>
@@ -682,6 +686,7 @@ $(document).ready(function () {
 		block.find('.product-container').append(productSelect);
 		block.find('.frequency-container').append(frequencySelect);
 		block.find('.days-container').append(frequencyDaysSelect);
+		block.find('.dates-container').append(frequencyDatesSelect);
 		block.find('.duration-type-container').append(durationTypeSelect);
 		block.find('select.select').select2();
 
@@ -690,6 +695,13 @@ $(document).ready(function () {
 		} else {
 			block.find(`#days_select_${index}`).hide();
 		}
+
+		if (frequencySelect.val() === 'monthly') {
+			block.find(`#dates_select_${index}`).show();
+		} else {
+			block.find(`#dates_select_${index}`).hide();
+		}
+
 		const selectedType = block.find(`.checkbox_${index}:checked`).val();
 
 		if (selectedType === 'pan_india') {
@@ -704,10 +716,18 @@ $(document).ready(function () {
 	}
 
 	function generateAddressContactBlock(index, addressIndex) {
+		// const shippingAddress = window.shippingAddress || [];
+		// const selectedShippingAddress = shippingAddress.find(address => address.id === shippingId);
+		const shippingContacts = window.contacts || [];
+
 		const addressBlock = $(`<div class="row align-item-center address-contact-block">
 								   <input name="shipping[${addressIndex}][shipping_contacts][${index}][id]" type="hidden" value="" >
+								   <input 
+									name="shipping[${addressIndex}][shipping_contacts][${index}][multiple_id]" 
+									type="hidden" 
+									value="">
                                     <div class="col-lg-5 col-md-6 col-sm-12">
-                                        <div class="input-block mb-3">
+                                        <div class="input-block mb-3 shipping-contacts-container_${addressIndex}_${index}">
                                             <label>Name</label>
                                             <input name="shipping[${addressIndex}][shipping_contacts][${index}][name]" type="text"
                                                 class="form-control" placeholder="Enter Name">
@@ -716,12 +736,19 @@ $(document).ready(function () {
                                     <div class="col-lg-5 col-md-6 col-sm-12">
                                         <div class="input-block mb-3">
                                             <label>Mobile No</label>
-                                            <input name="shipping[${addressIndex}][shipping_contacts][${index}][phone]"
+                                            <input name="shipping[${addressIndex}][shipping_contacts][${index}][phone]" value=""
                                                 type="text" class="form-control" placeholder="Enter Mobile No">
                                         </div>
                                     </div>
-                                    <div
-                                        class="col-lg-2 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
+									${shippingContacts.length > 0 ? `
+									<div class="col-lg-1 col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
+										<div class="form-check form-check-outline form-check-dark">
+											<input class="form-check-input is-active" type="checkbox" id="is_active_${index}"
+												name="shipping[${addressIndex}][shipping_contacts][${index}][exit]" data-index="${addressIndex}" data-contact-index="${index}" data-is-exit="false" >
+											<label class="form-check-label" for="is_active_${index}" >Exit</label>
+										</div>
+									</div> ` : ""}
+                                    <div class="${shippingContacts.length > 0 ? 'col-lg-1' : 'col-lg-2'} col-md-6 col-sm-12 d-flex align-items-center justify-content-center">
                                         <button type="button" class="btn btn-sm btn-danger" id="remove-address-contacts" data-index="${addressIndex}">
                                             - remove Contact
                                         </button>
@@ -729,6 +756,198 @@ $(document).ready(function () {
                                 </div>`);
 		return addressBlock;
 	}
+
+	function toggleShippingFields(index) {
+		const selectedType = $(`.checkbox_${index}:checked`).val();
+
+		if (selectedType === 'pan_india') {
+			$(`#vendor_select_${index}`).show();
+			$(`#plant_select_${index}, #route_select_${index}, #driver_select_${index}`).hide();
+		} else if (selectedType === 'local') {
+			$(`#vendor_select_${index}`).hide();
+			$(`#plant_select_${index}, #route_select_${index}, #driver_select_${index}`).show();
+		}
+	}
+
+	function toggleContactsFields(index, contactIndex, cId = null, mId = null, isExit, data = {}) {
+		console.log(contactIndex);
+
+		const container = $(`.shipping-contacts-container_${index}_${contactIndex}`);
+		const checkbox = $(`#is_active_${contactIndex}`);
+		const selectedType = checkbox.is(":checked");
+		const inputName = `shipping[${index}][shipping_contacts][${contactIndex}][name]`;
+		const shippingId = `shipping[${index}][id]`;
+		const inputPhone = `shipping[${index}][shipping_contacts][${contactIndex}][phone]`;
+		const shippingContacts = window.contacts || [];
+
+		if (isExit) {
+			if (selectedType) {
+				let inputValue = '';
+				let inputPhoneValue = '';
+				if (cId) {
+					const contact = shippingContacts.find(c => c.id == cId);
+					if (contact) {
+						inputValue = contact.name;
+						inputPhoneValue = contact.phone || '';
+					}
+				}
+				let optionsHtml = '<option value="">Select Name</option>';
+				shippingContacts.forEach((contact) => {
+					const selected = contact.name == inputValue ? 'selected' : '';
+					optionsHtml += `<option value="${contact.name}"  data-id="${contact.id}" ${selected}>${contact.name}</option>`;
+				});
+
+				const selectId = `shipping_contact_select_${index}_${contactIndex}`;
+				const selectHtml = `
+					<select name="${inputName}" class="select js-example-basic-single form-control" id="${selectId}">
+						${optionsHtml}
+					</select>
+				`;
+
+				const existingInput = container.find(`input[name="${inputName}"]`);
+				if (existingInput.length) {
+					existingInput.replaceWith(selectHtml);
+					$(`#${selectId}`).select2(); // Initialize Select2
+				}
+
+				const phoneInput = $(`input[name="${inputPhone}"]`);
+				const IdInput = $(`input[name="shipping[${index}][shipping_contacts][${contactIndex}][id]"]`);
+				const MIdInput = $(`input[name="shipping[${index}][shipping_contacts][${contactIndex}][multiple_id]"]`);
+				MIdInput.val(mId)
+				IdInput.val(cId);
+				phoneInput.val(inputPhoneValue);
+				phoneInput.prop('readonly', true);
+			} else {
+				const inputHtml = `
+					<input
+						name="${inputName}"
+						type="text"
+						class="form-control"
+						placeholder="Enter Name"
+						value=""
+					/>
+				`;
+				const existingSelect = container.find(`select[name="${inputName}"]`);
+				console.log("existingSelect.length", existingSelect.length);
+
+				if (existingSelect.length) {
+					existingSelect.select2('destroy'); // ✅ Destroy Select2 instance
+					existingSelect.replaceWith(inputHtml);
+				}
+				const phoneInput = $(`input[name="${inputPhone}"]`);
+				const IdInput = $(`input[name="shipping[${index}][shipping_contacts][${contactIndex}][id]"]`);
+				const MIdInput = $(`input[name="shipping[${index}][shipping_contacts][${contactIndex}][multiple_id]"]`);
+				MIdInput.val("")
+				IdInput.val("");
+				phoneInput.val("");
+				phoneInput.prop('readonly', false);
+			}
+		} else {
+			if (selectedType) {
+				let optionsHtml = '<option value="">Select Name</option>';
+				shippingContacts.forEach((contact) => {
+					const selected = contact.id == data.id ? 'selected' : '';
+					optionsHtml += `<option value="${contact.name}"  data-id="${contact.id}" ${selected}>${contact.name}</option>`;
+				});
+
+				const selectId = `shipping_contact_select_${index}_${contactIndex}`;
+				const selectHtml = `
+					<select name="${inputName}" class="select js-example-basic-single form-control" id="${selectId}">
+						${optionsHtml}
+					</select>
+				`;
+
+				const existingInput = container.find(`input[name="${inputName}"]`);
+				if (existingInput.length) {
+					existingInput.replaceWith(selectHtml);
+					$(`#${selectId}`).select2(); // Initialize Select2
+				}
+
+				const phoneInput = $(`input[name="${inputPhone}"]`);
+				const IdInput = $(`input[name="shipping[${index}][shipping_contacts][${contactIndex}][id]"]`);
+				const MIdInput = $(`input[name="shipping[${index}][shipping_contacts][${contactIndex}][multiple_id]"]`);
+				MIdInput.val("")
+				IdInput.val("");
+				if (data.id) {
+					phoneInput.val(data.phone || '');
+				} else {
+					phoneInput.val('');
+				}
+				phoneInput.prop('readonly', true);
+			} else {
+				let inputValue = '';
+				let inputPhoneValue = '';
+				if (cId) {
+					const contact = shippingContacts.find(c => c.id == cId);
+					if (contact) {
+						inputValue = contact.name;
+						inputPhoneValue = contact.phone || '';
+					}
+				}
+
+				const inputHtml = `
+					<input
+						name="${inputName}"
+						type="text"
+						class="form-control"
+						placeholder="Enter Name"
+						value="${inputValue}"
+					/>
+				`;
+
+				const existingSelect = container.find(`select[name="${inputName}"]`);
+				if (existingSelect.length) {
+					existingSelect.select2('destroy'); // ✅ Destroy Select2 instance
+					existingSelect.replaceWith(inputHtml);
+				}
+				const phoneInput = $(`input[name="${inputPhone}"]`);
+				const IdInput = $(`input[name="shipping[${index}][shipping_contacts][${contactIndex}][id]"]`);
+				const MIdInput = $(`input[name="shipping[${index}][shipping_contacts][${contactIndex}][multiple_id]"]`);
+				MIdInput.val(mId)
+				IdInput.val(cId);
+				phoneInput.val(inputPhoneValue);
+				phoneInput.prop('readonly', false);
+			}
+		}
+	}
+
+
+	$(document).on('change', '[id^="shipping_contact_select"]', function () {
+		const selectEl = $(this);
+		const selectedOption = selectEl.find(':selected');
+		const cId = selectedOption.data('id');
+		console.log(cId);
+
+
+		const shippingContacts = window.contacts || [];
+
+		const idMatch = selectEl.attr('id').match(/shipping_contact_select_(\d+)_(\d+)/);
+		if (!idMatch) return;
+
+		const index = idMatch[1];
+		const contactIndex = idMatch[2];
+
+		const contact = shippingContacts.find(c => c.id == cId);
+		console.log(contact);
+
+		if (!contact) return;
+
+		const phoneInputName = `shipping[${index}][shipping_contacts][${contactIndex}][phone]`;
+		const phoneInputId = `shipping[${index}][shipping_contacts][${contactIndex}][id]`;
+
+		const phoneInput = $(`input[name="${phoneInputName}"]`);
+		const IdInput = $(`input[name="${phoneInputId}"]`);
+		console.log(phoneInput);
+
+		if (IdInput.length) {
+			IdInput.val(cId);
+		}
+		if (phoneInput.length) {
+			phoneInput.val(contact.phone || '');
+		}
+	});
+
+
 
 	$('#add-address').on('click', function () {
 		const block = generateAddressBlock(addressIndex++, addressContractIndex++, {}, window.CustomerExists);
@@ -740,13 +959,12 @@ $(document).ready(function () {
 		}
 	});
 
-
 	$(document).on('click', '[id^="add-address-contacts"]', function () {
 		let $button = $(this);
+		// const shippingId = $button.data('shipping-id') // Check if data attribute is set
 		let buttonId = $button.attr('id');
 		let suffix = buttonId.replace('add-address-contacts', ''); // e.g. '', '_1', '_2'
 		let shippingDivId = 'shipping_contact_div' + suffix;
-
 		let parentindex = 0;
 		$('#' + shippingDivId)
 			.find('input[name*="[name]"]')
@@ -757,11 +975,10 @@ $(document).ready(function () {
 					parentindex = match[1]; // Use match[1] to get the index
 				}
 			});
-
-		const contactBlock = generateAddressContactBlock(addressContractIndex++, parentindex, {}, false);
+		addressContractIndex++;
+		const contactBlock = generateAddressContactBlock(addressContractIndex++, parentindex);
 		$('#' + shippingDivId).append(contactBlock);
 	});
-
 
 	$(document).on('click', '.remove-address', function () {
 		if ($('#shipping_address_div .address-block').length > 1) {
@@ -773,8 +990,6 @@ $(document).ready(function () {
 		$(this).closest('.address-contact-block').remove();
 	});
 
-
-
 	$('.edit-address').on('click', function () {
 		$('#add-address').hide();
 		$('.address-block').remove();
@@ -782,7 +997,9 @@ $(document).ready(function () {
 			address: {
 				...$(this).data('address'),
 			},
-			contract: $(this).data('contract')
+			available_contacts: $(this).data('available-contacts') || [],
+			contract: $(this).data('contract'),
+			shippingId: $(this).data('shipping-id'),
 		};
 		const block = generateAddressBlock(addressIndex++, addressContractIndex++, data, true);
 		$('#address-container').append(block);
@@ -800,19 +1017,6 @@ $(document).ready(function () {
 		$('#address-container').empty();
 	});
 
-	function toggleShippingFields(index) {
-		const selectedType = $(`.checkbox_${index}:checked`).val();
-
-		if (selectedType === 'pan_india') {
-			$(`#vendor_select_${index}`).show();
-			$(`#plant_select_${index}, #route_select_${index}, #driver_select_${index}`).hide();
-		} else if (selectedType === 'local') {
-			$(`#vendor_select_${index}`).hide();
-			$(`#plant_select_${index}, #route_select_${index}, #driver_select_${index}`).show();
-		}
-	}
-
-	// Handle checkbox changes for each index group
 	$(document).on('change', '.type-checkbox', function () {
 		const index = $(this).data('index');
 
@@ -827,13 +1031,30 @@ $(document).ready(function () {
 		toggleShippingFields(index);
 	});
 
-	// Initialize on page load
 	$('.type-checkbox:checked').each(function () {
 		const index = $(this).data('index');
 		toggleShippingFields(index);
 	});
-});
 
+	$(document).on('change', '.is-active', function () {
+		const index = $(this).data('index');
+		const cindex = $(this).data('contact-index');
+		const isExit = $(this).data('is-exit');
+		const cId = $(this).data('contact-id') ? $(this).data('contact-id') : null;
+		const mId = $(this).data('contact-maltuple-id') ? $(this).data('contact-maltuple-id') : null;
+		toggleContactsFields(index, cindex, cId, mId, isExit);
+	});
+
+	$('.is-active:checked').each(function () {
+		const index = $(this).data('index');
+		const cindex = $(this).data('contact-index');
+		const isExit = $(this).data('is-exit');
+		const cId = $(this).data('contact-id') ? $(this).data('contact-id') : null;
+		const mId = $(this).data('contact-maltuple-id') ? $(this).data('contact-maltuple-id') : null;
+
+		toggleContactsFields(index, cindex, cId, mId, isExit);
+	});
+});
 
 $(document).ready(function () {
 	const selectedShippingId = window.orderData?.shippingId || '';
@@ -983,11 +1204,10 @@ $(document).ready(function () {
 	});
 });
 
-
 $(document).ready(function () {
 	function getSuffixFromId(id) {
 		// If ID is like "frequency" return "", if "frequency_1" return "_1"
-		const match = id.match(/^frequency(?:_(\d+))?$/);
+		const match = id.match(/^frequency_enum(?:_(\d+))?$/);
 		return match && match[1] !== undefined ? '_' + match[1] : '';
 	}
 
@@ -1001,6 +1221,16 @@ $(document).ready(function () {
 				$daysBlock.show();
 			} else {
 				$daysBlock.hide();
+			}
+		}
+
+		const $daysBlock2 = $('#dates_select' + suffix);
+
+		if ($daysBlock2.length) {
+			if (frequency === 'monthly') {
+				$daysBlock2.show();
+			} else {
+				$daysBlock2.hide();
 			}
 		}
 	}
@@ -1028,37 +1258,34 @@ $(document).ready(function () {
 	}
 
 	// Initialize existing rows on page load
-	$('[id^="frequency"]').each(function () {
+	$('[id^="frequency_enum"]').each(function () {
 		toggleDaysBlock($(this));
 		updateFrequencyCountPlaceholder($(this));
 	});
 
 	// Handle changes on all frequency selects (also supports dynamic rows)
-	$(document).on('change', '[id^="frequency"]', function () {
+	$(document).on('change', '[id^="frequency_enum"]', function () {
 		toggleDaysBlock($(this));
 		updateFrequencyCountPlaceholder($(this));
 	});
 });
 
-
-
-function toggleSelect() {
-	let selectedValue = $('.type-checkbox:checked').val();
-	if (!selectedValue) {
-		const firstCheckbox = $('.type-checkbox').first();
-		firstCheckbox.prop('checked', true);
-		selectedValue = firstCheckbox.val();
-	}
-
-	if (selectedValue === 'pan_india') {
-		$('#vendor_select').show();
-	} else {
-		$('#vendor_select').hide();
-		$('#vendor_id').val(null).trigger('change'); // Reset Select2 value
-	}
-}
-
 $(document).ready(function () {
+	function toggleSelect() {
+		let selectedValue = $('.type-checkbox:checked').val();
+		if (!selectedValue) {
+			const firstCheckbox = $('.type-checkbox').first();
+			firstCheckbox.prop('checked', true);
+			selectedValue = firstCheckbox.val();
+		}
+
+		if (selectedValue === 'pan_india') {
+			$('#vendor_select').show();
+		} else {
+			$('#vendor_select').hide();
+			$('#vendor_id').val(null).trigger('change'); // Reset Select2 value
+		}
+	}
 	$(document).on('change', '.type-checkbox', function () {
 		$('.type-checkbox').not(this).prop('checked', false);
 
@@ -1072,16 +1299,13 @@ $(document).ready(function () {
 	toggleSelect();
 });
 
-
-
-
-function toggleCheckBox() {
-	const selectedValue = $('.checkbox-home:checked').val();
-	localStorage.setItem('val', selectedValue);
-	window.location.href = `/?value=${selectedValue}`;
-}
-
 $(document).ready(function () {
+	function toggleCheckBox() {
+		const selectedValue = $('.checkbox-home:checked').val();
+		localStorage.setItem('val', selectedValue);
+		window.location.href = `/?value=${selectedValue}`;
+	}
+
 	const savedVal = localStorage.getItem('val');
 
 	if (savedVal) {
@@ -1103,33 +1327,115 @@ $(document).ready(function () {
 
 
 
-$(document).on('click', '.fetch-pending-orders', function (e) {
-	e.preventDefault();
-	const key = $(this).data('key');
-	const $table = $('#yesterdayPendingOrders');
 
-	$('html, body').animate({
-		scrollTop: $table.offset().top
-	}, 500);
-	$.ajax({
-		url: "fetch-pending-orders",
-		type: 'GET',
-		data: { key: key },
-		success: function (response) {
-			$('#pending-orders-table-body').html(response.html);
+// Ensure jQuery is loaded before this script runs
+(function ($) {
+	'use strict';
+
+	const CardDownloader = {
+		init() {
+			this.cacheDom();
+			this.bindEvents();
+			this.setCurrentMonth();
+			this.updateSelectAllState();
 		},
-		error: function (xhr) {
-			console.error("Failed to fetch pending orders:", xhr);
+
+		cacheDom() {
+			this.$monthYear = $('#monthYear');
+			this.$selectAll = $('#select-all');
+			this.$rows = $('.row-checkbox');
+			this.$hidden = $('#selected-customer-ids');
+			this.$submitBtn = $('#submit-btn');
+			this.$form = $('#download-form');
+		},
+
+		bindEvents() {
+			this.$selectAll.on('change', () => this.onSelectAll());
+			this.$rows.on('change', () => this.updateSelectAllState());
+			this.$form.on('submit', e => this.onFormSubmit(e));
+		},
+
+		setCurrentMonth() {
+			const now = new Date();
+			const val = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+			this.$monthYear.val(val);
+		},
+
+		onSelectAll() {
+			const isChecked = this.$selectAll.prop('checked');
+			this.$rows.prop('checked', isChecked);
+			this.$selectAll.prop('indeterminate', false);
+		},
+
+		updateSelectAllState() {
+			const total = this.$rows.length;
+			const checked = this.$rows.filter(':checked').length;
+			this.$selectAll.prop({
+				checked: checked === total,
+				indeterminate: checked > 0 && checked < total
+			});
+		},
+
+		onFormSubmit(event) {
+			event.preventDefault();
+			const isAll = this.$selectAll.prop('checked') && !this.$selectAll.prop('indeterminate');
+			const selectedIds = this.$rows.filter(':checked').map((_, cb) => cb.value).get();
+
+			if (!isAll && selectedIds.length === 0) {
+				showSuccessAlert('Please select at least one customer or check "Select All".');
+				return;
+			}
+
+			this.$hidden.val(isAll ? '' : selectedIds.join(','));
+			this.sendAjaxRequest();
+		},
+
+		sendAjaxRequest() {
+			const monthYear = this.$monthYear.val();
+			const customerId = this.$hidden.val();
+
+			this.$submitBtn.prop('disabled', true).text('Processing...');
+			$.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+
+			$.ajax({
+				url: this.$form.attr('action'),
+				method: 'POST',
+				data: { month_year: monthYear, customer_id: customerId },
+				xhrFields: { responseType: 'blob' },
+				success: (data, status, xhr) => this.handleSuccess(data, xhr),
+				error: xhr => this.handleError(xhr),
+				complete: () => this.$submitBtn.prop('disabled', false).text('Download Digital Cards')
+			});
+		},
+
+		handleSuccess(data, xhr) {
+			const cd = xhr.getResponseHeader('Content-Disposition') || '';
+			const filename = (cd.match(/filename="?(.+)"?/) || [, 'download.zip'])[1];
+
+			const blob = new Blob([data], { type: 'application/zip' });
+			const link = document.createElement('a');
+			link.href = URL.createObjectURL(blob);
+			link.download = filename;
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+
+			showSuccessAlert('Download successful');
+		},
+
+		handleError(xhr) {
+			if (xhr.status === 404) {
+				const msg = xhr.responseJSON?.message || 'No cards found for the given criteria.';
+				showErrorAlert(msg);
+			} else {
+				showErrorAlert('An error occurred while downloading.');
+			}
 		}
-	});
-});
+	};
 
+	$(document).ready(() => CardDownloader.init());
 
-
-
-
-
-
+})(jQuery);
 
 
 

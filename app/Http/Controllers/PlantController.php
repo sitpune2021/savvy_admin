@@ -62,9 +62,7 @@ class PlantController extends BaseController
                 'required',
                 'email',
                 'regex:/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/',
-                Rule::unique('users', 'email')->where(function ($query) {
-                    return $query->where('role', 'plant-manager');
-                }),
+                Rule::unique('users'),
             ],
             'location' => 'required|string|max:255',
             'pincode' => 'required|string|digits:6',

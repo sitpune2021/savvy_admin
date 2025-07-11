@@ -14,6 +14,8 @@ use App\Http\Controllers\RequestOrdersController;
 use App\Http\Controllers\DispensaryController;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\VendorController;
+use App\Http\Controllers\ReasonsController;
+use App\Http\Controllers\RawMaterialsStockController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,37 +28,6 @@ use App\Http\Controllers\VendorController;
 |
 */
 
-Route::get('/image-check', [MaintenanceController::class, 'check']);
-Route::post('/upload-image', [MaintenanceController::class, 'upload'])->name('image.upload');
-
-
-Route::get('/clear-cache', function () {
-    Artisan::call('config:clear');
-    Artisan::call('cache:clear');
-    Artisan::call('route:clear');
-    return "Cache cleared!";
-});
-
-Route::get('/migration', function () {
-    try {
-        Artisan::call('migrate');
-        return "Migration completed successfully";
-    } catch (\Exception $e) {
-        return "Migration failed: " . $e->getMessage();
-    }
-});
-
-Route::get('/migration_fresh', function () {
-    try {
-        Artisan::call('migrate:fresh');
-        Artisan::call('migrate --seed');
-        Artisan::call('db:seed');
-        return "Migration completed successfully";
-    } catch (\Exception $e) {
-        return "Migration failed: " . $e->getMessage();
-    }
-});
-
 Route::get('/scheduler', function () {
     try {
         Artisan::call('schedule:run');
@@ -67,30 +38,44 @@ Route::get('/scheduler', function () {
     }
 });
 
-Route::get('/run-all-seeders', function () {
-    $exitCode = Artisan::call('db:seed');
-    $output = Artisan::output();
-    return "All seeders have been run successfully! Output: " . nl2br($output);
-});
-
-Route::get('/storage-link', function () {
-    $exitCode = Artisan::call('storage:link');
-    $output = Artisan::output();
-    return "All seeders have been run successfully! Output: " . nl2br($output);
-});
-
 Route::get('/schedule', function () {
     Artisan::call('schedule:run');
     return "schedule run!";
 });
 
-Route::get('/fix-assets', function () {
-    Artisan::call('config:clear');
-    Artisan::call('cache:clear');
-    Artisan::call('view:clear');
-    Artisan::call('route:clear');
-    return "Assets fixed!";
+Route::get('/dev/run/{action}', function ($action) {
+    try {
+        switch ($action) {
+            case 'clear':
+                Artisan::call('config:clear');
+                Artisan::call('cache:clear');
+                Artisan::call('route:clear');
+                Artisan::call('view:clear');
+                return "Cleared config, cache, route, and view.";
+
+            case 'migrate':
+                Artisan::call('migrate');
+                return "Migration completed successfully!";
+
+            case 'migrate-fresh':
+                Artisan::call('migrate:fresh', ['--seed' => true]);
+                return "Fresh migration and seed completed!";
+
+            case 'seed':
+                Artisan::call('db:seed');
+                return "Database seeding completed!";
+            case 'storage-link':
+                Artisan::call('storage:link');
+                $output = Artisan::output();
+                return "Storage link created!"  . nl2br($output);
+            default:
+                return "Invalid action: $action";
+        }
+    } catch (\Exception $e) {
+        return "Error running action [$action]: " . $e->getMessage();
+    }
 });
+
 
 Auth::routes(['register' => false]); 
 
@@ -102,15 +87,18 @@ Route::get('/privicy-policy', function () {
 Route::middleware(['auth'])->group(function () {
     Route::middleware('role:admin|vendor|plant-manager')->group(function () {
         Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+        Route::get('/fetch-pending-orders', [App\Http\Controllers\HomeController::class, 'fetchPendingOrders'])->name('orders.fetch');
+
         Route::resource('plant', PlantController::class);
         Route::resource('route', RouteController::class);
         Route::resource('driver', DriverController::class);
         Route::resource('customer', CustomerController::class);
         Route::resource('order', OrderController::class);
+        Route::resource('raw-materials', RawMaterialsStockController::class);
+
+        Route::post('/download-digital-cards-zip', [App\Http\Controllers\HomeController::class, 'downloadCardZip'])->name('downloaddigitalcardszip');
 
         Route::put('customer/{id}/vendor-shipping-address', [CustomerController::class, 'updateShippingAddressForVendor'])->name('customer.update-shipping-address-forr-vendor');
-        Route::get('/fetch-pending-orders', [App\Http\Controllers\HomeController::class, 'fetchPendingOrders'])->name('orders.fetch');
-
 
     });
     Route::middleware('role:admin')->group(function () {
@@ -122,6 +110,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('request-order', RequestOrdersController::class);
         Route::resource('maintenance', MaintenanceController::class);
         Route::resource('vendor', VendorController::class);
+        Route::resource('reasons', ReasonsController::class);
 
         Route::put('/request-order/{id}/status', [RequestOrdersController::class, 'updateStatus'])->name('requestOrder.update.status');
         Route::put('/maintenance/{id}/status', [MaintenanceController::class, 'updateStatus'])->name('maintenance.update.status');

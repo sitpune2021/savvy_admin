@@ -54,6 +54,25 @@
         <div class="card">
             <div class="card-body">
                 <div class="row g-2">
+                    <div class="col-sm-auto m-0">
+                        <div class="list-grid-nav hstack gap-1">
+                            <form id="download-form" action="/download-digital-cards-zip" method="POST">
+                                @csrf
+                                <div class="row g-3 align-items-center m-0">
+                                    <div class="col-sm-auto">
+                                        <input type="month" id="monthYear" name="month_year" class="form-control"
+                                            required>
+                                    </div>
+                                    <input type="hidden" name="customer_id" id="selected-customer-ids">
+                                    <div class="col-sm-auto text-end">
+                                        <button type="submit" id="submit-btn" class="btn btn-primary">
+                                            <i class="bi bi-download me-2"></i> Download Digital Cards
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                     <div class="col-sm-auto ms-auto">
                         <div class="list-grid-nav hstack gap-1">
                             <a class="btn btn-success" href="{{ route('customer.create') }}">
@@ -75,6 +94,12 @@
                         <table id="buttons-datatables" class="display table table-bordered" style="width:100%">
                             <thead>
                                 <tr>
+                                    <th scope="col">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="select-all">
+                                            <label class="form-check-label" for="select-all"></label>
+                                        </div>
+                                    </th>
                                     <th>Customer Zohi Id</th>
                                     <th>Name</th>
                                     <th>Phone No.</th>
@@ -84,10 +109,16 @@
                             <tbody>
                                 @foreach ($customers as $customer)
                                     <tr>
+                                        <td>
+                                            <div class="form-check">
+                                                <input class="form-check-input row-checkbox" type="checkbox"
+                                                    value="{{ $customer->id }}">
+                                                <label class="form-check-label"></label>
+                                            </div>
+                                        </td>
                                         <td>{{ $customer->customer_zohi_id }}</td>
                                         <td>{{ $customer->name }}</td>
                                         <td>{{ $customer->phone_no }}</td>
-
                                         <td>
                                             <div class="hstack gap-3 flex-wrap">
                                                 @if (auth()->user()?->plantManager?->id == null)

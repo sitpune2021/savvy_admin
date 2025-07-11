@@ -14,6 +14,7 @@ class ShippingContact extends Authenticatable
     use HasApiTokens, HasFactory, softDeletes;
     protected $fillable = [
         'shipping_id',
+        'customer_id',
         'name',
         'phone',
     ];
@@ -22,6 +23,12 @@ class ShippingContact extends Authenticatable
     {
         return $this->belongsTo(ShippingAddress::class, 'shipping_id');
     }
+
+    public function shippingContactMultiples()
+{
+    return $this->hasMany(ShippingContactsMultiple::class, 'shipping_contacts_id');
+}
+
     protected $hidden = ['password'];
     protected $dates = ['deleted_at'];
 

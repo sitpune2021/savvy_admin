@@ -10,6 +10,7 @@ use App\Models\Contracts;
 use App\Models\Drivers;
 use App\Models\Routes;
 use App\Models\ShippingContact;
+use App\Models\ShippingContactsMultiple;
 
 class ShippingAddress extends Model
 {
@@ -44,7 +45,7 @@ class ShippingAddress extends Model
 
     public function contacts()
     {
-        return $this->hasMany(ShippingContact::class, 'shipping_id');
+        return $this->hasMany(ShippingContactsMultiple::class, 'shipping_id');
     }
 
     public function driver()

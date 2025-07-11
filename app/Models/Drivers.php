@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
-
+use App\Models\Orders;
 
 
 class Drivers extends Authenticatable
@@ -40,6 +40,11 @@ class Drivers extends Authenticatable
     public function routes()
     {
         return $this->belongsTo(Routes::class, 'route_id');
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Orders::class, 'driver_id');
     }
 
     

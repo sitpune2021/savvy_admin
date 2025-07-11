@@ -2,7 +2,6 @@ function initializeTables() {
     const exportOptions = {
         columns: ':not(:last-child)' // exclude the last column (typically "Action")
     };
-
     new DataTable("#buttons-datatables", {
         dom: "Bfrtip",
         fixedHeader: true,

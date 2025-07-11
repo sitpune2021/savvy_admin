@@ -12,6 +12,7 @@ use App\Models\Orders;
 use App\Models\ShippingAddress;
 use App\Models\Drivers;
 use App\Models\ShippingContact;
+use App\Models\ShippingContactsMultiple;
 use App\Models\Routes;
 use App\Models\Vendor;
 use Illuminate\Support\Facades\DB;
@@ -37,14 +38,15 @@ class CustomerController extends BaseController
             });
         }else{
            if ($this->vendorId !== null) {
-            $query->whereHas('shippingAddresses', function($query) {
-                $query->where('type', 'pan_india')
-                    ->where('vendor_id', $this->vendorId);
-            });
+                $query->whereHas('shippingAddresses', function($query) {
+                    $query->where('type', 'pan_india')
+                        ->where('vendor_id', $this->vendorId);
+                });
+            }
         }
-        }
-        
         $customers = $query->get();
+
+
         return view('pages.customer.index', compact('customers'));
     }
 
@@ -84,7 +86,7 @@ class CustomerController extends BaseController
             foreach ($request->shipping as $key => $shippingData) {
                 // Save contract
                 $contractData = $request->contract[$key];
-                $contract = Contracts::create([
+                 $contract = Contracts::create([
                     'customer_id'       => $customer->id,
                     'product_id'        => $contractData['product_id'],
                     'quantity'          => $contractData['quantity'],
@@ -98,34 +100,66 @@ class CustomerController extends BaseController
                                             : null,
                     'status'            => 'active',
                 ]);
-    
+
                 $shippingData['customer_id'] = $customer->id;
                 $shippingData['contract_id'] = $contract->id;
                 $shipping = ShippingAddress::create($shippingData);
+                $contract->shipping_addresses_id = $shipping->id;
+                $contract->save();
     
                 // Save shipping contacts
                 foreach ($shippingData['shipping_contacts'] as $contact) {
-                    ShippingContact::create([
-                        'shipping_id' => $shipping->id,
-                        'name'        => $contact['name'],
-                        'phone'       => $contact['phone'],
+                    $exit = $contact['exit'] ?? null;
+                    if ($exit === 'on') {
+                        $shippingContactId = $contact['id'];
+                    } else {
+                        $shippingContact = ShippingContact::create([
+                            'customer_id' => $customer->id,
+                            // 'shipping_id' => $shipping->id,
+                            'name'        => $contact['name'],
+                            'phone'       => $contact['phone'],
+                        ]);
+
+                        $shippingContactId = $shippingContact->id;
+                    }
+                    ShippingContactsMultiple::create([
+                        'shipping_id'          => $shipping->id,
+                        'shipping_contacts_id' => $shippingContactId,
+                        'mode'                 => $exit === 'on' ? 'exit' : 'main' // fallback mode if needed
                     ]);
                 }
+
     
                 // Auto-create order if applicable
                 if ($shipping->type === 'local') {
                     $shouldCreateOrder = false;
-    
+
+                    $todayDay = strtolower(Carbon::now()->format('l')); // e.g. 'monday'
+                    $todayDate = strval(Carbon::now()->day);            // e.g. '19' as string
+
+                    $contractDaysRaw = strtolower($contract->days ?? '');
+                    $contractDays = array_map('trim', explode('|', $contractDaysRaw));
+
                     if (in_array($contract->frequency, ['daily', 'alternate_day'])) {
                         $shouldCreateOrder = true;
+
                     } elseif ($contract->frequency === 'weekly') {
-                        $today = strtolower(Carbon::now()->format('l')); // e.g. 'monday'
-                        $contractDays = explode('|', strtolower($contract->days ?? ''));
-                        if (in_array($today, $contractDays)) {
-                            $shouldCreateOrder = true;
+                        foreach ($contractDays as $day) {
+                            if (in_array($day, ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])) {
+                                if ($todayDay === $day) {
+                                    $shouldCreateOrder = true;
+                                }
+                            }
+                        }
+
+                    } elseif ($contract->frequency === 'monthly') {
+                        foreach ($contractDays as $day) {
+                            if (ctype_digit($day) && $day === $todayDate) {
+                                $shouldCreateOrder = true;
+                            }
                         }
                     }
-    
+
                     if ($shouldCreateOrder) {
                         $order = Orders::create([
                             'customer_id' => $customer->id,
@@ -137,6 +171,7 @@ class CustomerController extends BaseController
                         ]);
                         $orders[] = $order;
                     }
+
                 }
             }
     
@@ -179,7 +214,9 @@ class CustomerController extends BaseController
         $routes = Routes::with('plant')->whereHas('drivers')->get();
         $drivers = Drivers::with('routes')->get();
         $vendors = Vendor::with('user:id,name')->get();
-        return view('pages.customer.add-edit',compact('show', 'Customer', 'plants', 'products', 'routes', 'drivers', 'vendors'));
+        $contacts = ShippingContact::where('customer_id', $id)->get();
+
+        return view('pages.customer.add-edit',compact('show', 'Customer', 'plants', 'products', 'routes', 'drivers', 'vendors', 'contacts'));
     }
 
     public function edit(string $id)
@@ -193,6 +230,7 @@ class CustomerController extends BaseController
                                 $query->where('type', 'pan_india')
                                     ->where('vendor_id', $this->vendorId);
                             }
+                           $query->with(['contacts.shippingContact']);
                         }
                     ])->findOrFail($id);
             $query = Plant::orderBy('created_at', 'desc');
@@ -208,7 +246,8 @@ class CustomerController extends BaseController
             $routes = Routes::with('plant')->whereHas('drivers')->get();
             $drivers = Drivers::with('routes')->get();
             $vendors = Vendor::with('user:id,name')->get();
-            return view('pages.customer.add-edit',compact('show', 'Customer', 'plants', 'products', 'routes', 'drivers', 'vendors'));
+            $contacts = ShippingContact::with('shippingContactMultiples')->where('customer_id', $id)->get();
+            return view('pages.customer.add-edit',compact('show', 'Customer', 'plants', 'products', 'routes', 'drivers', 'vendors', 'contacts'));
         } catch (ModelNotFoundException $e) {
             return back()->withErrors(['error' => 'Customer not found.']);
         } catch (Exception $e) {
@@ -297,8 +336,8 @@ class CustomerController extends BaseController
                         'frequency'       => $contractData['frequency'],
                         'frequency_count' => $contractData['frequency_count'],
                         'days'            => is_array($contractData['days'] ?? null)
-                            ? implode('|', $contractData['days'])
-                            : null,
+                                                    ? implode('|', $contractData['days'])
+                                                    : null,
                     ]);
                 } else {
                     $contract = Contracts::create([
@@ -311,9 +350,9 @@ class CustomerController extends BaseController
                         'frequency'       => $contractData['frequency'],
                         'frequency_count' => $contractData['frequency_count'],
                         'days'            => is_array($contractData['days'] ?? null)
-                            ? implode('|', $contractData['days'])
-                            : null,
-                        'status' => 'active',
+                                                    ? implode('|', $contractData['days'])
+                                                    : null,
+                        'status'          => 'active',
                     ]);
                 }
         
@@ -333,53 +372,124 @@ class CustomerController extends BaseController
                     $address = ShippingAddress::create($shippingData);
                 }
 
+
+                $contract->update([
+                    'shipping_addresses_id'   => $address->id,
+                ]);
+
+        
+                
                 if (isset($shippingData['shipping_contacts']) && is_array($shippingData['shipping_contacts'])) {
-                    $existingContacts = ShippingContact::where('shipping_id', $address->id)->get();
-                    $existingIds = $existingContacts->pluck('id')->toArray();
-                    $receivedIds = []; // Will collect IDs from the incoming data
+                    // Get existing contacts linked to this shipping address
+                    $existingContacts = ShippingContactsMultiple::where('shipping_id', $address->id)
+                        ->with(['shippingContact:id'])
+                        ->get();
+
+                    $existingIds = $existingContacts->pluck('shippingContact.id')->filter()->toArray();
+                    $existingMultiIds = $existingContacts->pluck('id')->filter()->toArray();
+
+                    $receivedIds = [];
+                    $receivedMultiIds = [];
+
                     foreach ($shippingData['shipping_contacts'] as $contact) {
+                        $mode = (isset($contact['exit']) && $contact['exit'] === 'on') ? 'exit' : 'main';
+
                         if (!empty($contact['id'])) {
-                            $receivedIds[] = $contact['id']; // Track received ID
-                            $contactModel = ShippingContact::findOrFail($contact['id']);
+                            $contactModel = ShippingContact::find($contact['id']);
+                            if (!$contactModel) {
+                                return response()->json([
+                                    'error' => 'Contact not found.',
+                                    'id' => $contact['id'],
+                                ], 404);
+                            }
+
                             $contactModel->update([
                                 'name' => $contact['name'],
                                 'phone' => $contact['phone'],
                             ]);
                         } else {
-                            $newContact = ShippingContact::create([
-                                'shipping_id' => $address->id,
+                            $contactModel = ShippingContact::create([
+                                'customer_id' => $customer->id,
+                                // 'shipping_id' => $address->id,
                                 'name' => $contact['name'],
                                 'phone' => $contact['phone'],
                             ]);
-                            $receivedIds[] = $newContact->id; // Track new ID too
+                        }
+
+                        $receivedIds[] = $contactModel->id;
+
+                        $multipleEntry = ShippingContactsMultiple::updateOrCreate(
+                            [
+                                'shipping_id' => $address->id,
+                                'shipping_contacts_id' => $contactModel->id,
+                            ],
+                            ['mode' => $mode]
+                        );
+
+                        $receivedMultiIds[] = $multipleEntry->id;
+                    }
+
+                    $contactsToDelete = array_diff($existingIds, $receivedIds);
+
+                    if (!empty($contactsToDelete)) {
+                        $stillReferenced = ShippingContactsMultiple::whereIn('shipping_contacts_id', $contactsToDelete)
+                            ->pluck('shipping_contacts_id')
+                            ->unique()
+                            ->toArray();
+
+                        $safeToDelete = array_diff($contactsToDelete, $stillReferenced);
+
+                        if (!empty($safeToDelete)) {
+                            ShippingContact::whereIn('id', $safeToDelete)->delete();
                         }
                     }
-                
-                    $contactsToDelete = array_diff($existingIds, $receivedIds);
-                    if (!empty($contactsToDelete)) {
-                        ShippingContact::whereIn('id', $contactsToDelete)->delete();
+
+                    $multiToDelete = array_diff($existingMultiIds, $receivedMultiIds);
+                    if (!empty($multiToDelete)) {
+                        ShippingContactsMultiple::whereIn('id', $multiToDelete)->delete();
                     }
                 }
-                
 
         
                 $todayDay = strtolower(Carbon::now()->format('l')); // e.g. 'monday'
-                $contractDays = explode('|', strtolower($contract->days ?? ''));
-                $existingOrder = Orders::where('customer_id', $customer->id)
+                $todayDate = strval(Carbon::now()->day);            // e.g. '19' as string
+
+                $contractDaysRaw = strtolower($contract->days ?? '');
+                $contractDays = array_map('trim', explode('|', $contractDaysRaw)); // Normalize entries
+
+                $shouldCreateOrder = false;
+
+                foreach ($contractDays as $day) {
+                    // Check if the day is a weekday name
+                    if (in_array($day, ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])) {
+                        if ($todayDay === $day) {
+                            $shouldCreateOrder = true;
+                            break;
+                        }
+                    }
+                    // Else assume it's a string date
+                    elseif (ctype_digit($day) && $day === $todayDate) {
+                        $shouldCreateOrder = true;
+                        break;
+                    }
+                }
+
+                if ($shouldCreateOrder) {
+                    $existingOrder = Orders::where('customer_id', $customer->id)
                         ->where('contract_id', $contract->id)
                         ->where('shipping_id', $address->id)
                         ->whereDate('created_at', Carbon::today())
                         ->first();
-                if (in_array($todayDay, $contractDays)) {
+
                     if ($existingOrder && $existingOrder->status === 'complete') {
                         continue;
                     }
-        
+
                     if ($existingOrder && $existingOrder->status === 'pending') {
                         $existingOrder->update([
-                            'develivered_qty' => $contract->quantity, // ✅ corrected spelling
-                            'driver_id'     => $address->driver_id,
-                            'route_id'      => $address->route_id,
+                            'develivered_qty' => $contract->quantity,
+                            'driver_id'       => $address->driver_id,
+                            'route_id'        => $address->route_id,
                         ]);
                         $orders[] = $existingOrder;
                     } else {
@@ -394,6 +504,7 @@ class CustomerController extends BaseController
                         $orders[] = $order;
                     }
                 }
+
             }
         
             DB::commit();

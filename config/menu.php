@@ -89,5 +89,27 @@ return [
         'url' => 'vendor',
         'icon' => 'ri-dashboard-2-line',
         'roles' => ['admin'],
+    ],
+    [
+        'type' => 'section',
+        'label' => 'Stock Managments',
+        'roles' => ['admin'],
+    ],
+    [
+        'label' => 'Raw Materials Stock',
+        'url' => 'raw-materials',
+        'icon' => 'ri-dashboard-2-line',
+        'roles' => ['admin'],
+    ],
+    [
+        'type' => 'section',
+        'label' => 'Settings',
+        'roles' => ['admin'],
+    ],
+    [
+        'label' => 'Reasons',
+        'url' => 'reasons',
+        'icon' => 'ri-dashboard-2-line',
+        'roles' => ['admin'],
     ]
 ];

@@ -87,7 +87,7 @@ class StoreCustomerRequest extends FormRequest
             'contract.*.frequency' => 'required|string|in:daily,alternate_day,weekly,monthly',
             'contract.*.frequency_count' => 'required_if:contract.*.frequency,weekly,alternate_day|nullable|integer|min:1',
             'contract.*.days' => 'nullable|array',
-            'contract.*.days.*' => 'in:sunday,monday,tuesday,wednesday,thursday,friday,saturday',
+            'contract.*.days.*' => 'in:sunday,monday,tuesday,wednesday,thursday,friday,saturday,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31',
         ];
     }
 
@@ -162,38 +162,51 @@ class StoreCustomerRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function ($validator) {
-            $data = $this->all(); // Use $this->all() instead of $request->all()
+            $data = $this->all();
 
+            // Shipping PAN/local logic
             foreach ($data['shipping'] ?? [] as $index => $item) {
                 $type = $item['type'] ?? null;
 
-                if ($type === 'pan_india') {
-                    if (empty($item['vendor_id'])) {
-                        $validator->errors()->add("shipping.$index.vendor_id", 'The vendor is required.');
-                    }
+                if ($type === 'pan_india' && empty($item['vendor_id'])) {
+                    $validator->errors()->add("shipping.$index.vendor_id", 'The vendor is required.');
                 }
 
                 if ($type === 'local') {
-                    $fieldLabels = [
-                        'plant_id' => 'plant',
-                        'route_id' => 'route',
-                        'driver_id' => 'driver',
-                    ];
+                    $fields = ['plant_id' => 'plant', 'route_id' => 'route', 'driver_id' => 'driver'];
 
-                    foreach (['plant_id', 'route_id', 'driver_id'] as $field) {
+                    foreach ($fields as $field => $label) {
                         if (empty($item[$field])) {
-                            $label = $fieldLabels[$field];
                             $validator->errors()->add("shipping.$index.$field", "The $label is required.");
+                        }
+                    }
+                }
+
+                // ✅ Contact name/phone uniqueness if not exited
+                foreach ($item['shipping_contacts'] ?? [] as $cIndex => $contact) {
+                    $exit = $contact['exit'] ?? null;
+
+                    if ($exit !== 'on') {
+                        $name = $contact['name'] ?? null;
+                        $phone = $contact['phone'] ?? null;
+
+                        if ($name && \App\Models\ShippingContact::where('name', $name)->whereNull('deleted_at')->exists()) {
+                            $validator->errors()->add("shipping.$index.shipping_contacts.$cIndex.name", "The contact name '$name' has already been taken.");
+                        }
+
+                        if ($phone && \App\Models\ShippingContact::where('phone', $phone)->whereNull('deleted_at')->exists()) {
+                            $validator->errors()->add("shipping.$index.shipping_contacts.$cIndex.phone", "The phone number '$phone' has already been taken.");
                         }
                     }
                 }
             }
 
+            // Contract day count vs frequency check (unchanged)
             foreach ($data['contract'] ?? [] as $index => $contract) {
                 $days = $contract['days'] ?? [];
 
                 if (
-                    $contract['frequency'] === 'weekly' &&
+                    in_array($contract['frequency'] ?? '', ['weekly', 'monthly'], true) &&
                     !empty($contract['frequency_count']) &&
                     (int) $contract['frequency_count'] < count($days)
                 ) {
@@ -205,6 +218,7 @@ class StoreCustomerRequest extends FormRequest
             }
         });
     }
+
 
     
 }

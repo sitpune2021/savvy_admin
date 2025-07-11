@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Customers;
 use App\Models\ShippingContact;
+use App\Models\ShippingAddress;
+
 use App\Models\Product;
 
 class Contracts extends Model
@@ -27,6 +29,7 @@ class Contracts extends Model
         'days',
         'date',
         'send_by',
+        'shipping_addresses_id',
         'accepted_status',
     ];
 
@@ -42,6 +45,11 @@ class Contracts extends Model
 
     public function sender(){
         return $this->belongsTo(ShippingContact::class, 'send_by');
+    }
+
+    public function shippingAddress()
+    {
+        return $this->belongsTo(ShippingAddress::class, 'shipping_addresses_id');
     }
 
     protected $dates = ['deleted_at'];

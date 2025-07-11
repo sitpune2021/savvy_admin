@@ -8,6 +8,13 @@ use App\Models\Customers;
 use App\Models\Drivers;
 use App\Models\Plant;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
+use App\Models\DigitalCard;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Filesystem\Filesystem;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class HomeController extends BaseController
 {
@@ -62,8 +69,7 @@ class HomeController extends BaseController
 
     public function fetchPendingOrders(Request $request)
     {
-                $dates = $this->getDateRanges();
-
+        $dates = $this->getDateRanges();
         $key = $request->get('key');
         $userRole = auth()->user()->role;
         $isAdmin = ($userRole === 'admin');
@@ -186,4 +192,97 @@ class HomeController extends BaseController
 
         return $summary;
     }
+
+    public function downloadCardZip(Request $request)
+    {
+        // Accept comma-separated string from hidden input
+        $customerIdsRaw = $request->input('customer_id', '');
+        $customerIds = array_filter(explode(',', $customerIdsRaw));
+
+        $monthYear = $request->input('month_year', now()->format('Y-m')); // "2025-03"
+        $dt = Carbon::createFromFormat('Y-m', $monthYear);
+
+        $month = $dt->format('m'); // "03"
+        $year  = $dt->format('Y'); // "2025"
+
+        $startDate = Carbon::createFromDate($year, $month, 1)->startOfDay();
+        $endDate = (clone $startDate)->endOfMonth()->endOfDay();
+
+        $period = CarbonPeriod::create($startDate, $endDate);
+
+        $cardsQuery = DigitalCard::query()
+            ->whereBetween('created_at', [$startDate, $endDate]);
+
+        if (!empty($customerIds)) {
+            $cardsQuery->whereHas('order.customers', function ($q) use ($customerIds) {
+                $q->whereIn('id', $customerIds);
+            });
+        }
+
+        $cards = $cardsQuery->with([
+            'order.customers',
+            'order.shipping',
+            'order.drivers',
+            'acceptBy'
+        ])->get();
+
+        if ($cards->isEmpty()) {
+            return response()->json(['message' => 'No cards found for the given criteria.'], 404);
+        }
+
+        $filesystem = new Filesystem();
+        $folderPath = storage_path('app/public/digital_cards_' . now()->timestamp);
+        $filesystem->mkdir($folderPath);
+
+        $cardsGrouped = $cards->groupBy(function ($card) {
+            $shippingName = optional($card->order->shipping)->shipping_address ?? 'unknown_shipping';
+            $customer = optional($card->order->customers->first());
+            $customerName = $customer->name ?? 'unknown_customer';
+            $customerZohiId = $customer->customer_zohi_id ?? 'unknown_zoho';
+
+            return "{$shippingName}__{$customerName}__{$customerZohiId}";
+        });
+
+        foreach ($cardsGrouped as $groupKey => $cardsGroup) {
+            [$shippingName, $customerName, $customerZohiId] = explode('__', $groupKey);
+
+            $cardsByDate = $cardsGroup->keyBy(fn($card) => $card->created_at->toDateString());
+
+            // Fill in missing dates
+            $fullCards = [];
+            foreach ($period as $date) {
+                $dateKey = $date->toDateString();
+                if ($cardsByDate->has($dateKey)) {
+                    $fullCards[] = $cardsByDate[$dateKey];
+                } else {
+                    $dummy = new \stdClass();
+                    $dummy->created_at = $date;
+                    $fullCards[] = $dummy;
+                }
+            }
+
+            $pdf = PDF::loadView('pdf.delivery_card', [
+                'cards' => collect($fullCards),
+                'shipping_name' => $shippingName,
+                'customer_name' => $customerName,
+                'customer_zohi_id' => $customerZohiId,
+            ]);
+            $fileName = Str::slug("digital_cards_{$shippingName}_{$customerName}_{$customerZohiId}") . '.pdf';
+            file_put_contents("{$folderPath}/{$fileName}", $pdf->output());
+        }
+
+        $zipName = 'digital_cards_' . now()->format('Ymd_His') . '.zip';
+        $zipPath = storage_path("app/public/{$zipName}");
+
+        $escapedFolderPath = str_replace('/', '\\', $folderPath);
+        $escapedZipPath = str_replace('/', '\\', $zipPath);
+        exec("powershell Compress-Archive -Path {$escapedFolderPath}\\* -DestinationPath {$escapedZipPath}");
+
+        $filesystem->remove($folderPath);
+
+        return response()->download($zipPath)->deleteFileAfterSend(true);
+    }
+
+
+
 }

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 use App\Models\Drivers;
 use App\Models\Routes;
@@ -19,13 +20,25 @@ use Exception;
 
 class DriverController extends BaseController
 {
-    public function index()
+    public function index(Request $request)
     {
+        $perPage = $request->query('per_page', 25);
+        $page = $request->query('page', 1);
         $query = Drivers::orderBy('created_at', 'desc');
-        if ($this->vendorId !== null) {
-            $query->where('vendor_id', $this->vendorId);
+        $today = Carbon::today();
+
+        if($this->plantManagerId){
+            $query->where('plant_id', $this->plantManagerId);
+        }else{
+            if ($this->vendorId !== null) {
+                $query->where('vendor_id', $this->vendorId);
+            }
         }
-        $drivers = $query->get();
+            $drivers = $this->plantManagerId 
+        ? $query->paginate($perPage, ['*'], 'page', $page) 
+        : $query->get();
+
+    
         if ($drivers->isEmpty()) {
             return response()->json([
                 'status' => false,
@@ -39,6 +52,12 @@ class DriverController extends BaseController
             }
             if ($record->aadhar_card_FILE) {
                 $record->aadhar_card_FILE = url('storage/driver/'. $record->aadhar_card_FILE) ;
+            }
+            if ($this->plantManagerId) {
+                $ordersQuery = $record->orders()->whereDate('created_at', $today);
+                $record->today_completed_orders = (clone $ordersQuery)->where('status', 'completed')->count();
+                $record->today_inprogress_orders = (clone $ordersQuery)->where('status', 'in-progress')->count();
+                $record->today_pending_orders    = (clone $ordersQuery)->where('status', 'pending')->count();
             }
         }
 

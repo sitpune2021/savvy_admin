@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use App\Models\Drivers;
 use App\Models\Vendor;
+use App\Models\User;
+use App\Models\Plant;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -44,19 +46,12 @@ class AuthController extends Controller
                 ], 404);
             }
     
-            // Delete existing tokens
-            $driver->tokens->each(function ($token) {
-                $token->delete();
-            });
-    
-            // Generate and update OTP
             $otp = rand(100000, 999999);
             $driver->update([
                 'otp' => $otp,
                 'otp_expires_at' => Carbon::now()->addMinutes(10)
             ]);
     
-            // Send OTP
             $this->sendWhatsAppOtp($request->phone_no, $otp);
     
             return response()->json([
@@ -105,17 +100,12 @@ class AuthController extends Controller
                     'message' => 'Invalid or expired OTP'
                 ], 401);
             }
-    
-            // Clear OTP fields
+
             $driver->update([
                 'otp' => null,
                 'otp_expires_at' => null
             ]);
-    
-            // Delete old tokens
-            $driver->tokens->each(function ($token) {
-                $token->delete();
-            });
+
     
             // Create new token
             $token = $driver->createToken('driver_token')->plainTextToken;
@@ -205,9 +195,10 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone_no' => 'required|digits:10',
+            'phone_no' => 'nullable|digits:10',
+            'email' => 'nullable|email',
             'password' => 'required|string|min:6',
-            'role' => 'required|string|in:customer,vendor',
+            'role' => 'required|string|in:customer,vendor,plant-manager',
         ]);
 
         if ($validator->fails()) {
@@ -222,8 +213,8 @@ class AuthController extends Controller
             $user = null;
 
             if ($request->role === 'customer') {
-                $users = ShippingContact::where('phone', $request->phone_no)
-                    ->with('shippingAddress:id,shipping_address')
+                   $users = ShippingContact::where('phone', $request->phone_no)
+                    ->with('shippingContactMultiples.shippingAddress')
                     ->get();
 
                 if ($users->count() === 0) {
@@ -242,6 +233,17 @@ class AuthController extends Controller
 
                 $user = $users->first();
 
+                // Extract and assign shipping addresses only
+                $shippingAddresses = $user->shippingContactMultiples
+                    ->pluck('shippingAddress')
+                    ->filter()
+                    ->values();
+
+                unset($user->shippingContactMultiples); // Hide unwanted relation
+
+                $user->shipping_addresses = $shippingAddresses;
+
+
             } elseif ($request->role === 'vendor') {
                 $vendor = Vendor::with('user')->where('phone_number', $request->phone_no)->first();
 
@@ -257,6 +259,25 @@ class AuthController extends Controller
                 $user->address = $vendor->address;
                 $user->vendor_id = $vendor->id;
             }
+            elseif ($request->role === 'plant-manager') {
+                $plantUser = User::where('role', 'plant-manager')
+                    ->where('email', $request->email)
+                    ->first();
+                $plant = Plant::with('managerRecord')->where('manager_id', $plantUser->id)->first();
+
+                if (!$plantUser || !$plant->managerRecord) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'User not found',
+                    ], 404);
+                }
+
+                        // Augment user with plant data
+                $plantUser->address = $plant->address;
+                $plantUser->plant_id = $plant->id;
+
+                $user = $plantUser;
+            }
 
             if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json([
@@ -266,6 +287,7 @@ class AuthController extends Controller
             }
 
             $token = $user->createToken($request->role . '_token')->plainTextToken;
+            // $token = $user->createToken($request->role . '_token_' . now()->timestamp)->plainTextToken;
 
             return response()->json([
                 'status' => true,
@@ -273,6 +295,7 @@ class AuthController extends Controller
                 'data' => [
                     $request->role => $user,
                     'token' => $token,
+                    // 'token_type' => $user->tokens
                 ],
             ], 200);
 
@@ -288,8 +311,9 @@ class AuthController extends Controller
     public function verifyAccount(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone_no' => 'required|digits:10',
-            'role' => 'required|string|in:customer,vendor',
+            'phone_no' => 'nullable|digits:10',
+            'email' => 'nullable|email',
+            'role' => 'required|string|in:customer,vendor,plant-manager',
         ]);
 
         if ($validator->fails()) {
@@ -339,6 +363,25 @@ class AuthController extends Controller
                 $user->address = $vendor->address;
                 $user->vendor_id = $vendor->id;
             }
+             elseif ($request->role === 'plant-manager') {
+                $plantUser = User::where('role', 'plant-manager')
+                    ->where('email', $request->email)
+                    ->first();
+                $plant = Plant::with('managerRecord')->where('manager_id', $plantUser->id)->first();
+
+                if (!$plantUser || !$plant->managerRecord) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'User not found',
+                    ], 404);
+                }
+
+                        // Augment user with plant data
+                $plantUser->address = $plant->address;
+                $plantUser->plant_id = $plant->id;
+
+                $user = $plantUser;
+            }
             return response()->json([
                 'status' => true,
                 'message' => 'customer verified successfully',
@@ -360,9 +403,10 @@ class AuthController extends Controller
     public function resetPassword(Request $request)    
     {
         $validator = Validator::make($request->all(), [
-            'phone_no' => 'required|digits:10',
+            'phone_no' => 'nullable|digits:10',
+             'email' => 'nullable|email',
             'password' => 'required|string|min:6',
-            'role' => 'required|string|in:customer,vendor',
+            'role' => 'required|string|in:customer,vendor,plant-manager',
         ]);
         
         if ($validator->fails()) {
@@ -404,8 +448,22 @@ class AuthController extends Controller
                 }
 
                 $user = $vendor->user;
-            }
+            }else if ($request->role === 'plant-manager') {
+                $plantUser = User::where('role', 'plant-manager')
+                    ->where('email', $request->email)
+                    ->first();
+                $plant = Plant::with('managerRecord')->where('manager_id', $plantUser->id)->first();
 
+                if (!$plantUser || !$plant->managerRecord) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'User not found',
+                    ], 404);
+                }
+
+
+                $user = $plantUser;
+            }
             $user->password = Hash::make($request->password);
             $user->save();
 

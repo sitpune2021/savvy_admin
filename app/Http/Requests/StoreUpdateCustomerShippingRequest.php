@@ -6,6 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Contracts\Validation\Validator;
 use App\Models\ShippingContact;
+use App\Models\ShippingContactsMultiple;
+use Illuminate\Support\Facades\Log;
 
 
 class StoreUpdateCustomerShippingRequest extends FormRequest
@@ -38,7 +40,7 @@ class StoreUpdateCustomerShippingRequest extends FormRequest
             'shipping.*.shipping_pincode' => 'required|digits:6',
             'shipping.*.machine_deployed' => 'nullable|string|max:255',
 
-            'shipping.*.shipping_contacts.*.name' => 'required|string|max:255|regex:/^[a-zA-Z\s\-]+$/',
+            'shipping.*.shipping_contacts.*.name' => 'required|string|max:255',
             'shipping.*.shipping_contacts.*.phone' => 'required|digits:10,',
             
             'contract.*.product_id' => 'required|exists:products,id',
@@ -49,7 +51,7 @@ class StoreUpdateCustomerShippingRequest extends FormRequest
             'contract.*.frequency' => 'required|string|in:daily,alternate_day,weekly,monthly',
             'contract.*.frequency_count' => 'nullable|integer|min:1',
             'contract.*.days' => 'nullable|array',
-            'contract.*.days.*' => 'in:sunday,monday,tuesday,wednesday,thursday,friday,saturday',
+            'contract.*.days.*' => 'in:sunday,monday,tuesday,wednesday,thursday,friday,saturday,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31',
         ];
     }
 
@@ -162,13 +164,48 @@ class StoreUpdateCustomerShippingRequest extends FormRequest
                         'Number of selected days cannot be greater than the Frequency count.'
                     );
                 }
-            }
 
+                if (
+                    $contract['frequency'] === 'monthly' &&
+                    !empty($contract['frequency_count']) &&
+                    (int) $contract['frequency_count'] < count($days)
+                ) {
+                    $validator->errors()->add(
+                        "contract.$index.days[]",
+                        'Number of selected days cannot be greater than the Frequency count.'
+                    );
+                }
+            }
+            $regex = '/^[a-zA-Z\s\-]+$/';
             foreach ($data['shipping'] ?? [] as $sIndex => $shipping) {
                 foreach ($shipping['shipping_contacts'] ?? [] as $cIndex => $contact) {
                     $contactId = $contact['id'] ?? null;
+                    $exit = $contact['exit'] ?? null;
         
+                    if ($exit == 'on') {
+                        $demo = ShippingContactsMultiple::where([
+                            'shipping_id' => $shipping['id'],
+                            'shipping_contacts_id' => $contact['name']
+                        ])->first();
+                        if($demo){
+                        $validator->errors()->add(
+                            "shipping.$sIndex.shipping_contacts.$cIndex.name",
+                            'this already exit in this sgipping adress'
+                        );
+                        }
+                     
+                        continue;
+                    }
+                    
+                    if (!empty($contact['name'])) {
                     // Check for duplicate name in DB
+                    if (!preg_match($regex, $contact['name'])) {
+                        $validator->errors()->add(
+                            "shipping.$sIndex.shipping_contacts.$cIndex.name",
+                            'The contact person name format is invalid. Only letters, spaces, and hyphens are allowed.'
+                        );
+                    }
+
                     $existingName = ShippingContact::where('name', $contact['name'] ?? '')
                         ->when($contactId, fn($query) => $query->where('id', '!=', $contactId))
                         ->exists();
@@ -179,7 +216,8 @@ class StoreUpdateCustomerShippingRequest extends FormRequest
                             'The contact person name has already been taken.'
                         );
                     }
-        
+                }
+                if (!empty($contact['phone'])) {
                     // Check for duplicate phone in DB
                     $existingPhone = ShippingContact::where('phone', $contact['phone'] ?? '')
                         ->when($contactId, fn($query) => $query->where('id', '!=', $contactId))
@@ -192,6 +230,7 @@ class StoreUpdateCustomerShippingRequest extends FormRequest
                         );
                     }
                 }
+            }
             }
         });
     }

@@ -19,37 +19,47 @@ class OrderController extends BaseController
      */
     public function index(Request $request)
     {
+        $perPage = $request->query('per_page', 25);
+        $page = $request->query('page', 1);
         $status = $request->status;
         $count = $request->count;
         $today = Carbon::today();
         $ordersQuery = Orders::with(['customers', 'drivers','shipping' ]);
-        if ($this->vendorId !== null) {
-            $ordersQuery->whereHas('drivers', function ($query) {
-                $query->where('vendor_id', $this->vendorId);
-            });
+
+        if ($this->plantManagerId) {
+            $ordersQuery->forPlantManager($this->plantManagerId);
+        } else {
+            if ($this->vendorId !== null) {
+                $ordersQuery->whereHas('drivers', function ($query) {
+                    $query->where('vendor_id', $this->vendorId);
+                });
+            }
+            if($this->driverId){
+                $ordersQuery->where('driver_id', $this->driverId);
+            }
         }
-        if($this->driverId){
-            $ordersQuery->where('driver_id', $this->driverId);
-        }
+
         if ($status) {
             if ($status !== 'all') {
                 $ordersQuery->where('status', $status);
             }
-            $orders = $ordersQuery->orderBy('created_at', 'desc')->get();
+            $orders = $ordersQuery->orderBy('created_at', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
 
-            $transformedOrders = $orders->map(function ($order) {
+            $transformedOrders = $orders->getCollection()->transform(function ($order) {
                 return [
                     'id' => $order->id,
                     'customer_id' => $order->customer_id,
                     'customer_name' => optional($order->customers)->name,
                     'contract_id' => $order->contract_id,
                     'driver_id' => $order->driver_id,
+                    'driver_name' =>optional($order->drivers)->name,
                     'shipping_id' => $order->shipping_id,
                     'shipping_address' => optional($order->shipping)->shipping_address,
                     'status' => $order->status,
                     'develivered_qty' => $order->develivered_qty,
                     'return_qty' => $order->return_qty,
-                    'balance' => strval(optional($order->contract)->quantity),
+                    'balance' => strval(optional($order?->contract)->quantity),
                     'delevered_card_img' => $order->delevered_card_img 
                     ? url('storage/OrderCard/' . $order->delevered_card_img) 
                     : null,
@@ -59,19 +69,21 @@ class OrderController extends BaseController
                     'deleted_at' => $order->deleted_at,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
-                    'shipping_contacts' => $order->shipping->contacts->map(function ($contact) {
+                    'shipping_contacts' => $order->shipping?->contacts?->map(function ($contact) {
                         return [
-                            'name' => $contact->name,
-                            'phone' => $contact->phone,
+                            'name' => $contact?->shippingContact?->name,
+                            'phone' => $contact?->shippingContact?->phone,
                         ];
                     })
                 ];
             });
-
+            $pagination = $orders->toArray();
+            unset($pagination['data']);
             return response()->json([
                 'status' => true,
                 'message' =>$status.' Order retrieved successfully.',
                 'data' => $transformedOrders,
+                'pagination' => $pagination ,
             ]);
         }
         if ($count) {
@@ -79,7 +91,7 @@ class OrderController extends BaseController
             $totalContractQuantityToday = $todayQuery->with('contract')->get()->sum(function ($order) {
                             return optional($order->contract)->quantity;
                         });
-                        $statuses = ['pending', 'completed', 'in_progress', 'cancelled'];
+                        $statuses = ['pending', 'completed', 'in-progress', 'cancelled'];
             $data = [
                 'all_orders' => $ordersQuery->count(),
                 'todays_orders' => $todayQuery->count(),
@@ -87,7 +99,7 @@ class OrderController extends BaseController
     
             foreach ($statuses as $status) {
                 $data["all_{$status}_orders"] = (clone $ordersQuery)->where('status', $status)->count();
-                $data["todays_{$status}_orders"] = (clone $ordersQuery)->where('status', $status)->count();
+                $data["todays_{$status}_orders"] = (clone $todayQuery)->where('status', $status)->count();
             }
     
             return response()->json([
@@ -161,10 +173,10 @@ class OrderController extends BaseController
                 'contract_id' => $order->contract_id,
                 'driver_id' => $order->driver_id,
                 'driver_name' => optional($order->drivers)->name,
-                'shipping_contacts' => $order->shipping->contacts->map(function ($contact) {
+                'shipping_contacts' => $order?->shipping?->contacts?->map(function ($contact) {
                     return [
-                        'name' => $contact->name,
-                        'phone' => $contact->phone,
+                        'name' => $contact?->shippingContact?->name,
+                        'phone' => $contact?->shippingContact?->phone,
                     ];
                 }),
                 
@@ -189,9 +201,6 @@ class OrderController extends BaseController
             'status' => false,
             'message' => 'Unauthorized access or invalid role.',
         ], 403);
-
-       
-
     }
 
     public function update(Request $request, string $id)

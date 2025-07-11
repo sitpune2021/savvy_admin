@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
 Route::post('send-otp', [AuthController::class, 'sendOtp']); 
 Route::post('verify-otp', [AuthController::class, 'verifyOtp']);
 
- // Customer and Vendor 🔐 Auth Routes
+ // Customer and Vendor and  🔐 Auth Routes
 Route::post('login', [AuthController::class, 'login'])->name('login');
 Route::post('verify-account', [AuthController::class, 'verifyAccount']); 
 Route::post('reset-password', [AuthController::class, 'resetPassword']); 
@@ -33,21 +33,29 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('drivers/{routeId}', [CustomController::class, 'getDriversByRoute']);
     Route::get('shipping-address', [CustomController::class, 'getShipingAddress']);
     Route::post('shipping-address/{id}', [CustomController::class, 'updateShippingAddressForVendor']);
+    Route::get('reasons', [CustomController::class, 'getReasons']);
+    Route::get('digital-card', [CustomController::class, 'getDigitalCard']);
+    Route::get('order-request', [CustomController::class, 'getOrderRequest']);
+
 
 });
 
 // 👤 Customer Routes
 Route::middleware('auth:customer_api')->prefix('customer')->group(function () {
     Route::resource('orders', CustomerOrderController::class)->except([
-         'edit', 'destroy', 'update', 'show'
+         'edit', 'destroy', 'update', 'show', 'store'
     ]);
-    Route::get('orders/send-requests', [CustomerOrderController::class, 'getRequestedOrders']);
+    
     Route::get('products', [CustomerOrderController::class, 'products']);
-    Route::get('request-order-list', [CustomerOrderController::class, 'requestOrderList']);
-    Route::get('accept-order-request/{id}', [CustomerOrderController::class, 'requestOrderUpdate']);
+    Route::get('shipping-addresses', [CustomerOrderController::class, 'shippingAddresses']);
+
+    Route::get('orders/additional-order', [CustomerOrderController::class, 'getAdditionalOrders']);
+    Route::post('orders/{type}/{id}', [CustomerOrderController::class, 'manageOrders']); // 'accept', 'cancel', 'additional-order' for this 3
+    Route::get('orders/in-progress', [CustomerOrderController::class, 'requestOrderList']);
+
+
 });
 
-// 🚚 Driver Routes
 Route::middleware('auth:driver_api')->group(function () {
     Route::post('order_update/{id}', [OrderController::class, 'update']);
     Route::resource('profile', DriverController::class)->except([

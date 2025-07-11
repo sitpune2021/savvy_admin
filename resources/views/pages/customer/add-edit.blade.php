@@ -11,6 +11,7 @@
     if (isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->days) {
         $selectedDays = explode('|', $Customer->contracts[0]->days);
     }
+    $dates = array_map('strval', range(1, 31));
 @endphp
 @push('styles')
     <link href="{{ asset('/assets/libs/quill/quill.core.css') }}" rel="stylesheet" type="text/css" />
@@ -269,6 +270,8 @@
                                         <div class="row align-item-center">
                                             <input name="shipping[0][shipping_contacts][0][id]" type="hidden"
                                                 value="">
+                                            <input name="shipping[0][shipping_contacts][0][multiple_id]" type="hidden"
+                                                value="">
 
                                             <div class="col-lg-5 col-md-6 col-sm-12">
                                                 <div class="input-block mb-3">
@@ -333,8 +336,8 @@
                                         <div class="input-block mb-3">
                                             <label>Delivery Frequency</label>
                                             <select class="select js-example-basic-single" name="contract[0][frequency]"
-                                                id="frequency">
-                                                @foreach (['daily', 'alternate_day', 'weekly'] as $freq)
+                                                id="frequency_enum">
+                                                @foreach (['daily', 'alternate_day', 'weekly', 'monthly'] as $freq)
                                                     <option value="{{ $freq }}"
                                                         {{ isset($Customer) && count($Customer->contracts) > 0 && $Customer->contracts[0]->frequency == $freq ? 'selected' : '' }}>
                                                         {{ ucwords(str_replace('_', ' ', $freq)) }}
@@ -361,6 +364,21 @@
                                                     <option value="{{ $day }}"
                                                         {{ in_array($day, $selectedDays) ? 'selected' : '' }}>
                                                         {{ ucfirst($day) }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6 col-sm-12" id="dates_select">
+                                        <div class="input-block mb-3">
+                                            <label>Delivery Dates</label>
+                                            <select class="select js-example-basic-single" name="contract[0][days][]"
+                                                @if ($show) disabled @endif multiple>
+                                                @foreach ($dates as $date)
+                                                    <option value="{{ $day }}"
+                                                        {{ in_array($date, $selectedDays) ? 'selected' : '' }}>
+                                                        {{ ucfirst($date) }}
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -463,19 +481,20 @@
                                             <td class="fw-medium" rowspan="{{ $rowspan }}">{{ $index + 1 }}</td>
                                             <td rowspan="{{ $rowspan }}">{{ $shippingAddress->shipping_address }}
                                             </td>
-
                                             @if ($contactCount > 0)
                                                 @foreach ($shippingAddress->contacts as $i => $contact)
                                                     @if ($i > 0)
                                         <tr>
                                     @endif
-                                    <td>{{ $contact->name }}</td>
-                                    <td>{{ $contact->phone }}</td>
+                                    <td>{{ $contact?->shippingContact?->name }}</td>
+                                    <td>{{ $contact?->shippingContact?->phone }}</td>
                                     @if ($i == 0 && !$show)
                                         <td rowspan="{{ $rowspan }}">
                                             <div class="hstack gap-2">
                                                 <a href="javascript:void(0);" class="link-success fs-15 edit-address"
+                                                    data-shipping-id="{{ $shippingAddress->id }}"
                                                     data-address='@json($shippingAddress)'
+                                                    data-available-contacts='@json($contacts)'
                                                     data-contract='@json($shippingAddress->Contract)'>
                                                     <i class="ri-edit-2-line"></i>
                                                 </a>
@@ -485,7 +504,9 @@
                                             </div>
                                         </td>
                                     @endif
-                                    </tr>
+                                    @if ($i > 0)
+                                        </tr>
+                                    @endif
     @endforeach
 @else
     <td colspan="2">No contacts</td>
@@ -503,6 +524,7 @@
         </td>
     @endif
     @endif
+    </tr>
     @endforeach
     </tbody>
     </table>
@@ -539,6 +561,8 @@
         window.isvender = @json(auth()->user()?->vendor?->id);
         window.locationData = false;
         window.CustomerExists = {{ isset($Customer) ? 'true' : 'false' }}
+        window.shippingAddress = @json($Customer->shippingAddresses ?? null);
+        window.contacts = @json($contacts ?? []);
         window.Laravel = {
             routeIndex: "{{ route('customer.index') }}"
         };

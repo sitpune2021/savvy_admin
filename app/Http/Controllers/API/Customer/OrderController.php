@@ -13,20 +13,30 @@ use App\Models\ShippingAddress;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Contracts;
 use App\Models\Product;
+use App\Models\DigitalCard;
 
 class OrderController extends Controller
 {
     public function index(Request $request)
     {
         $user = Auth::user();
+        $shippingAddresses = $user->shippingContactMultiples
+            ->pluck('shippingAddress')
+            ->filter()
+            ->values();
 
-        $shippingId = $user->shippingAddress->id;
+        $shippingIds = $shippingAddresses->pluck('id')->toArray();
         $status = $request->status;
         $today = Carbon::today();
 
-        $ordersQuery = Orders::with(['drivers:id,name,phone_no', 'contract:id,quantity,product_id', 'contract.product'])
-            ->where('shipping_id', $shippingId);
+        $ordersQuery = Orders::with([
+            'drivers:id,name,phone_no',
+            'contract:id,quantity,product_id',
+            'contract.product',
+            'shipping'
+        ])->whereIn('shipping_id', $shippingIds);
 
+        // Handle filtering by status
         if ($status) {
             $orderHistory = (clone $ordersQuery)->where('status', $status)->get();
 
@@ -41,6 +51,8 @@ class OrderController extends Controller
                     'status' => $order->status,
                     'product_name' => optional($order->contract->product)->name,
                     'created_at' => $order->created_at->toDateTimeString(),
+                    'shipping_id' => $order->shipping_id,
+                    'shipping_address' => optional($order->shipping)->shipping_address,
                 ];
             });
 
@@ -51,60 +63,59 @@ class OrderController extends Controller
             ]);
         }
 
-        // Today's order
-        $todayOrder = (clone $ordersQuery)->whereDate('created_at', $today)->first();
+        // Fetch today's orders
+        $todayOrders = (clone $ordersQuery)
+            ->whereDate('created_at', $today)
+            ->get();
 
-        if (!$todayOrder) {
-            $contract = $user->shippingAddress->contract ?? Contracts::find($user->shippingAddress->contract_id);
-            if (!$contract) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'No contract found for the user.',
-                ], 404);
+        $shippingOrders = [];
+
+        foreach ($shippingAddresses as $address) {
+            $entry = [
+                'shipping_id' => $address->id,
+                'shipping_address' => $address->shipping_address,
+            ];
+
+            // Check if today's order exists for this address
+            $order = $todayOrders->firstWhere('shipping_id', $address->id);
+
+            if ($order) {
+                $entry['ongoing_order'] = [
+                    'id' => $order->id,
+                    'delivered_qty' => $order->develivered_qty,
+                    'return_qty' => $order->return_qty,
+                    'balance' => strval(optional($order->contract)->quantity),
+                    'driver_name' => optional($order->drivers)->name,
+                    'driver_phone_no' => optional($order->drivers)->phone_no,
+                    'status' => $order->status,
+                    'created_at' => $order->created_at->toDateTimeString(),
+                ];
+            } else {
+                $contract = $address->contract ?? Contracts::find($address->contract_id);
+                if ($contract) {
+                    $latestOrder = Orders::where('shipping_id', $address->id)
+                        ->where('contract_id', $contract->id)
+                        ->latest('created_at')
+                        ->first();
+
+                    $lastOrderDate = $latestOrder ? Carbon::parse($latestOrder->created_at) : $today;
+                    $nextOrderDate = $this->getNextOrderDate($contract, $lastOrderDate);
+
+                    if ($nextOrderDate) {
+                        $entry['next_order_date'] = $nextOrderDate->toDateString();
+                    }
+                }
             }
 
-            $latestOrder = (clone $ordersQuery)
-                ->where('contract_id', $contract->id)
-                ->latest('created_at')
-                ->first();
-
-            $lastOrderDate = $latestOrder ? Carbon::parse($latestOrder->created_at) : $today;
-            $nextOrderDate = $this->getNextOrderDate($contract, $lastOrderDate);
-
-            if (!$nextOrderDate) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Could not determine the next order date.',
-                ], 400);
-            }
-
-            return response()->json([
-                'status' => true,
-                'message' => 'No order found for today. Next scheduled order date retrieved.',
-                'data' => [
-                    'next_order_date' => $nextOrderDate->toDateString(),
-                ],
-            ]);
+            $shippingOrders[] = $entry;
         }
-
-        // Today's order exists
-        $orderData = [
-            'id' => $todayOrder->id,
-            'delivered_qty' => $todayOrder->develivered_qty,
-            'return_qty' => $todayOrder->return_qty,
-            'driver_name' => optional($todayOrder->drivers)->name,
-            'balance' => strval(optional($todayOrder->contract)->quantity),
-            'driver_phone_no' => optional($todayOrder->drivers)->phone_no,
-            'status' => $todayOrder->status,
-            'created_at' => $todayOrder->created_at->toDateTimeString(),
-        ];
 
         return response()->json([
             'status' => true,
-            'message' => "Today's order retrieved successfully.",
+            'message' => "Order data retrieved successfully.",
             'data' => [
-                'ongoing_order' => $orderData,
-            ]
+                'shipping_orders' => $shippingOrders
+            ],
         ]);
     }
 
@@ -135,7 +146,7 @@ class OrderController extends Controller
         return $nextDate;
     }
 
-    public function store(Request $request)
+    public function store(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
             'product'           => 'required|array|min:1',
@@ -155,15 +166,21 @@ class OrderController extends Controller
         try {
             $date = Carbon::createFromFormat('d-m-Y', $request->date)->format('Y-m-d');
             $user = auth()->user();
-    
-            if (!$user || !$user->shippingAddress) {
+            $shippingAddresses = $user->shippingContactMultiples
+            ->pluck('shippingAddress')
+            ->filter()
+            ->values();
+            $exists = $shippingAddresses->pluck('id')->contains($id);
+            $shippingAddress = $shippingAddresses->firstWhere('id', $id);
+
+            if (!$user || !$exists) {
                 return response()->json([
                     'status' => false,
                     'message' => 'User or shipping address not found.'
                 ], 404);
             }
     
-            $shipping = ShippingAddress::find($user->shippingAddress->id);
+            $shipping = ShippingAddress::find($id);
             $activeContract = $shipping->Contract()
                 ->where('type', 'contracts')
                 ->where('status', 'active')
@@ -172,7 +189,7 @@ class OrderController extends Controller
             foreach ($request->product as $productData) {
                 Contracts::create([
                     'type'             => 'additional',
-                    'customer_id'      => $user->shippingAddress->customer_id,
+                    'customer_id'      => $shippingAddress->customer_id,
                     'product_id'       => $productData['product_id'],
                     'quantity'         => $productData['quantity'],
                     'price'            => $activeContract ? $activeContract->price : 0,
@@ -184,6 +201,7 @@ class OrderController extends Controller
                     'status'           => 'active',
                     'date'             => $date,
                     'send_by'          => $user->id,
+                    'shipping_addresses_id' => $id,
                     'accepted_status'  => 'pending',
                 ]);
             }
@@ -194,7 +212,6 @@ class OrderController extends Controller
             ], 201);
     
         } catch (\Exception $e) {
-            Log::error('Contract creation failed: ' . $e->getMessage());
     
             return response()->json([
                 'status' => false,
@@ -221,39 +238,36 @@ class OrderController extends Controller
 
     }
 
-    public function requestOrderList()
+    public function getAdditionalOrders()
     {
         $user = auth()->user();
-        $orders = Orders::where('shipping_id', $user->shippingAddress->id)->where('status', 'in-progress')->get();
-            return response()->json([
-                'status' => true,
-                'message' => 'Order list retrieved successfully',
-                'data' => $orders
-            ], 200);
-    }
-
-    public function requestOrderUpdate($id)
-    {
-        $order = Orders::findOrFail($id);
-        $order->status = 'completed';
-        $order->save();
-        return response()->json([
-            'status' => true,
-            'message' => 'Order accepted successfully',
-            'data' => $order // Use $order, not $orders
-        ], 200);
-    }
-
-    public function getRequestedOrders()
-    {
-        $user = auth()->user();
-        $orders = Contracts::where('send_by', $user->id)
-                    ->whereHas('sender.shippingAddress', function ($query) {
+        $orders = Contracts::with(['product:id,name,image', 'sender:id,name', 'shippingAddress:id,shipping_address'])->where('send_by', $user->id)->where('type', 'additional')
+                    ->whereHas('sender.shippingContactMultiples.shippingAddress', function ($query) {
                         $query->whereNotNull('plant_id')
                             ->whereNotNull('route_id')
                             ->whereNotNull('driver_id');
                     })
-                    ->get();
+                    ->get()->map(function ($order) {
+                $data = $order->toArray();
+                unset($data['product'], $data['sender'], $data['shipping_address']);
+                $result = [];
+                foreach ($data as $key => $value) {
+                    $result[$key] = $value;
+                    if ($key === 'product_id') {
+                        $result['product_name'] = $order->product->name ?? null;
+                        $result['product_image'] = $order->product->image ?  url('storage/product/'.$order->product->image) : null;
+
+                    }
+                    if ($key === 'send_by') {
+                        $result['send_by_name'] = $order->sender->name ?? null;
+                    }
+                    if ($key === 'shipping_addresses_id') {
+                        $result['shipping_addresses'] = $order->shippingAddress->shipping_address ?? null;
+                    }
+                }
+
+                return $result;
+            });
 
         return response()->json([
             'status' => true,
@@ -262,6 +276,117 @@ class OrderController extends Controller
         ], 200);
     }
 
+    public function requestOrderList()
+    {
+        $user = auth()->user();
 
+        if (!$user->shippingContactMultiples || $user->shippingContactMultiples->isEmpty()) {
+            return response()->json([
+                'status' => true,
+                'message' => 'No shipping contacts found.',
+                'data' => [],
+            ], 200);
+        }
+
+        $shippingIds = $user->shippingContactMultiples->pluck('shipping_id')->toArray();
+
+        $orders = Orders::with(['drivers:id,name', 'shipping:id,shipping_address'])
+            ->whereIn('shipping_id', $shippingIds)
+            ->where('status', 'in-progress')
+            ->get()
+            ->map(function ($order) {
+                $data = $order->toArray();
+                unset($data['drivers'], $data['shipping']);
+                $result = [];
+                foreach ($data as $key => $value) {
+                    $result[$key] = $value;
+                    if ($key === 'shipping_id') {
+                        $result['shipping_address'] = $order->shipping->shipping_address ?? null;
+                    }
+                    if ($key === 'driver_id') {
+                        $result['driver_name'] = $order->drivers->name ?? null;
+                    }
+                }
+
+                return $result;
+            });
+
+
+
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Order list retrieved successfully.',
+            'data' => $orders,
+        ], 200);
+    }
+
+    
+    public function manageOrders(Request $request, $type, $id)
+    {
+        if (!in_array($type, ['accept', 'cancel', 'additional-order'])) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid order action type.',
+            ], 400);
+        }
+        if( $type === 'additional-order') {
+            return $this->store($request, $id);
+        }
+
+        $order = Orders::find($id);
+        if (!$order) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Order not found.',
+            ], 404);
+        }
+
+        if ($type === 'accept') {
+            $order->status = 'completed';
+            $order->save();
+
+            DigitalCard::create([
+                'order_id'    => $order->id,
+                'balance'     => optional($order->contract)->quantity,
+                'accept_by'   => auth()->id(),
+                'created_at'  => $order->created_at,
+                'updated_at'  => $order->updated_at,
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Order accepted successfully.',
+                'data' => $order,
+            ], 200);
+        }
+
+        if ($type === 'cancel') {
+            // $order->status = 'completed';
+            // $order->save();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Order cancelled successfully.',
+                'data' => $order,
+            ], 200);
+        }
+    }
+
+
+    public function shippingAddresses()
+    {
+        $user = auth()->user();
+        $shippingAddresses = $user->shippingContactMultiples
+            ->pluck('shippingAddress')
+            ->filter()
+            ->values();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Shipping addresses retrieved successfully',
+            'data' => $shippingAddresses
+        ], 200);
+    }
 
 }
