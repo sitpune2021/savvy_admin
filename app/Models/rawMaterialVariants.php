@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\rawStockTransactions;
 
 class rawMaterialVariants extends Model
 {
@@ -14,6 +16,12 @@ class rawMaterialVariants extends Model
     {
         return $this->belongsTo(rawMaterial::class);
     }
+
+    public function transactions()
+    {
+        return $this->hasMany(rawStockTransactions::class, 'raw_material_variant_id');
+    }
+
     public function scopeWithRawMaterialName($query, $name)
     {
         return $query->whereHas('rawMaterial', function ($q) use ($name) {

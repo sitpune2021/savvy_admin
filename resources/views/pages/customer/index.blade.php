@@ -60,7 +60,11 @@
                                 @csrf
                                 <div class="row g-3 align-items-center m-0">
                                     <div class="col-sm-auto">
-                                        <input type="month" id="monthYear" name="month_year" class="form-control"
+                                        {{-- <input type="month" id="monthYear" name="month_year" class="form-control"
+                                            required> --}}
+                                            <input type="date" id="startDate" name="start_date" class="form-control"
+                                            required>
+                                            <input type="date" id="endDate" name="end_date" class="form-control"
                                             required>
                                     </div>
                                     <input type="hidden" name="customer_id" id="selected-customer-ids">

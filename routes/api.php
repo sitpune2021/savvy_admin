@@ -36,6 +36,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('reasons', [CustomController::class, 'getReasons']);
     Route::get('digital-card', [CustomController::class, 'getDigitalCard']);
     Route::get('order-request', [CustomController::class, 'getOrderRequest']);
+    Route::get('raw-stock', [CustomController::class, 'getRawStock']);
+    Route::get('raw-stock-list', [CustomController::class, 'getNewStockList']);
+    Route::post('accept-stock/{id}', [CustomController::class, 'acceptStock']);
 
 
 });

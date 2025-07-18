@@ -193,20 +193,15 @@ class HomeController extends BaseController
         return $summary;
     }
 
-  public function downloadCardZip(Request $request)
+    public function downloadCardZip(Request $request)
     {
         // Accept comma-separated string from hidden input
         $customerIdsRaw = $request->input('customer_id', '');
         $customerIds = array_filter(explode(',', $customerIdsRaw));
 
-        $monthYear = $request->input('month_year', now()->format('Y-m'));
-        $dt = Carbon::createFromFormat('Y-m', $monthYear);
-
-        $month = $dt->format('m');
-        $year  = $dt->format('Y');
-
-        $startDate = Carbon::createFromDate($year, $month, 1)->startOfDay();
-        $endDate = (clone $startDate)->endOfMonth()->endOfDay();
+        $startDate = Carbon::parse($request->input('start_date', now()->format('Y-m-d')))->startOfDay();
+        $endDate = Carbon::parse($request->input('end_date', now()->format('Y-m-d')))->endOfDay();
+  
         $period = CarbonPeriod::create($startDate, $endDate);
 
         $cardsQuery = DigitalCard::query()
@@ -234,7 +229,7 @@ class HomeController extends BaseController
 
         $cardsGrouped = $cards->groupBy(function ($card) {
             $shippingName = optional($card->order->shipping)->shipping_address ?? 'unknown_shipping';
-            $customer = optional($card->order->customers->first());
+            $customer = optional($card->order->shipping->Customers);
             $customerName = $customer->name ?? 'unknown_customer';
             $customerZohiId = $customer->customer_zohi_id ?? 'unknown_zoho';
 
@@ -244,24 +239,22 @@ class HomeController extends BaseController
         foreach ($cardsGrouped as $groupKey => $cardsGroup) {
             [$shippingName, $customerName, $customerZohiId] = explode('__', $groupKey);
 
-            $cardsByDate = $cardsGroup->keyBy(fn($card) => $card->created_at->toDateString());
-
-            $fullCards = [];
-            foreach ($period as $date) {
-                $dateKey = $date->toDateString();
-                $fullCards[] = $cardsByDate->get($dateKey) ?? (object)[
-                    'created_at' => $date
-                ];
-            }
-
             $pdf = PDF::loadView('pdf.delivery_card', [
-                'cards' => collect($fullCards),
+                'cards' => collect($cardsGroup),
                 'shipping_name' => $shippingName,
                 'customer_name' => $customerName,
                 'customer_zohi_id' => $customerZohiId,
-            ]);
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ])->setPaper('a4', 'portrait');
 
-            $fileName = Str::slug("digital_cards_{$shippingName}_{$customerName}_{$customerZohiId}") . '.pdf';
+            $shortShippingName = Str::limit(Str::slug($shippingName), 10, '');
+            $shortCustomerName = Str::limit(Str::slug($customerName), 10, '');
+            $formattedEndDate = $endDate->format('d_m_y');
+
+            $fileName = Str::slug("DC_{$shortShippingName}_{$shortCustomerName}_{$formattedEndDate}") . '.pdf';
+
+            // $fileName = Str::slug("digital_cards_{$shippingName}_{$customerName}_{$endDate}") . '.pdf';
             file_put_contents("{$folderPath}/{$fileName}", $pdf->output());
         }
 

@@ -28,6 +28,15 @@ use App\Http\Controllers\RawMaterialsStockController;
 |
 */
 
+Route::get('/digital', function () {
+    try {
+        $cards = [];
+        return view('pdf.delivery_card', compact('cards'));
+    } catch (\Exception $e) {
+        return "schedule failed: " . $e->getMessage();
+    }
+});
+
 Route::get('/scheduler', function () {
     try {
         Artisan::call('schedule:run');
@@ -98,7 +107,8 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('customer', CustomerController::class);
         Route::resource('order', OrderController::class);
         Route::resource('raw-materials', RawMaterialsStockController::class);
-
+        Route::get('raw-materials/{id}/distribute', [RawMaterialsStockController::class, 'distribute'])->name('raw-materials.distribute');
+        Route::get('raw-materials/{id}/purches-distribute', [RawMaterialsStockController::class, 'purchesDistribute'])->name('raw-materials.purches-distribute');
         Route::post('/download-digital-cards-zip', [App\Http\Controllers\HomeController::class, 'downloadCardZip'])->name('downloaddigitalcardszip');
 
         Route::put('customer/{id}/vendor-shipping-address', [CustomerController::class, 'updateShippingAddressForVendor'])->name('customer.update-shipping-address-forr-vendor');

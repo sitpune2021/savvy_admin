@@ -75,7 +75,11 @@
                                         <td>{{ $materialVariant->total_quantity }}</td>
                                         <td>
                                             <div class="hstack gap-3 flex-wrap">
-                                                <a href="{{ route('order.show', $materialVariant->id) }}"
+                                                <a href="{{ route('raw-materials.purches-distribute', $materialVariant->id) }}"
+                                                    class="link-success fs-15"><i class="ri-menu-add-line"></i></a>
+                                                    <a href="{{ route('raw-materials.distribute', $materialVariant->id) }}"
+                                                    class="link-success fs-15"><i class="ri-folder-shared-fill"></i></a>
+                                                <a href="{{ route('raw-materials.show', $materialVariant->id) }}"
                                                     class="link-primary fs-15"><i class="ri-eye-line"></i></a>
                                             </div>
                                         </td>

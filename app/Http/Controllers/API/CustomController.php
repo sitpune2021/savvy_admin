@@ -15,6 +15,8 @@ use App\Models\Routes;
 use App\Models\Plant;
 use App\Models\Reasons;
 use App\Models\DigitalCard;
+use App\Models\rawDistributions;
+use App\Models\RawStockForPlant;
 
 use Carbon\Carbon;
 use Exception;
@@ -334,5 +336,79 @@ class CustomController extends BaseController
             'pagination' => $pagination
         ]);
     }
+
+    public function getNewStockList(){
+        $distributions = rawDistributions::where('plant_id', auth()->user()->plantManager->id)->where('status', 'pending')
+        ->with(['plant', 'transaction', 'transaction.variant', 'transaction.variant.rawMaterial'])
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'plant_id' => $item->plant_id,
+                'plant_name' => optional($item->plant)->name ?? 'N/A',
+                'variants_id' => $item->transaction->raw_material_variant_id,
+                'varient_name' => optional($item->transaction->variant->rawMaterial)->name . ' - ' . optional($item->transaction->variant)->variant_name,
+                'quantity' => $item->quantity,
+                'status' => $item->status,
+                'accepted_at' => $item->accepted_at,
+                'deleted_at' => $item->deleted_at,
+                'created_at' => $item->created_at,
+                'updated_at' => $item->updated_at,
+            ];
+        });
+
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Stock List retrieved successfully.',
+            'data' => $distributions ,
+            // 'pagination' => $pagination
+        ]);
+    }
+
+    public function getRawStock()
+    {
+        $rawStock = RawStockForPlant::where('plant_id', auth()->user()->plantManager->id)
+            ->with(['plant', 'rawMaterialVariant', 'rawMaterialVariant.rawMaterial'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy(function ($item) {
+                return optional($item->rawMaterialVariant->rawMaterial)->name ?? 'N/A';
+            })
+            ->map(function ($items, $materialName) {
+                return [
+                    'material_name' => $materialName,
+                    'variants' => $items->map(function ($item) {
+                        return [
+                            'variant_name' => optional($item->rawMaterialVariant)->variant_name,
+                            'full_name' => optional($item->rawMaterialVariant->rawMaterial)->name . ' - ' . optional($item->rawMaterialVariant)->variant_name,
+                            'quantity' => $item->total_quantity,
+                        ];
+                    })->values(),
+                ];
+            })->values();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Stock List retrieved successfully.',
+            'data' => $rawStock,
+        ]);
+    }
+
+    public function acceptStock($id)
+    {
+        $distribution = rawDistributions::findOrFail($id);
+        // $distribution->status = 'accepted';
+        // $distribution->accepted_at = now();
+        // $distribution->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Stock accepted successfully.',
+            'data' => $distribution
+        ]);
+    }
+
 
 }

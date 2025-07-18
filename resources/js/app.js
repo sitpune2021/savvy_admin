@@ -14,6 +14,7 @@ const formConfigs = [
 	{ selector: '#routeForm', url: '/route' },
 	{ selector: '#assignRoutesForm', url: '/assign-route' },
 	{ selector: '#reasonForm', url: '/reasons' },
+	{ selector: '#stockPurches', url: '/raw-materials' },
 
 	{
 		selector: '#shippingForm',
@@ -1341,7 +1342,10 @@ $(document).ready(function () {
 		},
 
 		cacheDom() {
-			this.$monthYear = $('#monthYear');
+			// this.$monthYear = $('#monthYear');
+			// this.$monthYear = $('#monthYear');
+			this.$startDate = $('#startDate');
+			this.$endDate = $('#endDate');
 			this.$selectAll = $('#select-all');
 			this.$rows = $('.row-checkbox');
 			this.$hidden = $('#selected-customer-ids');
@@ -1391,7 +1395,9 @@ $(document).ready(function () {
 		},
 
 		sendAjaxRequest() {
-			const monthYear = this.$monthYear.val();
+			// const monthYear = this.$monthYear.val();
+			const startDate = this.$startDate.val();
+			const EndDate = this.$endDate.val();
 			const customerId = this.$hidden.val();
 
 			this.$submitBtn.prop('disabled', true).text('Processing...');
@@ -1400,7 +1406,7 @@ $(document).ready(function () {
 			$.ajax({
 				url: this.$form.attr('action'),
 				method: 'POST',
-				data: { month_year: monthYear, customer_id: customerId },
+				data: { start_date: startDate,end_date: EndDate, customer_id: customerId },
 				xhrFields: { responseType: 'blob' },
 				success: (data, status, xhr) => this.handleSuccess(data, xhr),
 				error: xhr => this.handleError(xhr),
@@ -1438,5 +1444,157 @@ $(document).ready(function () {
 })(jQuery);
 
 
+
+
+$(document).ready(function () {
+	// Handle next step button
+	$('.nexttab').on('click', function () {
+		const nextTabId = $(this).data('nexttab');
+		const currentTab = $(this).closest('.tab-pane');
+		const currentTabId = currentTab.attr('id');
+		const qty = $('#total_quantity').val(); // 💡 get this once globally
+
+		// 💡 Always update visible quantity when moving into Step 2 or 3
+		if (nextTabId === 'v-pills-step2-tab') {
+			$('#purchaseQtyStep2').text(qty);
+		}
+		if (nextTabId === 'v-pills-step3-tab') {
+			$('#purchaseQtyStep3').text(qty);
+		}
+
+		// Step 1: Validate purchase quantity
+		if (currentTabId === 'v-pills-step1') {
+			if (!qty || parseInt(qty) < 1) {
+				$('#total_quantity').addClass('is-invalid');
+				return;
+			} else {
+				$('#total_quantity').removeClass('is-invalid');
+			}
+		}
+
+		// Step 2: Validate plant selection and build allocation UI
+		// if (currentTabId === 'v-pills-step2') {
+		// 	const plants = $('#plants').val();
+		// 	if (!plants || plants.length === 0) {
+		// 		$('#plants').addClass('is-invalid');
+		// 		return;
+		// 	} else {
+		// 		$('#plants').removeClass('is-invalid');
+		// 	}
+
+		// 	const allocationDiv = $('#allocations');
+		// 	allocationDiv.empty();
+
+		// 	plants.forEach(plant => {
+		// 		allocationDiv.append(`
+		//             <div class="mb-3">
+		//                 <label class="form-label">${plant}</label>
+		//                 <input type="number" 
+		//                     class="form-control allocation-input" 
+		// 					name="allocations[${plantId}]" 
+		// 					data-plant="${plantName}" 
+		// 					data-plant-id="${plantId}"
+		//                     placeholder="Enter quantity for ${plant}" 
+		//                     min="0" 
+		//                     required>
+		//             </div>
+		//         `);
+		// 	});
+		// }
+
+		if (currentTabId === 'v-pills-step2') {
+			const selectedOptions = $('#plants option:selected');
+			if (selectedOptions.length === 0) {
+				$('#plants').addClass('is-invalid');
+				return;
+			} else {
+				$('#plants').removeClass('is-invalid');
+			}
+
+			const allocationDiv = $('#allocations');
+			allocationDiv.empty();
+
+			selectedOptions.each(function () {
+				const plantId = $(this).val();
+				const plantName = $(this).data('name');
+
+				allocationDiv.append(`
+			<div class="mb-3">
+				<label class="form-label">${plantName}</label>
+				<input type="number" 
+					class="form-control allocation-input" 
+					name="allocations[${plantId}]" 
+					data-plant="${plantName}" 
+					data-plant-id="${plantId}"
+					placeholder="Enter quantity for ${plantName}" 
+					min="0" 
+					required>
+			</div>
+		`);
+			});
+		}
+
+
+		// Step 3: Validate allocation and prepare summary
+		if (currentTabId === 'v-pills-step3') {
+			const totalQty = parseInt(qty);
+			let totalAlloc = 0;
+			let valid = true;
+
+			$('.allocation-input').each(function () {
+				const val = parseInt($(this).val());
+				if (isNaN(val) || val < 0) {
+					$(this).addClass('is-invalid');
+					valid = false;
+				} else {
+					$(this).removeClass('is-invalid');
+					totalAlloc += val;
+				}
+			});
+
+			if (!valid) {
+				showErrorAlert('Please fix invalid allocation values.');
+				return;
+			}
+
+			if (totalAlloc > totalQty) {
+				showErrorAlert(`❌ You have allocated ${totalAlloc}, but only ${totalQty} units are available.`);
+				return;
+			}
+
+			const summary = $('#summary');
+			summary.empty();
+			summary.append(`<p><strong>Purchased Quantity:</strong> ${totalQty}</p>`);
+			summary.append(`<p><strong>Allocated Quantity:</strong> ${totalAlloc}</p>`);
+			summary.append(`<p><strong>Distributions:</strong></p><ul>`);
+			$('.allocation-input').each(function () {
+				const plant = $(this).data('plant');
+				const qty = $(this).val();
+				summary.append(`<li>${plant}: ${qty}</li>`);
+			});
+			summary.append('</ul>');
+
+			if (totalAlloc < totalQty) {
+				summary.append(`<p class="text-warning">⚠️ <strong>${totalQty - totalAlloc}</strong> units remain unallocated.</p>`);
+				summary.append(`<input type="hidden" 
+					name="remain_quantity" 
+					min="0" 
+					value="${totalQty - totalAlloc}">`);
+
+			}
+		}
+
+		// Move to next tab
+		const nextTab = new bootstrap.Tab(document.getElementById(nextTabId));
+		nextTab.show();
+	});
+
+	// Handle previous step button
+	$('.prevtab').on('click', function () {
+		const prevTabId = $(this).data('prevtab');
+		const prevTab = new bootstrap.Tab(document.getElementById(prevTabId));
+		prevTab.show();
+	});
+});
 
 
