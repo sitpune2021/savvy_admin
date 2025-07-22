@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'create', 'store', 'edit', 'destroy', 'update'
     ]);
     Route::resource('driver', DriverController::class);
+    
     Route::get('plant', [CustomController::class, 'plants']);
     Route::get('routes/{plantId}', [CustomController::class, 'getRoutesByPlant']);
     Route::get('drivers/{routeId}', [CustomController::class, 'getDriversByRoute']);
@@ -38,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('order-request', [CustomController::class, 'getOrderRequest']);
     Route::get('raw-stock', [CustomController::class, 'getRawStock']);
     Route::get('raw-stock-list', [CustomController::class, 'getNewStockList']);
+
     Route::post('accept-stock/{id}', [CustomController::class, 'acceptStock']);
 
 
@@ -55,8 +57,6 @@ Route::middleware('auth:customer_api')->prefix('customer')->group(function () {
     Route::get('orders/additional-order', [CustomerOrderController::class, 'getAdditionalOrders']);
     Route::post('orders/{type}/{id}', [CustomerOrderController::class, 'manageOrders']); // 'accept', 'cancel', 'additional-order' for this 3
     Route::get('orders/in-progress', [CustomerOrderController::class, 'requestOrderList']);
-
-
 });
 
 Route::middleware('auth:driver_api')->group(function () {

@@ -17,6 +17,10 @@ use App\Models\Reasons;
 use App\Models\DigitalCard;
 use App\Models\rawDistributions;
 use App\Models\RawStockForPlant;
+use App\Models\RawStockTransactions;
+use App\Models\RawMaterialVariants;
+use App\Models\RawStockLogs;
+
 
 use Carbon\Carbon;
 use Exception;
@@ -337,8 +341,9 @@ class CustomController extends BaseController
         ]);
     }
 
-    public function getNewStockList(){
-        $distributions = rawDistributions::where('plant_id', auth()->user()->plantManager->id)->where('status', 'pending')
+    public function getNewStockList(Request $request){
+        $status = $request->query('status');
+        $distributions = rawDistributions::where('plant_id', auth()->user()->plantManager->id)->where('status', $status)
         ->with(['plant', 'transaction', 'transaction.variant', 'transaction.variant.rawMaterial'])
         ->orderBy('created_at', 'desc')
         ->get()
@@ -395,20 +400,65 @@ class CustomController extends BaseController
             'data' => $rawStock,
         ]);
     }
-
+    
     public function acceptStock($id)
     {
-        $distribution = rawDistributions::findOrFail($id);
-        // $distribution->status = 'accepted';
-        // $distribution->accepted_at = now();
-        // $distribution->save();
+        $user = auth()->user();
+        $plantId = $user->plantManager->id;
+
+        $distribution = RawDistributions::findOrFail($id);
+
+        // ✅ Ensure the distribution belongs to the same plant
+        if ((int) $distribution->plant_id !== (int) $plantId) {
+            return response()->json([
+                'status' => false,
+                'message' => 'You are not authorized to accept this distribution.',
+            ], 403);
+        }
+
+        $transaction = RawStockTransactions::findOrFail((int) $distribution->raw_stock_transactions_id);
+        $variant = RawMaterialVariants::findOrFail((int) $transaction->raw_material_variant_id);
+
+        $plantStock = RawStockForPlant::where([
+            'plant_id' => $plantId,
+            'raw_material_variants_id' => $variant->id,
+        ])->firstOrFail();
+          // Mark distribution as accepted
+        $distribution->status = 'accepted';
+        $distribution->accepted_at = now();
+        $distribution->save();
+
+
+        // Update global variant stock
+        $variant->decrement('total_quantity', $distribution->quantity);
+        $variant->increment('remain_quantity', $distribution->quantity);
+        $variant->save();
+
+        // Update transaction with plant ID if not set
+        $transaction->plant_id = $distribution->plant_id ?? $plantId;
+        $transaction->save();
+
+      
+
+        // Update plant's stock
+        $plantStock->increment('total_quantity', $distribution->quantity);
+        $plantStock->save();
+
+        // Log the stock acceptance
+        RawStockLogs::create([
+            'raw_material_id' => $variant->raw_material_id,
+            'user_id' => $user->id,
+            'plant_id' => $plantId,
+            'action' => 'acceptance',
+            'quantity' => $distribution->quantity,
+            'note' => 'Accepted distribution to plant',
+            'action_time' => now(),
+        ]);
 
         return response()->json([
             'status' => true,
             'message' => 'Stock accepted successfully.',
-            'data' => $distribution
+            'data' => $distribution,
         ]);
     }
-
-
 }
