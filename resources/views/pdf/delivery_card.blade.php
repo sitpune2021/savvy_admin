@@ -164,6 +164,10 @@
         <p><label>Total Stock At Site :</label> {{ $lastBalance ?? '__________' }}</p>
     </div>
 
+    <p style="text-align: center; margin-top: 20px; font-size: 13px;">
+        <strong>Note:</strong> This is a computer-generated Delivery Challan. No seal or signature is required
+    </p>
+
 </body>
 
 </html>

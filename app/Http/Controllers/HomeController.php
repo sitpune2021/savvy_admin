@@ -213,6 +213,11 @@ class HomeController extends BaseController
             });
         }
 
+        $cardsQuery->whereHas('order', function ($q) {
+            $q->where('develivered_qty', '!=', 0)
+            ->where('return_qty', '!=', 0);
+        });
+
         $cards = $cardsQuery->with([
             'order.customers',
             'order.shipping',
@@ -277,8 +282,5 @@ class HomeController extends BaseController
 
         return response()->download($zipPath)->deleteFileAfterSend(true);
     }
-
-
-
 
 }
