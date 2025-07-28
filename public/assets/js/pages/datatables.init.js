@@ -28,6 +28,31 @@ function initializeTables() {
         ]
     });
 
+    new DataTable("#buttons-datatables-cust", {
+        dom: "Bfrtip",
+        fixedHeader: true,
+        paging: false,  // Disable pagination
+        buttons: [
+            {
+                extend: 'copy',
+                exportOptions: exportOptions
+            },
+            {
+                extend: 'csv',
+                exportOptions: exportOptions
+            },
+            {
+                extend: 'excel',
+                exportOptions: exportOptions
+            },
+            {
+                extend: 'print',
+                exportOptions: exportOptions
+            }
+        ]
+    });
+
+
     new DataTable("#yesterdayPendingOrders", {
         dom: "frtip",
         fixedHeader: true,

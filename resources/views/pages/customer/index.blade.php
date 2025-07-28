@@ -60,8 +60,6 @@
                                 @csrf
                                 <div class="row g-3 align-items-center m-0">
                                     <div class="col-sm-auto">
-                                        {{-- <input type="month" id="monthYear" name="month_year" class="form-control"
-                                            required> --}}
                                             <input type="date" id="startDate" name="start_date" class="form-control"
                                             required>
                                             <input type="date" id="endDate" name="end_date" class="form-control"
@@ -95,7 +93,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="buttons-datatables" class="display table table-bordered" style="width:100%">
+                        <table id="buttons-datatables-cust" class="display table table-bordered" style="width:100%">
                             <thead>
                                 <tr>
                                     <th scope="col">
