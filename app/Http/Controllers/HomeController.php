@@ -195,14 +195,11 @@ class HomeController extends BaseController
 
     public function downloadCardZip(Request $request)
     {
-        // Accept comma-separated string from hidden input
         $customerIdsRaw = $request->input('customer_id', '');
         $customerIds = array_filter(explode(',', $customerIdsRaw));
 
         $startDate = Carbon::parse($request->input('start_date', now()->format('Y-m-d')))->startOfDay();
         $endDate = Carbon::parse($request->input('end_date', now()->format('Y-m-d')))->endOfDay();
-  
-        $period = CarbonPeriod::create($startDate, $endDate);
 
         $cardsQuery = DigitalCard::query()
             ->whereBetween('created_at', [$startDate, $endDate]);
@@ -214,8 +211,10 @@ class HomeController extends BaseController
         }
 
         $cardsQuery->whereHas('order', function ($q) {
-            $q->where('develivered_qty', '!=', 0)
-            ->where('return_qty', '!=', 0);
+            $q->where(function ($q2) {
+                $q2->where('develivered_qty', '!=', 0)
+                ->orWhere('return_qty', '!=', 0);
+            });
         });
 
         $cards = $cardsQuery->with([
@@ -229,20 +228,27 @@ class HomeController extends BaseController
             return response()->json(['message' => 'No cards found for the given criteria.'], 404);
         }
 
+        // Create a temp folder
         $folderPath = storage_path('app/tmp/digital_cards_' . now()->timestamp);
         File::makeDirectory($folderPath, 0755, true);
 
+        // Grouping by shipping_id and customer_id to ensure uniqueness
         $cardsGrouped = $cards->groupBy(function ($card) {
-            $shippingName = optional($card->order->shipping)->shipping_address ?? 'unknown_shipping';
-            $customer = optional($card->order->shipping->Customers);
-            $customerName = $customer->name ?? 'unknown_customer';
-            $customerZohiId = $customer->customer_zohi_id ?? 'unknown_zoho';
-
-            return "{$shippingName}__{$customerName}__{$customerZohiId}";
+            $shippingId = optional($card->order->shipping)->id ?? 'unknown_shipping_id';
+            $customerId = optional(optional($card->order->shipping)->Customers)->id ?? 'unknown_customer_id';
+            return "{$shippingId}__{$customerId}";
         });
 
         foreach ($cardsGrouped as $groupKey => $cardsGroup) {
-            [$shippingName, $customerName, $customerZohiId] = explode('__', $groupKey);
+            [$shippingId, $customerId] = explode('__', $groupKey);
+
+            $firstCard = $cardsGroup->first();
+            $shipping = optional($firstCard->order->shipping);
+            $customer = optional($shipping->Customers);
+
+            $shippingName = $shipping->shipping_address ?? 'unknown_shipping';
+            $customerName = $customer->name ?? 'unknown_customer';
+            $customerZohiId = $customer->customer_zohi_id ?? 'unknown_zoho';
 
             $pdf = PDF::loadView('pdf.delivery_card', [
                 'cards' => collect($cardsGroup),
@@ -253,17 +259,16 @@ class HomeController extends BaseController
                 'end_date' => $endDate,
             ])->setPaper('a4', 'portrait');
 
-            $shortShippingName = Str::limit(Str::slug($shippingName), 10, '');
-            $shortCustomerName = Str::limit(Str::slug($customerName), 10, '');
+            $shortShippingName = Str::slug($shippingName);
+            $shortCustomerName = Str::slug($customerName);
             $formattedEndDate = $endDate->format('d_m_y');
 
             $fileName = Str::slug("DC_{$shortShippingName}_{$shortCustomerName}_{$formattedEndDate}") . '.pdf';
 
-            // $fileName = Str::slug("digital_cards_{$shippingName}_{$customerName}_{$endDate}") . '.pdf';
             file_put_contents("{$folderPath}/{$fileName}", $pdf->output());
         }
 
-        // Create ZIP using ZipArchive
+        // Create ZIP
         $zipName = 'digital_cards_' . now()->format('Ymd_His') . '.zip';
         $zipPath = storage_path("app/public/{$zipName}");
 
@@ -282,5 +287,6 @@ class HomeController extends BaseController
 
         return response()->download($zipPath)->deleteFileAfterSend(true);
     }
+
 
 }
