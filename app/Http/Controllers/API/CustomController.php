@@ -18,7 +18,7 @@ use App\Models\DigitalCard;
 use App\Models\rawDistributions;
 use App\Models\RawStockForPlant;
 use App\Models\RawStockTransactions;
-use App\Models\RawMaterialVariants;
+use App\Models\rawMaterialVariants;
 use App\Models\RawStockLogs;
 
 
@@ -417,7 +417,7 @@ class CustomController extends BaseController
         }
 
         $transaction = RawStockTransactions::findOrFail((int) $distribution->raw_stock_transactions_id);
-        $variant = RawMaterialVariants::findOrFail((int) $transaction->raw_material_variant_id);
+        $variant = rawMaterialVariants::findOrFail((int) $transaction->raw_material_variant_id);
 
         $plantStock = RawStockForPlant::where([
             'plant_id' => $plantId,
@@ -458,13 +458,11 @@ class CustomController extends BaseController
 
     public function getLabels()
     {
-        $rawStock = RawMaterialVariants::whereHas('rawMaterial', function ($query) {
+        $rawStock = rawMaterialVariants::whereHas('rawMaterial', function ($query) {
             $query->whereIn('name', ['Label', 'Jar']);
         })
         ->select('id', 'variant_name')
         ->get();
-
-        dd($rawStock);
 
         $unlabelled = $rawStock->filter(function($item) {
             return !str_starts_with($item->variant_name, 'with Label - ');

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\PlantProduction;
 use App\Models\PlantProductionDetail;
 use App\Models\RawStockForPlant;
-use App\Models\RawMaterialVariants;
+use App\Models\rawMaterialVariants;
 use App\Models\Orders;
 use App\Models\Drivers;
 use Carbon\Carbon;
@@ -223,8 +223,8 @@ class StockProductionController extends BaseController
                 ], 400);
             }
 
-            // Fetch RawMaterialVariants for Label and Jar once
-            $rawStock = RawMaterialVariants::with('rawMaterial')
+            // Fetch rawMaterialVariants for Label and Jar once
+            $rawStock = rawMaterialVariants::with('rawMaterial')
                 ->whereHas('rawMaterial', fn($q) => $q->whereIn('name', ['Label', 'Jar']))
                 ->select('id', 'variant_name', 'raw_material_id')
                 ->get();
