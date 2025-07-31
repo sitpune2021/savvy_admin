@@ -514,11 +514,14 @@ class StockProductionController extends BaseController
                 "total_count" => 'required|numeric|min:1',
                 'fill_jar' => 'required|array|min:1',
                 'fill_jar.*' => 'required|numeric|min:1',
-                'maintance_jar' => 'required|array|min:1',
-                'maintance_jar.*' => 'required|numeric|min:1',
+                'maintance_jar_green' => 'required|array|min:1',
+                'maintance_jar_green.*' => 'required|numeric|min:1',
+                'maintance_jar_leack' => 'required|array|min:1',
+                'maintance_jar_leack.*' => 'required|numeric|min:1',
                 'jar_with_labels' => 'required|array|min:1',
                 'jar_with_labels.*' => 'required|numeric|min:1',
             ]);
+
 
             if ($validator->fails()) {
                 return response()->json([
@@ -535,7 +538,8 @@ class StockProductionController extends BaseController
                 $status = $request->status;
                 $jarWithLabels = $request->jar_with_labels;
                 $fillJar = $request->fill_jar;
-                $maintanceJar = $request->maintance_jar;
+                $maintanceGreenJar = $request->maintance_jar_green;
+                $maintanceLeackJar = $request->maintance_jar_leack;
 
                 foreach ($fillJar as $variantId => $qty) {
                     $stock = RawStockForPlant::where('plant_id', $plantId)
@@ -543,11 +547,34 @@ class StockProductionController extends BaseController
                         ->first();
                     $stock->increment('total_production_quantity', $qty);
                 }
+
                 foreach ($jarWithLabels as $variantId => $qty) {
                     $stock = RawStockForPlant::where('plant_id', $plantId)
                         ->where('raw_material_variants_id', $variantId)
                         ->first();
                     $stock->increment('total_quantity', $qty);
+                }
+
+                foreach ($maintanceGreenJar as $variantId => $qty) {
+                     JarMaintance::create([
+                            'plant_id'=> $plantId,
+                            'driver_id' => $id,
+                            'date' => now(),
+                            'qty' => $qty,
+                            'raw_material_variants_id' => $variantId,
+                            'type'=> 'leacked-jar',
+                    ]);
+                }
+
+                foreach ($maintanceLeackJar as $variantId => $qty) {
+                    JarMaintance::create([
+                            'plant_id'=> $plantId,
+                            'driver_id' => $id,
+                            'date' => now(),
+                            'qty' => $qty,
+                            'raw_material_variants_id' => $variantId,
+                            'type'=> 'leacked-jar',
+                    ]);
                 }
 
                 $driver = Drivers::with('jarTransportation')->find($id);
