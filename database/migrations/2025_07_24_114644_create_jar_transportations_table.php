@@ -25,17 +25,6 @@ return new class extends Migration
             $table->foreign('driver_id')->references('id')->on('drivers')->onDelete('cascade');
         });
 
-        // Raw SQL insert (ensure at least one driver has a valid plant_id)
-        DB::statement("
-            INSERT INTO jar_transportations (plant_id, driver_id, date, status, created_at, updated_at, deleted_at)
-            SELECT plant_id, id, CURRENT_DATE, 'dispatching', NOW(), NOW(), deleted_at
-            FROM drivers
-            WHERE plant_id IS NOT NULL
-        ");
-
-
-
-
     }
 
     /**
