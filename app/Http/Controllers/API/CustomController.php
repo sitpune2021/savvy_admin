@@ -434,12 +434,6 @@ class CustomController extends BaseController
         $variant->increment('remain_quantity', $distribution->quantity);
         $variant->save();
 
-        // Update transaction with plant ID if not set
-        $transaction->plant_id = $distribution->plant_id ?? $plantId;
-        $transaction->save();
-
-      
-
         // Update plant's stock
         $plantStock->increment('total_quantity', $distribution->quantity);
         $plantStock->save();
@@ -460,5 +454,105 @@ class CustomController extends BaseController
             'message' => 'Stock accepted successfully.',
             'data' => $distribution,
         ]);
+    }
+
+    public function getLabels()
+    {
+        $rawStock = RawMaterialVariants::whereHas('rawMaterial', function ($query) {
+            $query->whereIn('name', ['Label', 'Jar']);
+        })
+        ->select('id', 'variant_name')
+        ->get();
+
+        $unlabelled = $rawStock->filter(function($item) {
+            return !str_starts_with($item->variant_name, 'with Label - ');
+        })->keyBy('variant_name');  // key by name for easy lookup
+
+        $labelled = $rawStock->filter(function($item) {
+            return str_starts_with($item->variant_name, 'with Label - ');
+        });
+
+        $rawStockPlant = RawStockForPlant::where('plant_id', auth()->user()->plantManager->id)
+            ->with(['plant', 'rawMaterialVariant', 'rawMaterialVariant.rawMaterial'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy(function ($item) {
+                return optional($item->rawMaterialVariant->rawMaterial)->name ?? 'N/A';
+            })
+            ->map(function ($items, $materialName) {
+                return [
+                    'material_name' => $materialName,
+                    'variants' => $items->map(function ($item) {
+                        return [
+                            'variant_name' => optional($item->rawMaterialVariant)->variant_name,
+                            'full_name' => optional($item->rawMaterialVariant->rawMaterial)->name . ' - ' . optional($item->rawMaterialVariant)->variant_name,
+                            'quantity' => $item->total_quantity,
+                        ];
+                    })->values(),
+                ];
+            })->values();
+
+        // Map labelled to required structure
+        $data = $labelled->map(function($item) use ($unlabelled, $rawStockPlant) {
+            $labelName = trim(str_replace('with Label - ', '', $item->variant_name));
+
+            // Get grouped material types
+            $labelGroup = $rawStockPlant->firstWhere('material_name', 'Label');
+            $jarGroup   = $rawStockPlant->firstWhere('material_name', 'Jar');
+            $capGroup   = $rawStockPlant->firstWhere('material_name', 'Cap');
+
+            // Initialize quantities
+            $labelQty = 0;
+            $jarQty   = 0;
+            $capQty   = 0;
+            $labeledJarQty = 0;
+
+            // Get Label quantity
+            if ($labelGroup) {
+                $labelVariant = collect($labelGroup['variants'])->firstWhere('variant_name', $labelName);
+                $labelQty = $labelVariant['quantity'] ?? 0;
+            }
+
+            // Get Jar without Label quantity
+            if ($jarGroup) {
+                $jarWithoutLabel = collect($jarGroup['variants'])->firstWhere('variant_name', 'without Label');
+                $jarQty = $jarWithoutLabel['quantity'] ?? 0;
+
+                // Get Jar *with* this specific label
+                $jarWithLabel = collect($jarGroup['variants'])->firstWhere('variant_name', 'with Label - ' . $labelName);
+                $labeledJarQty = $jarWithLabel['quantity'] ?? 0;
+            }
+
+            // Get Cap quantity
+            if ($capGroup) {
+                $capVariant = collect($capGroup['variants'])->firstWhere('variant_name', 'Plastic Cap');
+                $capQty = $capVariant['quantity'] ?? 0;
+            }
+
+            // Logic:
+            // Disable if:
+            // 1. Cap is 0 OR
+            // 2. Jar without Label is 0 OR
+            // 3. (Label is 0 AND Jar with Label is 0)
+            $disable = ($capQty == 0 || $jarQty == 0 || ($labelQty == 0 && $labeledJarQty == 0));
+
+            return [
+                'label_id' => $unlabelled[$labelName]->id ?? null,
+                'variant_name' => $labelName,
+                'id' => $item->id,
+                'disable' => $disable,
+            ];
+        })->filter(function($item) {
+            return $item['label_id'] !== null;
+        })->values();
+
+
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Label List retrieved successfully.',
+            'data' => $data,
+        ]);
+
     }
 }

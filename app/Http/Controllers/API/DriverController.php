@@ -54,10 +54,28 @@ class DriverController extends BaseController
                 $record->aadhar_card_FILE = url('storage/driver/'. $record->aadhar_card_FILE) ;
             }
             if ($this->plantManagerId) {
-                $ordersQuery = $record->orders()->whereDate('created_at', $today);
-                $record->today_completed_orders = (clone $ordersQuery)->where('status', 'completed')->count();
-                $record->today_inprogress_orders = (clone $ordersQuery)->where('status', 'in-progress')->count();
-                $record->today_pending_orders    = (clone $ordersQuery)->where('status', 'pending')->count();
+                // Today's date
+                $today = now()->toDateString();
+
+                // Base query for today's orders
+                $todayOrdersQuery = $record->orders()
+                    ->whereDate('created_at', $today);
+
+                // Base query for current month's orders
+                $monthOrdersQuery = $record->orders()
+                    ->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year);
+
+                // Today's order counts
+                $record->today_completed_orders = (clone $todayOrdersQuery)->where('status', 'completed')->count();
+                $record->today_inprogress_orders = (clone $todayOrdersQuery)->where('status', 'in-progress')->count();
+                $record->today_pending_orders = (clone $todayOrdersQuery)->where('status', 'pending')->count();
+
+                // This month's order counts
+                $record->month_completed_orders = (clone $monthOrdersQuery)->where('status', 'completed')->count();
+                $record->month_inprogress_orders = (clone $monthOrdersQuery)->where('status', 'in-progress')->count();
+                $record->month_pending_orders = (clone $monthOrdersQuery)->where('status', 'pending')->count();
+
             }
         }
 

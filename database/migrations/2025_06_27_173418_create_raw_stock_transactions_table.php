@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('raw_stock_transactions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('raw_material_variant_id');
-            $table->enum('type', ['purchase']); 
+            $table->enum('type', ['purchase', 'distribution']); 
             $table->unsignedInteger('quantity'); 
             $table->foreign('raw_material_variant_id')->references('id')->on('raw_material_variants')->onDelete('cascade');
             $table->softDeletes(); // For soft deleting transactions

@@ -9,6 +9,7 @@ use App\Http\Controllers\API\Customer\OrderController as CustomerOrderController
 use App\Http\Controllers\API\Driver\ProfileController;
 use App\Http\Controllers\API\Customer\ProfileController as CustomerProfileController;
 use App\Http\Controllers\API\Driver\MaintenanceController;
+use App\Http\Controllers\API\StockProductionController;
 use Illuminate\Http\Request; 
 
 // Driver 🔐 Auth Routes
@@ -41,8 +42,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('raw-stock-list', [CustomController::class, 'getNewStockList']);
 
     Route::post('accept-stock/{id}', [CustomController::class, 'acceptStock']);
+    Route::get('labels', [CustomController::class, 'getLabels']);
 
-
+    Route::resource('production', StockProductionController::class);
 });
 
 // 👤 Customer Routes

@@ -47,6 +47,11 @@ class Drivers extends Authenticatable
         return $this->hasMany(Orders::class, 'driver_id');
     }
 
+    public function jarTransportation()
+    {
+        return $this->hasOne(JarTransportation::class, 'driver_id');
+    }
+
     
     protected $hidden = ['otp','otp_expires_at' ];
     

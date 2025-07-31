@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')->hourly();
         // $schedule->command('app:generate-contract-orders')->dailyAt('5:00');
         $schedule->command('app:generate-contract-orders')->everyMinute();
+        $schedule->command('app:sync-driver-transportations')->everyMinute();
 
     }
 

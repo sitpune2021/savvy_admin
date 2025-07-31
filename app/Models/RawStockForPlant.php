@@ -16,6 +16,7 @@ class RawStockForPlant extends Model
         'plant_id',
         'raw_material_variants_id',
         'total_quantity',
+        'total_production_quantity'
     ];
 
     public function plant()
