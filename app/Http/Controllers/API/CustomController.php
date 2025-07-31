@@ -464,6 +464,8 @@ class CustomController extends BaseController
         ->select('id', 'variant_name')
         ->get();
 
+        dd($rawStock);
+
         $unlabelled = $rawStock->filter(function($item) {
             return !str_starts_with($item->variant_name, 'with Label - ');
         })->keyBy('variant_name');  // key by name for easy lookup
