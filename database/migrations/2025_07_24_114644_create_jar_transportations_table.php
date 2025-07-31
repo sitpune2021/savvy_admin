@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('plant_id');
             $table->unsignedBigInteger('driver_id'); // Use unsignedBigInteger for foreign keys
-            $table->date('date')->default(DB::raw('CURRENT_DATE')); // Use DB::raw here
+            $table->date('date'); // Use DB::raw here
             $table->enum('status', ['dispatching', 'receiving', 'received'])->default('dispatching');
             $table->softDeletes();
             $table->timestamps();
