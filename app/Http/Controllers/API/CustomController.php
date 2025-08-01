@@ -17,7 +17,7 @@ use App\Models\Reasons;
 use App\Models\DigitalCard;
 use App\Models\rawDistributions;
 use App\Models\RawStockForPlant;
-use App\Models\RawStockTransactions;
+use App\Models\rawStockTransactions;
 use App\Models\rawMaterialVariants;
 use App\Models\RawStockLogs;
 
@@ -416,7 +416,7 @@ class CustomController extends BaseController
             ], 403);
         }
 
-        $transaction = RawStockTransactions::findOrFail((int) $distribution->raw_stock_transactions_id);
+        $transaction = rawStockTransactions::findOrFail((int) $distribution->raw_stock_transactions_id);
         $variant = rawMaterialVariants::findOrFail((int) $transaction->raw_material_variant_id);
 
         $plantStock = RawStockForPlant::where([
