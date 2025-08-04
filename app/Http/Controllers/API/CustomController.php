@@ -534,7 +534,7 @@ class CustomController extends BaseController
             // 1. Cap is 0 OR
             // 2. Jar without Label is 0 OR
             // 3. (Label is 0 AND Jar with Label is 0)
-            $disable = ($capQty == 0 || $jarQty == 0 || ($labelQty == 0 && $labeledJarQty == 0));
+$disable = ($capQty == 0 || ($jarQty == 0 && $labeledJarQty == 0) || ($labelQty == 0 && $labeledJarQty == 0));
 
             return [
                 'label_id' => $unlabelled[$labelName]->id ?? null,
