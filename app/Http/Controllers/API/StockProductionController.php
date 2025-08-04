@@ -154,7 +154,7 @@ class StockProductionController extends BaseController
                     'driver_id' => $firstOrder->driver_id,
                     'driver_name' => $firstOrder->drivers->name ?? 'Unknown',
                     'total_delivered_qty' => $orders->sum('delivered_qty'),
-                    'total_return_qty' => $orders->sum('return_qty'),
+                    'total_return_qty' => $orders->sum('delivered_qty'),
                     'total_balance_qty' => optional($firstOrder->contract)->quantity ?? 0,
                 ];
             })
