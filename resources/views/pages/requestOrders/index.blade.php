@@ -92,10 +92,10 @@
                                 @foreach ($contracts as $contract)
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $contract->customer->name }}</td>
+                                        <td>{{ $contract?->customer?->name }}</td>
                                         <td>{{ $contract->shippingAddress?->shipping_address }}</td>
                                         <td>{{ $contract->sender?->name }}</td>
-                                        <td>{{ $contract->product->name }}</td>
+                                        <td>{{ $contract?->product?->name }}</td>
                                         <td>{{ $contract->quantity }}</td>
                                         <td>
                                             <div @if ($contract->status === 'active') ondblclick="toggleEdit(this)" @endif
@@ -125,7 +125,7 @@
                                             </div>
                                         </td>
                                         <td>{{ $contract->date }}</td>
-                                        <td>{{ $contract->shippingAddress?->driver->name }}</td>
+                                        <td>{{ $contract->shippingAddress?->driver?->name }}</td>
                                         <td>
                                             <span
                                                 class="badge {{ $statusClasses[$contract->status] ?? 'bg-secondary-subtle text-secondary' }} p-2 status-badge">
