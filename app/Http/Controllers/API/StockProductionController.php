@@ -29,123 +29,53 @@ class StockProductionController extends BaseController
         $count = $request->count;
         $today = Carbon::today();
 
-        if ($count) {
-            return $this->getCountStatistics($today);
+        // Apply plant manager filter if available
+        $ordersQuery = Orders::with(['drivers']);
+        if ($this->plantManagerId) {
+            $ordersQuery->forPlantManager($this->plantManagerId);
         }
-
-        if ($status) {
-            return $this->getDriversByStatus($status, $today);
-        }
-        
-
-        return response()->json([
-            'status' => false,
-            'message' => 'Please provide either a count flag or a status value.',
-        ], 400);
-    }
-
-    protected function getCountStatistics($today)
-    {
         $plantManagerId = $this->plantManagerId;
 
-        // 1. Get Jar Stocks
-        $jarStocks = RawStockForPlant::whereHas('rawMaterialVariant.rawMaterial', function ($q) {
-            $q->where('name', 'Jar');
+        // --- CASE 1: Count flag is set ---
+        if ($count) {
+              $data = [];
+
+        // 1. Jar Stocks
+        $jarStocks = RawStockForPlant::whereHas('rawMaterialVariant.rawMaterial', function ($query) {
+            $query->where('name', 'Jar');
         })
-        ->when($plantManagerId, fn($q) => $q->where('plant_id', $plantManagerId))
+        ->when($plantManagerId, function ($q) use ($plantManagerId) {
+            $q->where('plant_id', $plantManagerId);
+        })
         ->with('rawMaterialVariant.rawMaterial')
         ->get();
 
-        // 2. Total Production & Breakdown
-        $jarWiseBreakdown = [];
-        $totalProduction = 0;
+        // 2. Total Jar Production
+        $data['jar_total_production_quantity'] = $jarStocks->sum('total_production_quantity');
 
+        // 3. Jar-wise Breakdown
+        $jarWiseBreakdown = [];
         foreach ($jarStocks as $stock) {
             $variantName = $stock->rawMaterialVariant->rawMaterial->name . ' ' . ($stock->rawMaterialVariant->variant_name ?? 'Unknown Variant');
             $jarWiseBreakdown[$variantName] = ($jarWiseBreakdown[$variantName] ?? 0) + $stock->total_production_quantity;
-            $totalProduction += $stock->total_production_quantity;
         }
+        $data['jar_variant_breakdown'] = $jarWiseBreakdown;
 
-        // 3. Prepare Initial Data
-        $data = [
-            'jar_total_production_quantity' => $totalProduction,
-            'jar_variant_breakdown' => $jarWiseBreakdown,
+        // 4. Initialize aggregates
+        $data['dispatching'] = 0;
+        $data['dispatched'] = 0;
+        $data['receiving'] = 0;
+        $data['received'] = 0;
+
+        // 5. Initialize driver counts by status
+        $driverStatusCounts = [
             'dispatching' => 0,
-            'dispatched' => 0,
             'receiving' => 0,
             'received' => 0,
-            'driver_counts' => [
-                'dispatching' => 0,
-                'receiving' => 0,
-                'received' => 0,
-            ]
         ];
 
-        // 4. Fetch & Process Orders Grouped by Driver
-        $driverOrders = $this->getOrdersGroupedByDriver($today);
-
-        $driverOrders->each(function ($orders) use (&$data) {
-            $firstOrder = $orders->first();
-            $driver = $firstOrder->drivers;
-            $transport = $driver?->jarTransportation?->first();
-            $status = $transport?->status;
-
-            $balanceQty = $orders->sum(fn($o) => optional($o->contract)->quantity ?? 0);
-
-            if (in_array($status, ['dispatching', 'receiving', 'received'])) {
-                $data['driver_counts'][$status]++;
-            }
-
-            match ($status) {
-                'dispatching' => $data['dispatching'] += $balanceQty,
-                'receiving' => [
-                    $data['dispatched'] += $balanceQty,
-                    $data['receiving'] += $balanceQty
-                ],
-                'received' => $data['received'] += $balanceQty,
-                default => null
-            };
-        });
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Order statistics retrieved successfully.',
-            'data' => $data,
-        ], 200);
-    }
-
-    protected function getDriversByStatus($status, $today)
-    {
-        $driverOrders = $this->getOrdersGroupedByDriver($today);
-
-        $filteredDrivers = $driverOrders->map(function ($orders) {
-            $firstOrder = $orders->first();
-            $status = optional($firstOrder->drivers->jarTransportation)->status;
-
-            return [
-                'jarTransportation' => $status,
-                'driver_id' => $firstOrder->driver_id,
-                'driver_name' => $firstOrder->drivers->name ?? 'Unknown',
-                'total_delivered_qty' => $orders->sum(fn($order) => optional($order->contract)->quantity ?? 0),
-                'total_return_qty' => $orders->sum(fn($order) => optional($order->contract)->quantity ?? 0),
-                'total_balance_qty' => $orders->sum(fn($order) => optional($order->contract)->quantity ?? 0),
-            ];
-        })->filter(function ($driver) use ($status) {
-            return $status === 'dispatched' 
-                ? $driver['jarTransportation'] === 'receiving'
-                : $driver['jarTransportation'] === $status;
-        })->values();
-
-        return response()->json([
-            'status' => true,
-            'message' => "Drivers filtered by status: {$status}",
-            'data' => ['drivers' => $filteredDrivers]
-        ], 200);
-    }
-
-    protected function getOrdersGroupedByDriver($today)
-    {
-        return Orders::whereDate('created_at', $today)
+        // 6. Fetch today's orders with related drivers and their jarTransportation for today
+        $driverOrders = Orders::whereDate('created_at', $today)
             ->whereNotNull('driver_id')
             ->whereHas('drivers', function ($query) {
                 $query->where('plant_id', $this->plantManagerId);
@@ -153,10 +83,116 @@ class StockProductionController extends BaseController
             ->with([
                 'drivers:id,name,plant_id',
                 'contract:id,quantity',
-                'drivers.jarTransportation' => fn($q) => $q->whereDate('date', $today)
+                'drivers.jarTransportation' => function ($query) use ($today) {
+                    $query->whereDate('date', $today);
+                }
             ])
             ->get()
             ->groupBy('driver_id');
+
+        // 7. Process each driver group
+        $driverOrders->each(function ($orders) use (&$data, &$driverStatusCounts) {
+            $firstOrder = $orders->first();
+
+            $driver = $firstOrder->drivers;
+            $transport = $driver ? $driver->jarTransportation : null;
+            $status = optional($transport)->status;
+
+            $deliveredQty = $orders->sum('delivered_qty');
+            $returnQty = $orders->sum('return_qty');
+            $balanceQty = $orders->sum(function ($order) {
+                        return optional($order->contract)->quantity ?? 0;
+                    });
+
+            if (in_array($status, ['dispatching', 'receiving', 'received'])) {
+                // Count driver for this status once
+                $driverStatusCounts[$status]++;
+            }
+
+            // Sum quantities by status
+            switch ($status) {
+                case 'dispatching':
+                    $data['dispatching'] += $balanceQty;
+                    break;
+
+                case 'receiving':
+                    // 'dispatched' means returned quantity
+                    $data['dispatched'] += $balanceQty;
+                    // 'receiving' means expected return quantity
+                    $data['receiving'] += $balanceQty;
+                    break;
+
+                case 'received':
+                    $data['received'] += $balanceQty;
+                    break;
+
+                default:
+                    // status unknown or null, ignore
+                    break;
+            }
+        });
+
+        // 8. Add driver counts to data
+        $data['driver_counts'] = $driverStatusCounts;
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Order statistics retrieved successfully.',
+            'data' => $data
+        ], 200);
+        }
+
+        // --- CASE 2: Status filter only ---
+        if ($status) {
+            $driverOrders = Orders::whereDate('created_at', $today)
+                ->whereNotNull('driver_id')
+                ->whereHas('drivers', function ($query) {
+                    $query->where('plant_id', $this->plantManagerId);
+                })
+                ->with(['drivers:id,name,plant_id', 'contract:id,quantity', 'drivers.jarTransportation'])
+                ->get()
+                ->groupBy('driver_id');
+
+            $filteredDrivers = $driverOrders->map(function ($orders) {
+                $firstOrder = $orders->first();
+                $type = optional($firstOrder->drivers->jarTransportation)->status;
+
+                return [
+                    'jarTransportation' => $type,
+                    'driver_id' => $firstOrder->driver_id,
+                    'driver_name' => $firstOrder->drivers->name ?? 'Unknown',
+                    // 'total_delivered_qty' => $orders->sum('delivered_qty'),
+                    // 'total_return_qty' => $orders->sum('return_qty'),
+                    'total_delivered_qty' => $orders->sum(function ($order) {
+                        return optional($order->contract)->quantity ?? 0;
+                    }),
+                    'total_return_qty' => $orders->sum(function ($order) {
+                        return optional($order->contract)->quantity ?? 0;
+                    }),
+                    'total_balance_qty' => $orders->sum(function ($order) {
+                        return optional($order->contract)->quantity ?? 0;
+                    }),
+                ];
+            })
+            ->filter(function ($driver) use ($status) {
+                 if ($status === 'dispatched') {
+                    return $driver['jarTransportation'] === 'receiving';
+                }
+                return $driver['jarTransportation'] === $status;
+            })->values();
+
+            return response()->json([
+                'status' => true,
+                'message' => "Drivers filtered by status: {$status}",
+                'data' => ['drivers' => $filteredDrivers]
+            ], 200);
+        }
+
+        // --- Neither count nor status provided ---
+        return response()->json([
+            'status' => false,
+            'message' => 'Please provide either a count flag or a status value.',
+        ], 400);
     }
 
     /**
