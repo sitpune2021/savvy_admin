@@ -35,6 +35,13 @@ class SyncDriverTransportations extends Command
         $drivers = Drivers::whereNotNull('plant_id')->get();
 
         $insertData = $drivers->map(function ($driver) use ($today, $now) {
+          $data = Orders::whereDate('created_at', $today)
+                ->where('driver_id', $driver->id)
+                ->with([
+                    'drivers:id,name,plant_id',
+                    'contract:id,quantity',
+                ])
+                ->get();
             return [
                 'plant_id' => $driver->plant_id,
                 'driver_id' => $driver->id,

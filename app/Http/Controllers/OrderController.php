@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\Contracts;
 use App\Models\Routes;
 use App\Models\ShippingAddress;
+use App\Models\JarTransportation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -72,6 +73,28 @@ class OrderController extends BaseController
                     'driver_id' => $shipping?->driver_id,
                     'status' => 'pending',
                 ]);
+                $jar4 = JarTransportation::where('date',  Carbon::today())
+                        ->where('driver_id', $shipping->driver_id)
+                        ->where('plant_id', $shipping->plant_id)
+                        ->first();
+
+                if ($jar4) {
+                    // If already exists, increment total_quantity
+                    $jar4->total_quantity += $shipping->Contract->quantity;
+                    $jar4->allocat_quantity += $shipping->Contract->quantity; // Consider fixing typo if not intentional
+                    $jar4->save();
+
+                } else {
+                    $newJarAdd4 =  JarTransportation::create([
+                        'plant_id' => $address->plant_id,
+                        'driver_id' => $address->driver_id,
+                        'date' =>  Carbon::today(),
+                        'status' => 'dispatching',
+                        'total_quantity' => $shipping->Contract->quantity,
+                        'allocated_quantity' => 0,
+                        'allocat_quantity' => $shipping->Contract->quantity, // Consider fixing typo if not intentional
+                    ]);
+                }
             }
             return response()->json([
                 'message' => 'Order created successfully!',

@@ -14,10 +14,18 @@ class JarTransportation extends Model
         'plant_id',
         'driver_id',
         'date',
-        'status',
+        'status', // 'dispatching', 'receiving', 'received'
+        'total_quantity',
+        'allocated_quantity',
+        'allocat_quantity',
     ];
 
-    public function driver()
+    public function JarLogs()
+    {
+        return $this->hasMany(JarTransportLog::class, 'jar_transportation_id');
+    }
+
+    public function Driver()
     {
         return $this->belongsTo(Drivers::class, 'driver_id');
     }

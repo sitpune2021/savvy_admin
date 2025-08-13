@@ -15,6 +15,7 @@ use App\Models\ShippingContact;
 use App\Models\ShippingContactsMultiple;
 use App\Models\Routes;
 use App\Models\Vendor;
+use App\Models\JarTransportation;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use Illuminate\Support\Arr;
@@ -170,6 +171,29 @@ class CustomerController extends BaseController
                             'status'      => 'pending',
                         ]);
                         $orders[] = $order;
+                        $jar = JarTransportation::where('date',  Carbon::today())
+                        ->where('driver_id', $shipping->driver_id)
+                        ->where('plant_id', $shipping->plant_id)
+                        ->first();
+
+                        if ($jar) {
+                            // If already exists, increment total_quantity
+                            $jar->total_quantity += $contract->quantity;
+                            $jar->allocat_quantity += $contract->quantity;
+                            $jar->save();
+
+                        } else {
+                        $newJarAdd =  JarTransportation::create([
+                                'plant_id' => $shipping->plant_id,
+                                'driver_id' => $shipping->driver_id,
+                                'date' =>  Carbon::today(),
+                                'status' => 'dispatching',
+                                'total_quantity' => $contract->quantity,
+                                'allocated_quantity' => 0,
+                                'allocat_quantity' => $contract->quantity, // Consider fixing typo if not intentional
+                            ]);
+
+                        }
                     }
 
                 }
@@ -502,6 +526,28 @@ class CustomerController extends BaseController
                             'status'         => 'pending',
                         ]);
                         $orders[] = $order;
+                        $jar2 = JarTransportation::where('date',  Carbon::today())
+                        ->where('driver_id', $address->driver_id)
+                        ->where('plant_id', $address->plant_id)
+                        ->first();
+
+                        if ($jar2) {
+                            // If already exists, increment total_quantity
+                            $jar2->total_quantity += $contract->quantity;
+                            $jar2->allocat_quantity += $contract->quantity;
+                            $jar2->save();
+
+                        } else {
+                            $newJarAdd2 =  JarTransportation::create([
+                                'plant_id' => $address->plant_id,
+                                'driver_id' => $address->driver_id,
+                                'date' =>  Carbon::today(),
+                                'status' => 'dispatching',
+                                'total_quantity' => $contract->quantity,
+                                'allocated_quantity' => 0,
+                                'allocat_quantity' => $contract->quantity, // Consider fixing typo if not intentional
+                            ]);
+                        }
                     }
                 }
 
@@ -581,6 +627,28 @@ class CustomerController extends BaseController
                                     'status'         => 'pending',
                                 ]);
                                 $orders[] = $order;
+                                $jar3 = JarTransportation::where('date',  Carbon::today())
+                                    ->where('driver_id', $address->driver_id)
+                                    ->where('plant_id', $address->plant_id)
+                                    ->first();
+
+                                if ($jar3) {
+                                    // If already exists, increment total_quantity
+                                    $jar3->total_quantity += $contract->quantity;
+                                    $jar3->allocat_quantity += $contract->quantity;
+                                    $jar3->save();
+
+                                } else {
+                                    $newJarAdd3 =  JarTransportation::create([
+                                        'plant_id' => $address->plant_id,
+                                        'driver_id' => $address->driver_id,
+                                        'date' =>  Carbon::today(),
+                                        'status' => 'dispatching',
+                                        'total_quantity' => $contract->quantity,
+                                        'allocated_quantity' => 0,
+                                        'allocat_quantity' => $contract->quantity, // Consider fixing typo if not intentional
+                                    ]);
+                                }
                             }
                         }
                         if($contract->frequency == 'weekly'){
@@ -606,6 +674,28 @@ class CustomerController extends BaseController
                                         'status'         => 'pending',
                                     ]);
                                     $orders[] = $order;
+                                    $jar4 = JarTransportation::where('date',  Carbon::today())
+                                        ->where('driver_id', $address->driver_id)
+                                        ->where('plant_id', $address->plant_id)
+                                        ->first();
+
+                                    if ($jar4) {
+                                        // If already exists, increment total_quantity
+                                        $jar4->total_quantity += $contract->quantity;
+                                        $jar4->allocat_quantity += $contract->quantity;
+                                        $jar4->save();
+
+                                    } else {
+                                        $newJarAdd4 =  JarTransportation::create([
+                                            'plant_id' => $address->plant_id,
+                                            'driver_id' => $address->driver_id,
+                                            'date' =>  Carbon::today(),
+                                            'status' => 'dispatching',
+                                            'total_quantity' => $contract->quantity,
+                                            'allocated_quantity' => 0,
+                                            'allocat_quantity' => $contract->quantity, // Consider fixing typo if not intentional
+                                        ]);
+                                    }
                                 }
                             }
                             else{

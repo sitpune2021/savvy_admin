@@ -20,6 +20,7 @@ use App\Models\RawStockForPlant;
 use App\Models\rawStockTransactions;
 use App\Models\rawMaterialVariants;
 use App\Models\RawStockLogs;
+use App\Models\JarTransportation;
 
 
 use Carbon\Carbon;
@@ -186,6 +187,28 @@ class CustomController extends BaseController
                         'status' => 'pending',
                     ]);
                     $orders[] = $order;
+                    $jar4 = JarTransportation::where('date',  Carbon::today())
+                                        ->where('driver_id', $address->driver_id)
+                                        ->where('plant_id', $address->plant_id)
+                                        ->first();
+
+                                    if ($jar4) {
+                                        // If already exists, increment total_quantity
+                                        $jar4->total_quantity += $contract->quantity;
+                                        $jar4->allocat_quantity += $contract->quantity; // Consider fixing typo if not intentional
+                                        $jar4->save();
+
+                                    } else {
+                                        $newJarAdd4 =  JarTransportation::create([
+                                            'plant_id' => $address->plant_id,
+                                            'driver_id' => $address->driver_id,
+                                            'date' =>  Carbon::today(),
+                                            'status' => 'dispatching',
+                                            'total_quantity' => $contract->quantity,
+                                            'allocated_quantity' => 0,
+                                            'allocat_quantity' => $contract->quantity, // Consider fixing typo if not intentional
+                                        ]);
+                                    }
                 }
             }
 
@@ -208,6 +231,28 @@ class CustomController extends BaseController
                             'status' => 'pending',
                         ]);
                         $orders[] = $order;
+                        $jar3 = JarTransportation::where('date',  Carbon::today())
+                            ->where('driver_id', $address->driver_id)
+                            ->where('plant_id', $address->plant_id)
+                            ->first();
+
+                        if ($jar3) {
+                            // If already exists, increment total_quantity
+                            $jar3->total_quantity += $contract->quantity;
+                            $jar3->allocat_quantity += $contract->quantity;
+                            $jar3->save();
+
+                        } else {
+                            $newJarAdd3 =  JarTransportation::create([
+                                'plant_id' => $address->plant_id,
+                                'driver_id' => $address->driver_id,
+                                'date' =>  Carbon::today(),
+                                'status' => 'dispatching',
+                                'total_quantity' => $contract->quantity,
+                                'allocated_quantity' => 0,
+                                'allocat_quantity' => $contract->quantity, // Consider fixing typo if not intentional
+                            ]);
+                        }
                     }
                 } else {
                     if ($existingOrder && $existingOrder->status === 'pending') {

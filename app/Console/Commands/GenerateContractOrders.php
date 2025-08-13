@@ -7,6 +7,7 @@ use App\Models\Customers;
 use App\Models\ShippingAddress;
 use App\Models\Contracts;
 use App\Models\Orders;
+use App\Models\JarTransportation;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -118,6 +119,35 @@ class GenerateContractOrders extends Command
                         'status' => 'pending',
                         'type' => 'additional',
                     ]);
+                    
+                     $jar = JarTransportation::where('date',  $today)
+                        ->where('driver_id', $shipping->driver_id)
+                        ->where('plant_id', $shipping->plant_id)
+                        ->first();
+
+                    if ($jar) {
+                        // If already exists, increment total_quantity
+                        $jar->total_quantity += $contractAdditional->quantity;
+                        $jar->allocat_quantity += $contractAdditional->quantity;
+                        $jar->save();
+
+                        Log::channel('scheduler')->info("🟢 Updated JarTransportation: ID {$jar->id}, added quantity {$contractAdditional->quantity}, new total {$jar->total_quantity} for additional order");
+
+                    } else {
+                        // If doesn't exist, create new
+                       $newJarAdd =  JarTransportation::create([
+                            'plant_id' => $shipping->plant_id,
+                            'driver_id' => $shipping->driver_id,
+                            'date' =>  $today,
+                            'status' => 'dispatching',
+                            'total_quantity' => $contractAdditional->quantity,
+                            'allocated_quantity' => 0,
+                            'allocat_quantity' => $contractAdditional->quantity, // Consider fixing typo if not intentional
+                        ]);
+
+                        Log::channel('scheduler')->info("🆕 Created new JarTransportation: ID {$newJarAdd->id}, quantity {$contractAdditional->quantity} for additional order");
+
+                    }
 
                     $contractAdditional->status = 'in-progress';
                     $contractAdditional->save();
@@ -162,6 +192,35 @@ class GenerateContractOrders extends Command
                         'driver_id' => $shipping->driver_id,
                         'status' => 'pending',
                     ]);
+                    $jar = JarTransportation::where('date',  $today)
+                        ->where('driver_id', $shipping->driver_id)
+                        ->where('plant_id', $shipping->plant_id)
+                        ->first();
+
+                    if ($jar) {
+                        // If already exists, increment total_quantity
+                        $jar->total_quantity += $contract->quantity;
+                        $jar->allocat_quantity += $contract->quantity;
+
+                        $jar->save();
+
+                        Log::channel('scheduler')->info("🟢 Updated JarTransportation: ID {$jar->id}, added quantity {$contract->quantity}, new total {$jar->total_quantity}");
+
+                    } else {
+                        // If doesn't exist, create new
+                       $newJar =  JarTransportation::create([
+                            'plant_id' => $shipping->plant_id,
+                            'driver_id' => $shipping->driver_id,
+                            'date' =>  $today,
+                            'status' => 'dispatching',
+                            'total_quantity' => $contract->quantity,
+                            'allocated_quantity' => 0,
+                            'allocat_quantity' => $contract->quantity, // Consider fixing typo if not intentional
+                        ]);
+
+                        Log::channel('scheduler')->info("🆕 Created new JarTransportation: ID {$newJar->id}, quantity {$contract->quantity}");
+
+                    }
                     Log::channel('scheduler')->info("✅ Order created for contract ID {$contract->id}, shipping ID {$shipping->id}");
                 } else {
                     Log::warning("⚠️ Order not created for contract ID {$contract->id}, shipping ID {$shipping->id} due to missing route/driver.");
