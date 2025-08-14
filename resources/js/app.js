@@ -1220,6 +1220,7 @@ $(document).ready(function () {
 		if ($daysBlock.length) {
 			if (frequency === 'weekly') {
 				$daysBlock.show();
+				$daysBlock2.find('input, select').val(null).prop('checked', false);
 			} else {
 				$daysBlock.hide();
 			}
@@ -1230,6 +1231,7 @@ $(document).ready(function () {
 		if ($daysBlock2.length) {
 			if (frequency === 'monthly') {
 				$daysBlock2.show();
+				$daysBlock.find('input, select').val(null).prop('checked', false);
 			} else {
 				$daysBlock2.hide();
 			}

@@ -149,15 +149,31 @@ class StockProductionController extends BaseController
                     ->whereNotNull('driver_id')
                     ->get();
 
-                $filteredDrivers = $driverOrders->map(function ($order) {
-                    return [
-                        'jarTransportation' => $order->status,
+                $filteredDrivers = $driverOrders->flatMap(function ($order) {
+                    $status = $order->status;
+                    $hasReceivingLog = $order->JarLogs->contains(fn($log) => $log->action === 'receiving');
+                    $hasReceivedLog = $order->JarLogs->contains(fn($log) => $log->action === 'received');
+
+                    $driverData = [
+                        'jarTransportation' => $status,
                         'driver_id' => $order->driver_id,
-                        'driver_name' => $order->Driver->name ?? 'Unknown', // Assuming relationship is 'driver'
-                        'allocat_quantity' => $order->allocat_quantity ?? 0, // Adjust to correct field
-                        'allocated_quantity' => $order->allocated_quantity ?? 0,     // Adjust to correct field
+                        'driver_name' => $order->Driver->name ?? 'Unknown',
+                        'allocat_quantity' => $order->allocat_quantity ?? 0,
+                        'allocated_quantity' => $order->allocated_quantity ?? 0,
                         'total_quantity' => $order->total_quantity ?? 0,
                     ];
+                    $results = [];
+                    $results[] = $driverData;
+                    if (in_array($status, ['dispatching', 'receiving'])) {
+                        if ($hasReceivingLog) {
+                            $results[] = array_merge($driverData, ['jarTransportation' => 'receiving']);
+                        }
+
+                        if ($hasReceivedLog) {
+                            $results[] = array_merge($driverData, ['jarTransportation' => 'received']);
+                        }
+                    }
+                    return $results;
                 })->filter(function ($driver) use ($status) {
                     if ($status === 'dispatched') {
                         return $driver['jarTransportation'] === 'receiving';
@@ -475,21 +491,35 @@ class StockProductionController extends BaseController
                 }
 
                 $currentStatus = $driver->jarTransportation->status;
-
-                $nextStatus = match ($currentStatus) {
-                    'dispatching' => 'receiving',
-                    default => null,
-                };
-
+                if($driver->jarTransportation->allocat_quantity == 0){
+                    $nextStatus = match ($currentStatus) {
+                        'dispatching' => 'receiving',
+                        default => null,
+                    };
+                } else  {
+                    $nextStatus = match ($currentStatus) {
+                        'dispatching' => 'dispatching',
+                        default => null,
+                    };
+                }
                 if (!$nextStatus) {
                     throw new \Exception("Invalid or terminal status: $currentStatus");
                 }
 
-                $driver->jarTransportation->update(['status' => $nextStatus, 'allocat_quantity' =>DB::raw('total_quantity - '. $request->total_count) , 'allocated_quantity' => $request->total_count]);
+                $incrementAllocatedQuantity = $request->total_count;
+
+                // Perform update using DB::raw to increment existing values
+                $driver->jarTransportation->update([
+                    'status' => $nextStatus,
+                    'allocat_quantity' => DB::raw("allocat_quantity - $request->total_count"),
+                    'allocated_quantity' => DB::raw("allocated_quantity + $incrementAllocatedQuantity"),
+                ]);
+
+                // $driver->jarTransportation->update(['status' => $nextStatus, 'allocat_quantity' => DB::raw('total_quantity - '. $request->total_count) , 'allocated_quantity' => $request->total_count]);
 
                 JarTransportLog::create([
                     'jar_transportation_id' => $driver->jarTransportation->id,
-                    'action' => 'distributed',
+                    'action' => 'receiving',
                     'date' => $driver->jarTransportation->date,
                     'quantity' => $request->total_count,
                     'stocks' => json_encode($distribution),
@@ -621,7 +651,7 @@ class StockProductionController extends BaseController
                     $driver->jarTransportation->update(['status' => $nextStatus, 'allocat_quantity' =>DB::raw('total_quantity - '. $request->total_count) , 'allocated_quantity' => $request->total_count]);
                     JarTransportLog::create([
                         'jar_transportation_id' => $driver->jarTransportation->id,
-                        'action' => 'received',
+                        'action' => 'receiving',
                         'date' => $driver->jarTransportation->date,
                         'quantity' => $request->total_count,
                         'stocks' => json_encode([
