@@ -644,23 +644,34 @@ class StockProductionController extends BaseController
                 default => null,
             };
 
+            if($driver->jarTransportation->allocated_quantity == $driver->jarTransportation->total_quantity){
+                    $nextStatus = match ($currentStatus) {
+                        'receiving' => 'received',
+                        default => null,
+                    };
+                } else  {
+                    $nextStatus = match ($currentStatus) {
+                        'receiving' => 'receiving',
+                        default => null,
+                    };
+                }
+
             if (!$nextStatus) {
                 throw new \Exception("Invalid or terminal status: $currentStatus");
             }
-
-                    $driver->jarTransportation->update(['status' => $nextStatus, 'allocat_quantity' =>DB::raw('total_quantity - '. $request->total_count) , 'allocated_quantity' => $request->total_count]);
-                    JarTransportLog::create([
-                        'jar_transportation_id' => $driver->jarTransportation->id,
-                        'action' => 'receiving',
-                        'date' => $driver->jarTransportation->date,
-                        'quantity' => $request->total_count,
-                        'stocks' => json_encode([
-                            'jar_with_labels' => $jarWithLabels,
-                            'fill_jar' => $fillJar,
-                            'maintance_green_jar' => $maintanceGreenJar,
-                            'maintance_leack_jar' => $maintanceLeackJar,
-                    ]),
-                    ]);
+            $driver->jarTransportation->update(['status' => $nextStatus]);
+            JarTransportLog::create([
+                'jar_transportation_id' => $driver->jarTransportation->id,
+                'action' => 'receiving',
+                'date' => $driver->jarTransportation->date,
+                'quantity' => $request->total_count,
+                'stocks' => json_encode([
+                    'jar_with_labels' => $jarWithLabels,
+                    'fill_jar' => $fillJar,
+                    'maintance_green_jar' => $maintanceGreenJar,
+                    'maintance_leack_jar' => $maintanceLeackJar,
+                ]),
+            ]);
 
             DB::commit();
 
