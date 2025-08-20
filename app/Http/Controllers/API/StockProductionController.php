@@ -654,7 +654,7 @@ class StockProductionController extends BaseController
 
             // ✅ Determine next status
             $nextStatus = null;
-            if ($jarTransport->allocated_quantity == $jarTransport->total_quantity) {
+            if ($jarTransport->allocat_quantity == 0) {
                 $nextStatus = match ($currentStatus) {
                     'receiving' => 'received',
                     default => null,
@@ -672,7 +672,10 @@ class StockProductionController extends BaseController
             }
 
             // ✅ Update transportation status
-            $jarTransport->update(['status' => $nextStatus]);
+             $jarTransport->update([
+                'status' => $nextStatus,
+                'allocated_quantity' => DB::raw("allocated_quantity - $totalCount"),
+            ]);
 
             // ✅ Log receiving
             JarTransportLog::create([
