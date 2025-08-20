@@ -661,6 +661,7 @@ class StockProductionController extends BaseController
                 };
             } else {
                 $nextStatus = match ($currentStatus) {
+                    'dispatching' => 'dispatching',
                     'receiving' => 'receiving',
                     default => null,
                 };
