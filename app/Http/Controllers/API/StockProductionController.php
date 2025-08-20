@@ -77,63 +77,73 @@ class StockProductionController extends BaseController
             ];
 
 
-            $driverOrders = JarTransportation::with('JarLogs')->where('plant_id', $plantManagerId)
+           $driverOrders = JarTransportation::with('JarLogs')
+                ->where('plant_id', $plantManagerId)
                 ->whereNotNull('driver_id')
                 ->get();
 
             $driverOrders->each(function ($orders) use (&$data, &$driverStatusCounts) {
 
-                $status =$orders->status;
+                $status = $orders->status;
 
-                $hasReceivingLog = $orders->JarLogs->contains(function ($log) {
-                    return $log->action === 'receiving';
-                });
+                // Detect actual actions from logs
+                $hasReceivingLog = $orders->JarLogs->contains(fn($log) => $log->action === 'receiving');
+                $hasReceivedLog  = $orders->JarLogs->contains(fn($log) => $log->action === 'received');
 
-                $hasReceivedLog = $orders->JarLogs->contains(function ($log) {
-                    return $log->action === 'received';
-                });
-
-                // Count driver in their actual status
+                // Count driver status
                 if (in_array($status, ['dispatching', 'receiving', 'received'])) {
                     $driverStatusCounts[$status]++;
                 }
 
-                // Additionally count driver as 'receiving' if their log has receiving action
-                if ($status === 'dispatching' && $hasReceivingLog) {
-                    $driverStatusCounts['receiving']++;
+                // Additionally count driver as 'receiving' based on logs
+                if ($status === 'dispatching') {
+                    if ($hasReceivingLog) {
+                        $driverStatusCounts['receiving']++;
+                    }
+
+                    if ($hasReceivedLog) {
+                        $driverStatusCounts['received']++;
+                    }
                 }
 
-                if ($status === 'dispatching' && $hasReceivedLog) {
-                    $driverStatusCounts['receiving']++;
-                }
-
+                // Data calculations based on actual actions
                 switch ($status) {
                     case 'dispatching':
-                        $data['dispatching'] += $orders->allocat_quantity;
+                        $data['dispatching'] += $orders->allocated_quantity ?? 0;
+
                         if ($hasReceivingLog) {
-                            $data['dispatched'] += $orders->allocated_quantity;
-                            $data['receiving'] += $orders->allocated_quantity;
+                            $data['dispatched'] += $orders->allocated_quantity ?? 0;
+                            $data['receiving'] += $orders->allocated_quantity ?? 0;
+                        }
+
+                        if ($hasReceivedLog) {
+                            $data['dispatched'] += $orders->allocated_quantity ?? 0;
+                            $data['receiving'] += $orders->allocated_quantity ?? 0;
+                            $data['received']   += $orders->total_quantity ?? 0;
                         }
                         break;
 
                     case 'receiving':
-                        $data['dispatched'] += $orders->allocated_quantity;
-                        $data['receiving'] += $orders->allocated_quantity;
-                        if ($hasReceivingLog) {
-                            $data['dispatched'] += $orders->allocated_quantity;
-                            $data['receiving'] += $orders->allocated_quantity;
+                        $data['dispatched'] += $orders->allocated_quantity ?? 0;
+                        $data['receiving']  += $orders->allocated_quantity ?? 0;
+
+                        if ($hasReceivedLog) {
+                            $data['received'] += $orders->total_quantity ?? 0;
                         }
                         break;
 
                     case 'received':
-                        $data['received'] += $orders->total_quantity;
+                        $data['received'] += $orders->total_quantity ?? 0;
                         break;
 
                     default:
+                        // No action
                         break;
                 }
             });
+
             $data['driver_counts'] = $driverStatusCounts;
+
 
             return response()->json([
                 'status' => true,
