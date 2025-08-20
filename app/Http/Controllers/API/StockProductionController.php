@@ -77,7 +77,7 @@ class StockProductionController extends BaseController
             ];
 
 
-            $driverOrders = JarTransportation::with('JarLogs')->whereDate('date', $today)->where('plant_id', $plantManagerId)
+            $driverOrders = JarTransportation::with('JarLogs')->where('plant_id', $plantManagerId)
                 ->whereNotNull('driver_id')
                 ->get();
 
@@ -144,8 +144,7 @@ class StockProductionController extends BaseController
 
         // --- CASE 2: Status filter only ---
         if ($status) {
-                $driverOrders = JarTransportation::whereDate('date', $today)
-                    ->where('plant_id', $plantManagerId)
+                $driverOrders = JarTransportation::where('plant_id', $plantManagerId)
                     ->whereNotNull('driver_id')
                     ->get();
 
