@@ -160,6 +160,8 @@ class StockProductionController extends BaseController
                         'allocat_quantity' => $order->allocat_quantity ?? 0,
                         'allocated_quantity' => $order->allocated_quantity ?? 0,
                         'total_quantity' => $order->total_quantity ?? 0,
+                        'date' => $order->date ? Carbon::parse($order->date)->format('Y-m-d') : null,
+                        'jarTransportationId' => $order->id,
                     ];
                     $results = [];
                     $results[] = $driverData;
@@ -449,106 +451,112 @@ class StockProductionController extends BaseController
     private function dispatch($request , $id)
     {
         $validator = Validator::make($request->all(), [
-                'status' => 'required|in:dispatching',
-                "total_count" => 'required|numeric|min:1',
-                'distritute' => 'required|array|min:1',
-                'distritute.*' => 'required|numeric|min:1',
+            'jarTransportationId' => 'required|exists:jar_transportations,id',
+            'status' => 'required|in:dispatching',
+            'total_count' => 'required|numeric|min:1',
+            'distritute' => 'required|array|min:1',
+            'distritute.*' => 'required|numeric|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $plantId = $this->plantManagerId;
+            $status = $request->status;
+            $distribution = $request->distritute;
+            $totalCount = $request->total_count;
+
+            // Step 1: Deduct distributed quantity from jar stock
+            foreach ($distribution as $variantId => $qty) {
+                $stock = RawStockForPlant::where('plant_id', $plantId)
+                    ->where('raw_material_variants_id', $variantId)
+                    ->first();
+
+                if (!$stock || $stock->total_production_quantity < $qty) {
+                    throw new \Exception("Insufficient stock for variant: " . ($stock?->rawMaterialVariant->rawMaterial->name ?? 'Unknown') . " " . ($stock?->rawMaterialVariant->variant_name ?? ''));
+                }
+                $stock->decrement('total_production_quantity', $qty);
+            }
+
+            // Step 2: Update jar transportation status
+            $driver = Drivers::whereHas('jarTransportation', function ($query) use ($request) {
+                $query->where('id', $request->jarTransportationId);
+            })->find($id);
+
+            if (!$driver || !$driver->jarTransportation) {
+                throw new \Exception("Driver or transportation data not found.");
+            }
+
+            $jarTransportation = $driver->jarTransportation;
+            $currentStatus = $jarTransportation->status;
+
+            // Determine next status
+            if ($jarTransportation->allocat_quantity == 0) {
+                $nextStatus = match ($currentStatus) {
+                    'dispatching' => 'receiving',
+                    default => null,
+                };
+            } else  {
+                $nextStatus = match ($currentStatus) {
+                    'dispatching' => 'dispatching',
+                    default => null,
+                };
+            }
+
+            if (!$nextStatus) {
+                throw new \Exception("Invalid or terminal status: $currentStatus");
+            }
+
+            // Update transportation quantities
+            $jarTransportation->update([
+                'status' => $nextStatus,
+                'allocat_quantity' => DB::raw("allocat_quantity - $totalCount"),
+                'allocated_quantity' => DB::raw("allocated_quantity + $totalCount"),
             ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Validation errors',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
+            // Create log entry
+            JarTransportLog::create([
+                'jar_transportation_id' => $jarTransportation->id,
+                'action' => 'receiving',
+                'date' => $jarTransportation->date,
+                'quantity' => $totalCount,
+                'stocks' => json_encode($distribution),
+            ]);
+            DB::commit();
 
-            try {
-                DB::beginTransaction();
+            return response()->json([
+                'status' => true,
+                'message' => "Updated successfully. Status moved from $currentStatus to $nextStatus.",
+            ], 200);
 
-                $plantId = $this->plantManagerId;
-                $status = $request->status;
-                $distribution = $request->distritute;
+        } catch (\Throwable $e) {
+            DB::rollBack();
 
-                // Step 1: Deduct distributed quantity from Jar stock
-                foreach ($distribution as $variantId => $qty) {
-                    $stock = RawStockForPlant::where('plant_id', $plantId)
-                        ->where('raw_material_variants_id', $variantId)
-                        ->first();
+            Log::error('Dispatch Error: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
-                    if (!$stock || $stock->total_production_quantity < $qty) {
-                        throw new \Exception("Insufficient stock for Jar variant ID: ".$stock->rawMaterialVariant->rawMaterial->name. " ".$stock->rawMaterialVariant->variant_name);
-                    }
-                    $stock->decrement('total_production_quantity', $qty);
-                }
-
-                // Step 2: Update jarTransportation status to next step
-                $driver = Drivers::with('jarTransportation')->find($id);
-
-                if (!$driver || !$driver->jarTransportation) {
-                    throw new \Exception("Driver or transportation data not found.");
-                }
-
-                $currentStatus = $driver->jarTransportation->status;
-                if($driver->jarTransportation->allocat_quantity == 0){
-                    $nextStatus = match ($currentStatus) {
-                        'dispatching' => 'receiving',
-                        default => null,
-                    };
-                } else  {
-                    $nextStatus = match ($currentStatus) {
-                        'dispatching' => 'dispatching',
-                        default => null,
-                    };
-                }
-                if (!$nextStatus) {
-                    throw new \Exception("Invalid or terminal status: $currentStatus");
-                }
-
-                $incrementAllocatedQuantity = $request->total_count;
-
-                // Perform update using DB::raw to increment existing values
-                $driver->jarTransportation->update([
-                    'status' => $nextStatus,
-                    'allocat_quantity' => DB::raw("allocat_quantity - $request->total_count"),
-                    'allocated_quantity' => DB::raw("allocated_quantity + $incrementAllocatedQuantity"),
-                ]);
-
-                // $driver->jarTransportation->update(['status' => $nextStatus, 'allocat_quantity' => DB::raw('total_quantity - '. $request->total_count) , 'allocated_quantity' => $request->total_count]);
-
-                JarTransportLog::create([
-                    'jar_transportation_id' => $driver->jarTransportation->id,
-                    'action' => 'receiving',
-                    'date' => $driver->jarTransportation->date,
-                    'quantity' => $request->total_count,
-                    'stocks' => json_encode($distribution),
-                ]);
-                DB::commit();
-
-                return response()->json([
-                    'status' => true,
-                    'message' => "Updated successfully. Status moved from $currentStatus to $nextStatus.",
-                ], 200);
-
-            } catch (\Throwable $e) {
-                DB::rollBack();
-
-                Log::error('Production Update Error: ' . $e->getMessage(), [
-                    'user_id' => Auth::id(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
-
-                return response()->json([
-                    'status' => false,
-                    'message' => 'An error occurred while updating production data.',
-                    'error' => config('app.debug') ? $e->getMessage() : 'Please contact support.',
-                ], 500);
-            }
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while dispatching.',
+                'error' => config('app.debug') ? $e->getMessage() : 'Please contact support.',
+            ], 500);
+        }
     }
 
     private function receiving($request, $id)
     {
         $validator = Validator::make($request->all(), [
+            'jarTransportationId' => 'required|exists:jar_transportations,id',
             'status' => 'required|in:receiving',
             'total_count' => 'required|numeric|min:1',
             'fill_jar' => 'nullable|array',
@@ -574,12 +582,13 @@ class StockProductionController extends BaseController
 
             $plantId = $this->plantManagerId;
             $status = $request->status;
+            $totalCount = $request->total_count;
             $jarWithLabels = $request->jar_with_labels;
             $fillJar = $request->fill_jar ?? [];
-            $maintanceGreenJar = $request->maintance_jar_green ?? [];
-            $maintanceLeackJar = $request->maintance_jar_leack ?? [];
+            $maintGreenJar = $request->maintance_jar_green ?? [];
+            $maintLeakedJar = $request->maintance_jar_leack ?? [];
 
-            // ✅ Add to production quantity for filled jars
+            // ✅ Update stock: filled jars (production quantity)
             foreach ($fillJar as $variantId => $qty) {
                 if ($qty > 0) {
                     $stock = RawStockForPlant::firstOrNew([
@@ -591,7 +600,7 @@ class StockProductionController extends BaseController
                 }
             }
 
-            // ✅ Add to stock for labeled jars
+            // ✅ Update stock: jars with labels (total stock)
             foreach ($jarWithLabels as $variantId => $qty) {
                 if ($qty > 0) {
                     $stock = RawStockForPlant::firstOrNew([
@@ -603,8 +612,8 @@ class StockProductionController extends BaseController
                 }
             }
 
-            // ✅ Save maintenance jars (green)
-            foreach ($maintanceGreenJar as $variantId => $qty) {
+            // ✅ Log maintenance: green jars
+            foreach ($maintGreenJar as $variantId => $qty) {
                 if ($qty > 0) {
                     JarMaintance::create([
                         'plant_id' => $plantId,
@@ -617,8 +626,8 @@ class StockProductionController extends BaseController
                 }
             }
 
-            // ✅ Save maintenance jars (leak)
-            foreach ($maintanceLeackJar as $variantId => $qty) {
+            // ✅ Log maintenance: leaked jars
+            foreach ($maintLeakedJar as $variantId => $qty) {
                 if ($qty > 0) {
                     JarMaintance::create([
                         'plant_id' => $plantId,
@@ -631,44 +640,50 @@ class StockProductionController extends BaseController
                 }
             }
 
-            $driver = Drivers::with('jarTransportation')->find($id);
+            // ✅ Locate driver and transportation
+            $driver = Drivers::whereHas('jarTransportation', function ($query) use ($request) {
+                $query->where('id', $request->jarTransportationId);
+            })->find($id);
 
             if (!$driver || !$driver->jarTransportation) {
                 throw new \Exception("Driver or transportation data not found.");
             }
 
-            $currentStatus = $driver->jarTransportation->status;
-            $nextStatus = match ($currentStatus) {
-                'receiving' => 'received',
-                default => null,
-            };
+            $jarTransport = $driver->jarTransportation;
+            $currentStatus = $jarTransport->status;
 
-            if($driver->jarTransportation->allocated_quantity == $driver->jarTransportation->total_quantity){
-                    $nextStatus = match ($currentStatus) {
-                        'receiving' => 'received',
-                        default => null,
-                    };
-                } else  {
-                    $nextStatus = match ($currentStatus) {
-                        'receiving' => 'receiving',
-                        default => null,
-                    };
-                }
+            // ✅ Determine next status
+            $nextStatus = null;
+            if ($jarTransport->allocated_quantity == $jarTransport->total_quantity) {
+                $nextStatus = match ($currentStatus) {
+                    'receiving' => 'received',
+                    default => null,
+                };
+            } else {
+                $nextStatus = match ($currentStatus) {
+                    'receiving' => 'receiving',
+                    default => null,
+                };
+            }
 
             if (!$nextStatus) {
                 throw new \Exception("Invalid or terminal status: $currentStatus");
             }
-            $driver->jarTransportation->update(['status' => $nextStatus]);
+
+            // ✅ Update transportation status
+            $jarTransport->update(['status' => $nextStatus]);
+
+            // ✅ Log receiving
             JarTransportLog::create([
-                'jar_transportation_id' => $driver->jarTransportation->id,
+                'jar_transportation_id' => $jarTransport->id,
                 'action' => 'receiving',
-                'date' => $driver->jarTransportation->date,
-                'quantity' => $request->total_count,
+                'date' => $jarTransport->date,
+                'quantity' => $totalCount,
                 'stocks' => json_encode([
                     'jar_with_labels' => $jarWithLabels,
                     'fill_jar' => $fillJar,
-                    'maintance_green_jar' => $maintanceGreenJar,
-                    'maintance_leack_jar' => $maintanceLeackJar,
+                    'maintance_green_jar' => $maintGreenJar,
+                    'maintance_leack_jar' => $maintLeakedJar,
                 ]),
             ]);
 
@@ -678,17 +693,18 @@ class StockProductionController extends BaseController
                 'status' => true,
                 'message' => "Updated successfully. Status moved from $currentStatus to $nextStatus.",
             ], 200);
+
         } catch (\Throwable $e) {
             DB::rollBack();
 
-            Log::error('Production Update Error: ' . $e->getMessage(), [
+            Log::error('Receiving Error: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'status' => false,
-                'message' => 'An error occurred while updating production data.',
+                'message' => 'An error occurred while updating receiving data.',
                 'error' => config('app.debug') ? $e->getMessage() : 'Please contact support.',
             ], 500);
         }
