@@ -678,11 +678,13 @@ class StockProductionController extends BaseController
             $jarTransport->update(['status' => $nextStatus]);
 
             // ✅ Log receiving
-            JarTransportLog::create([
+            JarTransportLog::updateOrCreate([
                 'jar_transportation_id' => $jarTransport->id,
-                'action' => 'received',
                 'date' => $jarTransport->date,
                 'quantity' => $totalCount,
+            ],
+            [
+                'action' => 'received',
                 'stocks' => json_encode([
                     'jar_with_labels' => $jarWithLabels,
                     'fill_jar' => $fillJar,
