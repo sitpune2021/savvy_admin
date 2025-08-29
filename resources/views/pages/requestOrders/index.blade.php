@@ -73,7 +73,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="buttons-datatables" class="display table table-bordered" style="width:100%">
+                        <table id="orders-request-table" class="display table table-bordered" style="width:100%">
                             <thead>
                                 <tr>
                                     <th>Sr. No</th>
@@ -89,7 +89,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($contracts as $contract)
+                                {{-- @foreach ($contracts as $contract)
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $contract?->customer?->name }}</td>
@@ -133,7 +133,7 @@
                                             </span>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @endforeach --}}
                             </tbody>
                         </table>
                     </div>

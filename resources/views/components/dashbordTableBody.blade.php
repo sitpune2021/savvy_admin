@@ -1,4 +1,4 @@
-@php
+{{-- @php
     $statusClasses = [
         'cancelled' => 'bg-danger-subtle text-danger',
         'pending' => 'bg-warning-subtle text-warning',
@@ -43,4 +43,4 @@
         </td>
         <td>{{ $order->created_at->format('d-m-Y') }}</td>
     </tr>
-@endforeach
+@endforeach --}}

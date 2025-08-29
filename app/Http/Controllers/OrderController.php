@@ -15,6 +15,7 @@ use App\Models\JarTransportation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
+use Yajra\DataTables\Facades\DataTables;
 
 use Exception;
 
@@ -23,20 +24,59 @@ class OrderController extends BaseController
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-       $ordersQuery = Orders::with(['customers', 'drivers']);
-       if($this->plantManagerId) {
-            $ordersQuery = Orders::forPlantManager($this->plantManagerId);
-
-        }else{
-            if ($this->vendorId !== null) {
-                $ordersQuery = Orders::forVendor($this->vendorId, false, false);
+        if ($request->ajax()) {
+            $ordersQuery = Orders::whereHas('drivers')->with(['customers', 'drivers', 'shipping'])->orderBy('created_at', 'desc');
+            if($this->plantManagerId) {
+                $ordersQuery = Orders::forPlantManager($this->plantManagerId);
+            }else{
+                if ($this->vendorId !== null) {
+                    $ordersQuery = Orders::forVendor($this->vendorId, false, false);
+                }
             }
+                    $user = auth()->user();
+                    $serial = 0;
+
+            return DataTables::of($ordersQuery)
+                ->addColumn('order_id', function ($order) use (&$serial, $user) {
+        $serial++; // Manually increment row number
+                $icon1 = '';
+                $icon2 = '';
+
+                if ($user?->vendor?->id === null && $order->drivers?->vendor_id != null && $user?->plantManager?->id == null) {
+                    $icon1 = '<i class="ri-user-shared-line"></i>';
+                }
+                if ($order->type == 'additional') {
+                    $icon2 = '<i class="ri-shopping-cart-line"></i>';
+                }
+
+                return $serial . $icon1 . $icon2;
+            })
+                ->addColumn('customer', fn($order) => $order->customers->name ?? '')
+                ->addColumn('shipping_address', fn($order) => $order->shipping->shipping_address ?? '')
+                ->addColumn('driver', fn($order) => $order->drivers->name ?? '')
+                ->addColumn('status_label', function ($order) {
+                      $statusClasses = [
+                        'cancelled' => 'bg-danger-subtle text-danger',
+                        'pending' => 'bg-warning-subtle text-warning',
+                        'completed' => 'bg-success-subtle text-success',
+                        'in_progress' => 'bg-info-subtle text-info',
+                    ]; 
+                    return '<span class="badge ' . ($statusClasses[$order->status] ?? 'bg-secondary') . '">' .
+                        ucfirst(str_replace('_', ' ', $order->status)) .
+                        '</span>';
+                })
+                ->addColumn('date', fn($order) => $order->created_at->format('d-m-Y'))
+                ->addColumn('date_complete', fn($order) => $order->updated_at->format('d-m-Y'))
+                ->addColumn('actions', function ($order) {
+                    $Url = route('order.show', $order->id);
+                    return view('components.orderActions', compact('order', 'Url'))->render();
+                })
+                ->rawColumns(['order_id','status_label', 'actions'])
+                ->make(true);
         }
-        
-        $orders = $ordersQuery->orderBy('created_at', 'desc')->get();
-        return view('pages.order.index', compact('orders'));
+        return view('pages.order.index');
     }
 
     public function create()

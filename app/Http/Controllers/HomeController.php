@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Filesystem\Filesystem;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Yajra\DataTables\Facades\DataTables;
+
 
 class HomeController extends BaseController
 {
@@ -33,7 +35,7 @@ class HomeController extends BaseController
         $lastMonthOrders = (clone $baseQuery)->whereBetween('created_at', [$dates['startOfLastMonth'], $dates['endOfLastMonth']])->count();
         $todayOrders = (clone $baseQuery)->whereDate('created_at', $dates['today'])->count();
         $yesterdayPendingOrders = (clone $baseQuery)->whereDate('created_at', $dates['yesterday'])->where('status', 'pending')->count();
-        $allPendingOrders = (clone $baseQuery)->whereDate('created_at', '!=', $dates['today'])->where('status', 'pending')->orderBy('created_at', 'desc')->get();
+        $allPendingOrdersCount = (clone $baseQuery)->whereDate('created_at', '!=', $dates['today'])->where('status', 'pending')->orderBy('created_at', 'desc')->count();
         $todayPendingOrders = (clone $baseQuery)->whereDate('created_at', $dates['today'])->where('status', 'pending')->count();
         $todayCompletedOrders = (clone $baseQuery)->whereDate('created_at', $dates['today'])->where('status', 'completed')->count();
         $todayInProgressOrders = (clone $baseQuery)->whereDate('created_at', $dates['today'])->where('status', 'in-progress')->count();
@@ -50,41 +52,95 @@ class HomeController extends BaseController
             $ordersCountByPlant[$plantId] = $ordersCountByPlant[$plantId] ?? 0;
         }
 
-        $allPendingOrdersCount = $allPendingOrders->count();
-
         if ($this->plantManagerId || $this->vendorId) {
             $data = compact(
                 'thisMonthOrders', 'todayOrders', 'todayPendingOrders', 'allPendingOrdersCount',
                 'yesterdayPendingOrders', 'todayCompletedOrders', 'todayInProgressOrders',
                 'orderChange', 'customerChange', 'thisMonthCustomers',
-                'allPendingOrders', 'ordersCountByPlant', 'plants'
+                 'ordersCountByPlant', 'plants'
             );
         } else {
             $record = $this->getOrdersSummary($dates, $isAdmin);
-            $data = compact('record', 'allPendingOrders', 'ordersCountByPlant', 'plants');
+            $data = compact('record', 'allPendingOrdersCount', 'ordersCountByPlant', 'plants');
         }
 
-        return $request->ajax() ? response()->json($data) : view('home', $data);
+        return  view('home', $data);
     }
 
-    public function fetchPendingOrders(Request $request)
+    public function yesterdayPendingOrdersData(Request $request)
     {
+        $statusClasses = [
+            'cancelled' => 'bg-danger-subtle text-danger',
+            'pending' => 'bg-warning-subtle text-warning',
+            'completed' => 'bg-success-subtle text-success',
+            'in_progress' => 'bg-info-subtle text-info',
+        ];
+
         $dates = $this->getDateRanges();
-        $key = $request->get('key');
         $userRole = auth()->user()->role;
         $isAdmin = ($userRole === 'admin');
+        $type = $request->query('value', 'all');
+
         $baseQuery = $this->plantManagerId
             ? Orders::forPlantManager($this->plantManagerId)
-            : Orders::forVendor($this->vendorId, $isAdmin, $key );
+            : Orders::forVendor($this->vendorId, $isAdmin, $type);
 
-        // Fetch the data based on the key
-        $allPendingOrders = (clone $baseQuery)->whereDate('created_at', '!=', $dates['today'])->where('status', 'pending')->orderBy('created_at', 'desc')->get();
+        $user = auth()->user();
 
-        return response()->json([
-            'html' => view('components.dashbordTableBody', [
-                'allPendingOrders' => $allPendingOrders,
-            ])->render()
-        ]);
+        $query = (clone $baseQuery)
+            ->whereDate('created_at', '!=', $dates['today'])
+            ->where('status', 'pending')
+            ->with(['customers', 'shipping', 'drivers']) // eager load relationships
+            ->orderBy('created_at', 'desc');
+
+        return DataTables::of($query)
+            ->addColumn('order_id', function ($order) use ($user) {
+                $icon1 = '';
+                $icon2 = '';
+
+                if ($user?->vendor?->id === null && $order->drivers?->vendor_id != null && $user?->plantManager?->id == null) {
+                    $icon1 = '<i class="ri-user-shared-line"></i>';
+                }
+                if ($order->type == 'additional') {
+                    $icon2 = '<i class="ri-shopping-cart-line"></i>';
+                }
+
+                return '<a href="'.url('order/' . $order->id).'" class="fw-medium link-primary">#'.$order->id.' '.$icon1.' '.$icon2.'</a>';
+            })
+            ->addColumn('customer', function ($order) {
+                return '<div class="d-flex align-items-center"><div class="flex-grow-1"><span style="white-space: pre-wrap;">'.$order->customers->name.'</span></div></div>';
+            })
+            ->addColumn('shipping_address', function ($order) {
+                return '<div class="d-flex align-items-center"><div class="flex-grow-1"><span style="white-space: pre-wrap;">'.$order->shipping->shipping_address.'</span></div></div>';
+            })
+            ->addColumn('driver', fn($order) => $order->drivers?->name ?? '')
+            ->addColumn('delivery_quantity', fn($order) => $order->develivered_qty)
+            ->addColumn('status', function ($order) use ($statusClasses) {
+                $class = $statusClasses[$order->status] ?? 'bg-secondary-subtle text-secondary';
+                $text = ucfirst(str_replace('_', ' ', $order->status));
+                return '<span class="badge '.$class.' p-2">'.$text.'</span>';
+            })
+            ->addColumn('date', fn($order) => $order->created_at->format('d-m-Y'))
+
+            // 🔍 Make related fields searchable
+            ->filterColumn('customer', function($query, $keyword) {
+                $query->whereHas('customers', function ($q) use ($keyword) {
+                    $q->where('name', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('shipping_address', function($query, $keyword) {
+                $query->whereHas('shipping', function ($q) use ($keyword) {
+                    $q->where('shipping_address', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('driver', function($query, $keyword) {
+                $query->whereHas('drivers', function ($q) use ($keyword) {
+                    $q->where('name', 'like', "%{$keyword}%");
+                });
+            })
+
+            ->rawColumns(['order_id', 'customer', 'shipping_address', 'status']) // allow HTML
+            ->make(true);
     }
 
     private function getDateRanges()

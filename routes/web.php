@@ -100,6 +100,8 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:admin|vendor|plant-manager')->group(function () {
         Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
         Route::get('/fetch-pending-orders', [App\Http\Controllers\HomeController::class, 'fetchPendingOrders'])->name('orders.fetch');
+Route::get('/yesterday-pending-orders-data', [App\Http\Controllers\HomeController::class, 'yesterdayPendingOrdersData'])
+    ->name('yesterday.pending.orders.data');
 
         Route::resource('plant', PlantController::class);
         Route::resource('route', RouteController::class);

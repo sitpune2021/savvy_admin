@@ -166,8 +166,8 @@
                     </div>
                     <!-- end col -->
                 </div>
-                @if (count($allPendingOrders) > 0)
-                    @include('components.dashbordTable', ['allPendingOrders' => $allPendingOrders])
+                @if ($allPendingOrdersCount > 0)
+                    @include('components.dashbordTable')
                 @endif
                 <!-- end row-->
             </div>

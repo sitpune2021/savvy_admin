@@ -3,12 +3,6 @@
     $title = 'Orders - ' . config('app.name');
     $PageTitle = 'Orders List';
     $breadcrumbs = [['name' => 'Home', 'url' => url('/')], ['name' => $PageTitle, 'url' => '']];
-    $statusClasses = [
-        'cancelled' => 'bg-danger-subtle text-danger',
-        'pending' => 'bg-warning-subtle text-warning',
-        'completed' => 'bg-success-subtle text-success',
-        'in_progress' => 'bg-info-subtle text-info',
-    ];
 @endphp
 
 @push('styles')
@@ -78,7 +72,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="buttons-datatables" class="display table table-bordered" style="width:100%">
+                        <table id="orders-table" class="display table table-bordered" style="width:100%">
                             <thead>
                                 <tr>
                                     <th>Sr. No</th>
@@ -87,12 +81,13 @@
                                     <th>Driver</th>
                                     <th>Delivery Quantity</th>
                                     <th>Status</th>
-                                    <th>Date</th>
+                                    <th>Order Create Date</th>
+                                    <th>Order Completed Date </th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($orders as $order)
+                                {{-- @foreach ($orders as $order)
                                     <tr>
                                         <td>
                                             {{ $loop->iteration }}
@@ -116,14 +111,12 @@
                                         <td>{{ $order->created_at->format('d-m-Y') }}</td>
                                         <td>
                                             <div class="hstack gap-3 flex-wrap">
-                                                {{-- <a href="{{ route('order.edit', $order->id) }}" class="link-success fs-15"><i class="ri-edit-2-line"></i></a> --}}
                                                 <a href="{{ route('order.show', $order->id) }}"
                                                     class="link-primary fs-15"><i class="ri-eye-line"></i></a>
-                                                {{-- <a href="javascript:void(0);" class="link-danger fs-15"><i class="ri-delete-bin-line"></i></a> --}}
                                             </div>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @endforeach --}}
                             </tbody>
                         </table>
                     </div>

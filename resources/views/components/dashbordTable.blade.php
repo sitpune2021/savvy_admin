@@ -23,10 +23,6 @@
                             </tr>
                         </thead>
                         <tbody id="pending-orders-table-body">
-                            {{-- <div id="loader">Loading...</div> --}}
-                            @include('components.dashbordTableBody', [
-                                'allPendingOrders' => $allPendingOrders,
-                            ])
                         </tbody>
                     </table>
                     <!-- end table -->
