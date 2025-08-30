@@ -36,7 +36,7 @@ class RequestOrdersController extends Controller
                 'in-progress' => 'bg-info-subtle text-info',
             ]; 
             $form = '';
-            if ($contract->accepted_status === 'active') {
+            if ($contract->status === 'active') {
                 $form = '
                     <form action="' . route('requestOrder.update.status', $contract->id) . '" method="POST" class="status-form d-none">
                         ' . csrf_field() . method_field('PUT') . '
@@ -49,7 +49,7 @@ class RequestOrdersController extends Controller
             }
 
             return '
-                <div class="status-wrapper" ' . ($contract->accepted_status === 'active' ? 'ondblclick="toggleEdit(this)"' : '') . '>
+                <div class="status-wrapper" ' . ($contract->status === 'active' ? 'ondblclick="toggleEdit(this)"' : '') . '>
                     <span class="badge ' .  ($statusClasses[$contract->accepted_status] ?? 'bg-secondary-subtle text-secondary') . ' p-2 status-badge">' . ucfirst(str_replace('_', ' ', $status)) . '</span>
                     ' . $form . '
                 </div>';
