@@ -29,10 +29,10 @@ class OrderController extends BaseController
         if ($request->ajax()) {
             $ordersQuery = Orders::whereHas('drivers')->with(['customers', 'drivers', 'shipping'])->orderBy('created_at', 'desc');
             if($this->plantManagerId) {
-                $ordersQuery = Orders::forPlantManager($this->plantManagerId);
+                $ordersQuery = $ordersQuery->forPlantManager($this->plantManagerId);
             }else{
                 if ($this->vendorId !== null) {
-                    $ordersQuery = Orders::forVendor($this->vendorId, false, false);
+                    $ordersQuery = $ordersQuery->forVendor($this->vendorId, false, false);
                 }
             }
                     $user = auth()->user();
@@ -40,19 +40,19 @@ class OrderController extends BaseController
 
             return DataTables::of($ordersQuery)
                 ->addColumn('order_id', function ($order) use (&$serial, $user) {
-        $serial++; // Manually increment row number
-                $icon1 = '';
-                $icon2 = '';
+                    $serial++; // Manually increment row number
+                    $icon1 = '';
+                    $icon2 = '';
 
-                if ($user?->vendor?->id === null && $order->drivers?->vendor_id != null && $user?->plantManager?->id == null) {
-                    $icon1 = '<i class="ri-user-shared-line"></i>';
-                }
-                if ($order->type == 'additional') {
-                    $icon2 = '<i class="ri-shopping-cart-line"></i>';
-                }
+                    if ($user?->vendor?->id === null && $order->drivers?->vendor_id != null && $user?->plantManager?->id == null) {
+                        $icon1 = '<i class="ri-user-shared-line"></i>';
+                    }
+                    if ($order->type == 'additional') {
+                        $icon2 = '<i class="ri-shopping-cart-line"></i>';
+                    }
 
-                return $serial . $icon1 . $icon2;
-            })
+                    return $serial . $icon1 . $icon2;
+                })
                 ->addColumn('customer', fn($order) => $order->customers->name ?? '')
                 ->addColumn('shipping_address', fn($order) => $order->shipping->shipping_address ?? '')
                 ->addColumn('driver', fn($order) => $order->drivers->name ?? '')
@@ -72,6 +72,25 @@ class OrderController extends BaseController
                 ->addColumn('actions', function ($order) {
                     $Url = route('order.show', $order->id);
                     return view('components.orderActions', compact('order', 'Url'))->render();
+                })
+                ->filter(function ($query) {
+                    if (request()->has('search') && $search = request('search')['value']) {
+                        $query->where(function ($q) use ($search) {
+                            $q->where('orders.id', 'like', "%{$search}%")
+                            ->orWhere('orders.status', 'like', "%{$search}%")
+                            ->orWhereDate('orders.created_at', 'like', "%{$search}%")
+                            ->orWhereDate('orders.updated_at', 'like', "%{$search}%")
+                            ->orWhereHas('customers', function ($sub) use ($search) {
+                                $sub->where('name', 'like', "%{$search}%");
+                            })
+                            ->orWhereHas('shipping', function ($sub) use ($search) {
+                                $sub->where('shipping_address', 'like', "%{$search}%");
+                            })
+                            ->orWhereHas('drivers', function ($sub) use ($search) {
+                                $sub->where('name', 'like', "%{$search}%");
+                            });
+                        });
+                    }
                 })
                 ->rawColumns(['order_id','status_label', 'actions'])
                 ->make(true);
