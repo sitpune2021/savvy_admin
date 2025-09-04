@@ -23,13 +23,29 @@ class Orders extends Model
         'shipping_id',
         'route_id',
         'driver_id',
-        'status',
+        'status',  //'pending', 'in-progress', 'completed'
         'develivered_qty',
         'return_qty',
         'delevered_card_img',
         'return_card_img',
         'type',
+        'in_progress_at',
     ];
+
+    protected static function booted()
+    {
+        static::updating(function ($order) {
+            if ($order->isDirty('status')) {
+                $oldStatus = $order->getOriginal('status');
+                $newStatus = $order->status;
+
+                // Only set in_progress_at when changing from pending to in-progress
+                if ($oldStatus === 'pending' && $newStatus === 'in-progress') {
+                    $order->in_progress_at = now();
+                }
+            }
+        });
+    }
    
 
 

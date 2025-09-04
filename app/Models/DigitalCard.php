@@ -15,7 +15,9 @@ class DigitalCard extends Model
     protected $fillable = [
         'order_id',
         'balance',
-        'accept_by'
+        'accept_by',
+        'created_at',
+        'updated_at',
     ];
 
     public function order()
