@@ -307,7 +307,7 @@ class HomeController extends BaseController
             $customerZohiId = $customer->customer_zohi_id ?? 'unknown_zoho';
 
             $pdf = PDF::loadView('pdf.delivery_card', [
-                'cards' => collect($cardsGroup),
+                'cards' => collect($cardsGroup)->sortBy('created_at')->values(),
                 'shipping_name' => $shippingName,
                 'customer_name' => $customerName,
                 'customer_zohi_id' => $customerZohiId,
