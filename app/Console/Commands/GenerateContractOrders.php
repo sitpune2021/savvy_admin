@@ -162,7 +162,6 @@ class GenerateContractOrders extends Command
         }
 
         Log::channel('scheduler')->info('✅ Scheduler command completed at: ' . now());
-        $this->info('Orders generated successfully based on contract frequency.');
     }
 
     protected function createOrderIfNotExists($contract, Carbon $today)

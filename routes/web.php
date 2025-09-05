@@ -39,7 +39,7 @@ Route::get('/digital', function () {
 
 Route::get('/scheduler', function () {
     try {
-        Artisan::call('schedule:run');
+        Artisan::call('app:generate-contract-orders');
         $output = Artisan::output();
         return "All schedule have been run successfully! Output: " . nl2br($output);
     } catch (\Exception $e) {
@@ -48,8 +48,18 @@ Route::get('/scheduler', function () {
 });
 
 Route::get('/schedule', function () {
-    Artisan::call('schedule:run');
+    Artisan::call('app:generate-contract-orders');
     return "schedule run!";
+});
+
+Route::get('/scheduler-additional-contracts', function () {
+    try {
+        Artisan::call('app:auto-accept-additional-contracts');
+        $output = Artisan::output();
+        return "Additional Contracts schedule have been run successfully! Output: " . nl2br($output);
+    } catch (\Exception $e) {
+        return "Additional Contracts schedule failed: " . $e->getMessage();
+    }
 });
 
 Route::get('/dev/run/{action}', function ($action) {
