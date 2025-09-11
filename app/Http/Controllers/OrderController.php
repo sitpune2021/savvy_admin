@@ -53,6 +53,7 @@ class OrderController extends BaseController
 
                     return $serial . $icon1 . $icon2;
                 })
+                ->addColumn('plant', fn($order) => $order->shipping->Plant->name ?? '')
                 ->addColumn('customer', fn($order) => $order->customers->name ?? '')
                 ->addColumn('shipping_address', fn($order) => $order->shipping->shipping_address ?? '')
                 ->addColumn('driver', fn($order) => $order->drivers->name ?? '')

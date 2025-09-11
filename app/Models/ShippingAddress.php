@@ -11,6 +11,7 @@ use App\Models\Drivers;
 use App\Models\Routes;
 use App\Models\ShippingContact;
 use App\Models\ShippingContactsMultiple;
+use App\Models\Plant;
 
 class ShippingAddress extends Model
 {
@@ -51,6 +52,11 @@ class ShippingAddress extends Model
     public function driver()
     {
         return $this->belongsTo(Drivers::class, 'driver_id');
+    }
+
+    public function Plant()
+    {
+        return $this->belongsTo(Plant::class, 'plant_id');
     }
 
     protected $dates = ['deleted_at'];

@@ -6,11 +6,15 @@ use App\Http\Controllers\BaseController;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\DeliveryChallanMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\Orders;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends BaseController
 {
@@ -257,6 +261,32 @@ class OrderController extends BaseController
             }
     
             $order->save();
+
+            $data = [
+                'challan_no'       => 'CH-' . $order->id,
+                'date'             => now()->format('d-m-Y'),
+                'customer_name'    => optional($order->customers)->name,
+                'customer_address' => optional($order->shipping)->shipping_address,
+                'items'            => [
+                    [
+                        'develivered_qty' => $order->develivered_qty,
+                        'return_qty' => $order->return_qty,
+                        'balance' => strval(optional($order?->contract)->quantity),
+                    ]
+                ],
+                'driver_name'      => $order->drivers->name,
+            ];
+
+            if (!empty($order->customers?->email)) {
+                $pdf = Pdf::loadView('pdf.delivery_challan', $data)->output();
+                Mail::to($order->customers->email)->send(new DeliveryChallanMail($data, $pdf));
+            } else {
+                Log::channel('challan')->warning("Delivery challan not sent: Missing email for customer", [
+                    'order_id'    => $order->id,
+                    'customer_id' => $order->customers?->id,
+                    'customer_name' => $order->customers?->name,
+                ]);
+            }
     
             return response()->json([
                 'status' => true,

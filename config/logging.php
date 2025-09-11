@@ -122,6 +122,11 @@ return [
             'path' => storage_path('logs/scheduler.log'),
             'level' => 'info',
         ],
+        'challan' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/challan.log'),
+            'level' => 'info',
+        ],
     ],
 
 ];

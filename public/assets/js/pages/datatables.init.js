@@ -95,6 +95,7 @@ function initializeTables() {
 
     initDataTable('#orders-table', '/order', [
         { data: 'order_id', name: 'order_id', orderable: false },
+        { data: 'plant', name: 'shipping.plant.name', orderable: false },
         { data: 'customer', name: 'customers.name', orderable: false },
         { data: 'shipping_address', name: 'shipping.shipping_address', orderable: false },
         { data: 'driver', name: 'drivers.name', orderable: false },

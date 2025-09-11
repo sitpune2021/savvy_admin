@@ -350,7 +350,7 @@ class OrderController extends Controller
                 'order_id'    => $order->id,
                 'balance'     => optional($order->contract)->quantity,
                 'accept_by'   => auth()->id(),
-                'created_at'  => $order->created_at,
+                'created_at'  => $order->in_progress_at,
                 'updated_at'  => $order->updated_at,
             ]);
 

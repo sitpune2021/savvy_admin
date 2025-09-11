@@ -76,6 +76,7 @@
                             <thead>
                                 <tr>
                                     <th>Sr. No</th>
+                                    <th>Plant</th>
                                     <th>Customer</th>
                                     <th>shipping Address</th>
                                     <th>Driver</th>

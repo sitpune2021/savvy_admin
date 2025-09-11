@@ -29,8 +29,19 @@
                      <h4 class="fs-22 fw-semibold ff-secondary mb-4">
                          <span class="counter-value" data-target="{{ $thisMonthOrders }}">0</span>
                      </h4>
-                     <a href="{{ url('order') }}" class="text-decoration-underline">View all
-                         orders</a>
+                     <a href="{{ url('order') }}" class="d-flex align-items-center gap-2">
+                         <p class="fs-16 mb-0 text-muted"><i
+                                 class="mdi mdi-circle fs-14 align-middle text-success me-1"></i><span
+                                 class="counter-value" data-target="{{ $thisMonthCompletedOrders }}">0</span> </p>
+                         <p class="fs-16 mb-0 text-muted"><i
+                                 class="mdi mdi-circle fs-14 align-middle text-danger me-1"></i><span
+                                 class="counter-value" data-target="{{ $thisMonthPendingOrders }}">0</span>
+                         </p>
+                         <p class="fs-16 mb-0 text-muted"><i
+                                 class="mdi mdi-circle fs-14 align-middle text-warning me-1"></i><span
+                                 class="counter-value" data-target="{{ $thisMonthInProgressOrders }}">0</span>
+                         </p>
+                     </a>
                  </div>
                  <div class="avatar-sm flex-shrink-0">
                      <span class="avatar-title bg-info-subtle rounded fs-3">

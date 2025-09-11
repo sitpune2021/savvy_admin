@@ -33,6 +33,9 @@ class HomeController extends BaseController
 
         $thisMonthOrders = (clone $baseQuery)->whereBetween('created_at', [$dates['startOfThisMonth'], $dates['endOfThisMonth']])->count();
         $lastMonthOrders = (clone $baseQuery)->whereBetween('created_at', [$dates['startOfLastMonth'], $dates['endOfLastMonth']])->count();
+        $thisMonthPendingOrders = (clone $baseQuery)->whereBetween('created_at', [$dates['startOfThisMonth'], $dates['endOfThisMonth']])->where('status', 'pending')->count();
+        $thisMonthCompletedOrders = (clone $baseQuery)->whereBetween('created_at', [$dates['startOfThisMonth'], $dates['endOfThisMonth']])->where('status', 'completed')->count();
+        $thisMonthInProgressOrders = (clone $baseQuery)->whereBetween('created_at', [$dates['startOfThisMonth'], $dates['endOfThisMonth']])->where('status', 'in-progress')->count();
         $todayOrders = (clone $baseQuery)->whereDate('created_at', $dates['today'])->count();
         $yesterdayPendingOrders = (clone $baseQuery)->whereDate('created_at', $dates['yesterday'])->where('status', 'pending')->count();
         $allPendingOrdersCount = (clone $baseQuery)->whereDate('created_at', '!=', $dates['today'])->where('status', 'pending')->orderBy('created_at', 'desc')->count();
@@ -46,6 +49,86 @@ class HomeController extends BaseController
         $orderChange = $this->percentChange($thisMonthOrders, $lastMonthOrders);
         $customerChange = $this->percentChange($thisMonthCustomers, $lastMonthCustomers);
 
+        $savvyPlant = Plant::whereIn('name', ['warje', 'Manjri'])->get();
+        $plantWiseStats = [];
+
+        foreach ($savvyPlant as $plant) {
+            $plantQuery = (clone $baseQuery)
+            ->whereHas('shipping', function ($q) use ($plant) {
+                $q->where('plant_id', $plant->id);
+            });
+
+            $thisMonthOrders = (clone $plantQuery)
+                ->whereBetween('created_at', [$dates['startOfThisMonth'], $dates['endOfThisMonth']])
+                ->count();
+
+            $lastMonthOrders = (clone $plantQuery)
+                ->whereBetween('created_at', [$dates['startOfLastMonth'], $dates['endOfLastMonth']])
+                ->count();
+
+            $thisMonthPendingOrders = (clone $plantQuery)
+                ->whereBetween('created_at', [$dates['startOfThisMonth'], $dates['endOfThisMonth']])
+                ->where('status', 'pending')
+                ->count();
+
+            $thisMonthCompletedOrders = (clone $plantQuery)
+                ->whereBetween('created_at', [$dates['startOfThisMonth'], $dates['endOfThisMonth']])
+                ->where('status', 'completed')
+                ->count();
+
+            $thisMonthInProgressOrders = (clone $plantQuery)
+                ->whereBetween('created_at', [$dates['startOfThisMonth'], $dates['endOfThisMonth']])
+                ->where('status', 'in-progress')
+                ->count();
+
+            $todayOrders = (clone $plantQuery)
+                ->whereDate('created_at', $dates['today'])
+                ->count();
+
+            $yesterdayPendingOrders = (clone $plantQuery)
+                ->whereDate('created_at', $dates['yesterday'])
+                ->where('status', 'pending')
+                ->count();
+
+            $allPendingOrdersCount = (clone $plantQuery)
+                ->whereDate('created_at', '!=', $dates['today'])
+                ->where('status', 'pending')
+                ->count();
+
+            $todayPendingOrders = (clone $plantQuery)
+                ->whereDate('created_at', $dates['today'])
+                ->where('status', 'pending')
+                ->count();
+
+            $todayCompletedOrders = (clone $plantQuery)
+                ->whereDate('created_at', $dates['today'])
+                ->where('status', 'completed')
+                ->count();
+
+            $todayInProgressOrders = (clone $plantQuery)
+                ->whereDate('created_at', $dates['today'])
+                ->where('status', 'in-progress')
+                ->count();
+
+
+            $orderChange = $this->percentChange($thisMonthOrders, $lastMonthOrders);
+
+            $plantWiseStats[$plant->name] = [
+                'thisMonthOrders'        => $thisMonthOrders,
+                'thisMonthPendingOrders' => $thisMonthPendingOrders,
+                'thisMonthCompletedOrders'     => $thisMonthCompletedOrders,
+                'thisMonthInProgressOrders'    => $thisMonthInProgressOrders,
+                'todayOrders'            => $todayOrders,
+                'yesterdayPendingOrders'       => $yesterdayPendingOrders,
+                'allPendingOrdersCount'             => $allPendingOrdersCount,
+                'todayPendingOrders'           => $todayPendingOrders,
+                'todayCompletedOrders'         => $todayCompletedOrders,
+                'todayInProgressOrders'        => $todayInProgressOrders,
+                'orderChange'            => $orderChange,
+            ];
+        }
+
+
         list($ordersCountByPlant, $plants) = $this->getPlantOrderData($isAdmin, $type);
 
         foreach ($plants as $plantId => $plantName) {
@@ -54,14 +137,14 @@ class HomeController extends BaseController
 
         if ($this->plantManagerId || $this->vendorId) {
             $data = compact(
-                'thisMonthOrders', 'todayOrders', 'todayPendingOrders', 'allPendingOrdersCount',
+                'thisMonthOrders', 'thisMonthPendingOrders','thisMonthCompletedOrders', 'thisMonthInProgressOrders', 'todayOrders', 'todayPendingOrders', 'allPendingOrdersCount',
                 'yesterdayPendingOrders', 'todayCompletedOrders', 'todayInProgressOrders',
                 'orderChange', 'customerChange', 'thisMonthCustomers',
                  'ordersCountByPlant', 'plants'
             );
         } else {
             $record = $this->getOrdersSummary($dates, $isAdmin);
-            $data = compact('record', 'allPendingOrdersCount', 'ordersCountByPlant', 'plants');
+            $data = compact('record', 'allPendingOrdersCount', 'ordersCountByPlant', 'plants', 'plantWiseStats');
         }
 
         return  view('home', $data);
@@ -227,6 +310,9 @@ class HomeController extends BaseController
 
             $data = [
                 'thisMonthOrders' => (clone $baseQuery)->whereBetween('created_at', [$dates['startOfThisMonth'], $dates['endOfThisMonth']])->count(),
+                'thisMonthPendingOrders' => (clone $baseQuery)->whereBetween('created_at', [$dates['startOfThisMonth'], $dates['endOfThisMonth']])->where('status', 'pending')->count(),
+                'thisMonthCompletedOrders' => (clone $baseQuery)->whereBetween('created_at', [$dates['startOfThisMonth'], $dates['endOfThisMonth']])->where('status', 'completed')->count(),
+                'thisMonthInProgressOrders' => (clone $baseQuery)->whereBetween('created_at', [$dates['startOfThisMonth'], $dates['endOfThisMonth']])->where('status', 'in-progress')->count(),
                 'lastMonthOrders' => (clone $baseQuery)->whereBetween('created_at', [$dates['startOfLastMonth'], $dates['endOfLastMonth']])->count(),
                 'todayOrders' => (clone $baseQuery)->whereDate('created_at', $dates['today'])->count(),
                 'yesterdayPendingOrders' => (clone $baseQuery)->whereDate('created_at', $dates['yesterday'])->where('status', 'pending')->count(),
