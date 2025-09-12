@@ -263,18 +263,27 @@ class OrderController extends BaseController
             $order->save();
 
             $data = [
+                'order_id' => $order->id ,
                 'challan_no'       => 'CH-' . $order->id,
                 'date'             => now()->format('d-m-Y'),
                 'customer_name'    => optional($order->customers)->name,
-                'customer_address' => optional($order->shipping)->shipping_address,
+                'customer_address'    => optional($order->customers)->billing_address,
+                'c_phone_no'    => optional($order->customers)->phone_no,
+                'c_email'    => optional($order->customers)->email,
+                'shipping_address' => optional($order->shipping)->shipping_address,
+                'name' => optional($order->shipping)->contacts[0]?->shippingContact?->name ?? '',
+                'phone' => optional($order->shipping)->contacts[0]?->shippingContact?->phone ?? '',
                 'items'            => [
                     [
                         'develivered_qty' => $order->develivered_qty,
+                        'product_name' => optional($order->shipping)->Contract?->product?->name,
+                        'product_code' => optional($order->shipping)->Contract?->product?->code,
                         'return_qty' => $order->return_qty,
                         'balance' => strval(optional($order?->contract)->quantity),
                     ]
                 ],
                 'driver_name'      => $order->drivers->name,
+                'in_progress_at'      => $order->in_progress_at,
             ];
 
             if (!empty($order->customers?->email)) {

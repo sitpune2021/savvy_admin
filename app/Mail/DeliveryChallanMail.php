@@ -31,7 +31,8 @@ class DeliveryChallanMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Delivery Challan Mail',
+            //  subject: 'Delivery Challan for Your Order – [' . $this->data['order_id'] . ']'
+             subject: 'Delivery Challan for Your Order'
         );
     }
 
@@ -56,7 +57,8 @@ class DeliveryChallanMail extends Mailable
         return [
             \Illuminate\Mail\Mailables\Attachment::fromData(
                 fn () => $this->pdf,
-                'delivery-challan.pdf'
+                // 'Delivery Challan – ' . $this->data['challan_no'] . '.pdf'
+                'Delivery Challan.pdf'
             )->withMime('application/pdf'),
         ];
     }
