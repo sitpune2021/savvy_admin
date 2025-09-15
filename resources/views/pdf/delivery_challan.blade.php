@@ -248,7 +248,6 @@
                     <th>Sl No.</th>
                     <th>Item Name</th>
                     <th>HSN/SAC Code</th>
-                    <th>Delivered Quantity</th>
                     <th>Quantity</th>
                     <th>Unit</th>
                 </tr>
@@ -260,7 +259,6 @@
                         <td>{{ $item['product_name'] }}</td>
                         <td>{{ $item['product_code'] }}</td>
                         <td>{{ $item['develivered_qty'] ?? '-' }}</td>
-                        <td>{{ $item['balance'] ?? '-' }}</td>
                         <td>Jars</td>
                     </tr>
                 @endforeach
@@ -297,6 +295,11 @@
                         <p>Name: ____________________</p>
                         <p>Date: ____________________</p>
                         <p>Comment: ____________________</p>
+                        @foreach ($items as $i => $item)
+                        <p>Balance: {{ $item['balance'] ?? '-' }}</p>
+                        <p>Delivered Jar: {{ $item['develivered_qty'] ?? '-' }} </p>
+                        <p>Return Jar: {{ $item['return_qty'] ?? '-' }}</p>
+                        @endforeach
                     </td>
                     <td>
                         <p>Name: {{ $driver_name }}</p>

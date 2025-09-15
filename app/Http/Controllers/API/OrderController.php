@@ -287,12 +287,14 @@ class OrderController extends BaseController
             ];
 
             if (!empty($order->customers?->email)) {
-                $pdf = Pdf::loadView('pdf.delivery_challan', $data)->output();
-                Mail::to($order->customers->email)->send(new DeliveryChallanMail($data, $pdf));
+                if ($order->delivered_qty > 0) {
+                    $pdf = Pdf::loadView('pdf.delivery_challan', $data)->output();
+                    Mail::to($order->customers->email)->send(new DeliveryChallanMail($data, $pdf));
+                }
             } else {
-                Log::channel('challan')->warning("Delivery challan not sent: Missing email for customer", [
-                    'order_id'    => $order->id,
-                    'customer_id' => $order->customers?->id,
+                Log::channel('challan')->warning('Delivery challan not sent: Missing email for customer', [
+                    'order_id'      => $order->id,
+                    'customer_id'   => $order->customers?->id,
                     'customer_name' => $order->customers?->name,
                 ]);
             }
