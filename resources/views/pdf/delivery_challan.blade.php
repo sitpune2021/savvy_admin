@@ -248,6 +248,7 @@
                     <th>Sl No.</th>
                     <th>Item Name</th>
                     <th>HSN/SAC Code</th>
+                    <th>Delivered Quantity</th>
                     <th>Quantity</th>
                     <th>Unit</th>
                 </tr>
@@ -258,6 +259,7 @@
                         <td>{{ $i + 1 }}</td>
                         <td>{{ $item['product_name'] }}</td>
                         <td>{{ $item['product_code'] }}</td>
+                        <td>{{ $item['develivered_qty'] ?? '-' }}</td>
                         <td>{{ $item['balance'] ?? '-' }}</td>
                         <td>Jars</td>
                     </tr>
