@@ -287,7 +287,7 @@ class OrderController extends BaseController
             ];
 
             if (!empty($order->customers?->email)) {
-                if ($order->delivered_qty > 0) {
+                if ($order->develivered_qty > 0) {
                     $pdf = Pdf::loadView('pdf.delivery_challan', $data)->output();
                     Mail::to($order->customers->email)->send(new DeliveryChallanMail($data, $pdf));
                 }
