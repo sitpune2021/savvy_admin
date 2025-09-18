@@ -194,7 +194,7 @@
         @php
             $logoPath = public_path('assets/images/saavy_logo_pdf.png');
             $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-            $stampPath = public_path('assets/images/signature_stamp.png');
+            $stampPath = public_path('assets/images/signature_stamp.jpg');
             $stampBase64 = file_exists($stampPath)
                 ? 'data:image/png;base64,' . base64_encode(file_get_contents($stampPath))
                 : 'https://i.imgur.com/3Xq6XqF.png'; // fallback to URL if file missing
