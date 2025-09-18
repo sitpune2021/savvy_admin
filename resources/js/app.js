@@ -421,14 +421,14 @@ $(document).ready(function () {
 								placeholder="Enter Shipping Address" value="${data?.address?.shipping_address || ''}" ${isVender !== null ? 'disabled' : ''}>
 						</div>
 					</div>
-					<div class="col-lg-3 col-md-6 col-sm-12">
+					<div class="col-lg-6 col-md-6 col-sm-12">
 						<div class="input-block mb-3">
 							<label>Country</label>
 							<input name="shipping[${index}][shipping_country]" type="text" class="form-control"
 								placeholder="Enter Shipping Country" value="${data?.address?.shipping_country || ''}" ${isVender !== null ? 'disabled' : ''}>
 						</div>
 					</div>
-					<div class="col-lg-3 col-md-6 col-sm-12">
+					<div class="col-lg-6 col-md-6 col-sm-12">
 						<div class="input-block mb-3">
 							<label>State</label>
 							<input name="shipping[${index}][shipping_state]" type="text" class="form-control"
@@ -447,6 +447,13 @@ $(document).ready(function () {
 							<label>Pin Code</label>
 							<input name="shipping[${index}][shipping_pincode]" type="number" class="form-control"
 								placeholder="Enter Shipping Pin Code" value="${data?.address?.shipping_pincode || ''}" ${isVender !== null ? 'disabled' : ''}>
+						</div>
+					</div>
+					<div class="col-lg-6 col-md-6 col-sm-12">
+						<div class="input-block mb-3">
+							<label>PO Number</label>
+							<input name="shipping[${index}][po_no]" type="number" class="form-control"
+								placeholder="Enter PO Number" value="${data?.address?.po_no || ''}" ${isVender !== null ? 'disabled' : ''}>
 						</div>
 					</div>
 					${isVender === null ? `

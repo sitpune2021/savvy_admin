@@ -39,6 +39,7 @@ class StoreUpdateCustomerShippingRequest extends FormRequest
             'shipping.*.shipping_city' => 'required|string|max:255',
             'shipping.*.shipping_pincode' => 'required|digits:6',
             'shipping.*.machine_deployed' => 'nullable|string|max:255',
+            'shipping.*.po_no' => 'nullable',
 
             'shipping.*.shipping_contacts.*.name' => 'required|string|max:255',
             'shipping.*.shipping_contacts.*.phone' => 'required|digits:10,',

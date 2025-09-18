@@ -187,14 +187,14 @@
                                                 class="form-control" placeholder="Enter Shipping Address">
                                         </div>
                                     </div>
-                                    <div class="col-lg-3 col-md-6 col-sm-12">
+                                    <div class="col-lg-6 col-md-6 col-sm-12">
                                         <div class="input-block mb-3">
                                             <label>Country</label>
                                             <input name="shipping[0][shipping_country]" type="text"
                                                 class="form-control" placeholder="Enter Shipping Country">
                                         </div>
                                     </div>
-                                    <div class="col-lg-3 col-md-6 col-sm-12">
+                                    <div class="col-lg-6 col-md-6 col-sm-12">
                                         <div class="input-block mb-3">
                                             <label>State</label>
                                             <input name="shipping[0][shipping_state]" type="text" class="form-control"
@@ -213,6 +213,14 @@
                                             <label>Pin Code</label>
                                             <input name="shipping[0][shipping_pincode]" type="number"
                                                 class="form-control" placeholder="Enter Shipping Pin Code">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-6 col-md-6 col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>PO Number</label>
+                                            <input name="shipping[0][po_no]" type="number"
+                                                class="form-control" placeholder="Enter PO Number">
                                         </div>
                                     </div>
 

@@ -32,6 +32,7 @@ class ShippingAddress extends Model
         'machine_deployed_date',
         'type',
         'vendor_id',
+        'po_no'
     ];
 
     public function Customers()

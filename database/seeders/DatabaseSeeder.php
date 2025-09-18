@@ -6,8 +6,6 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
-use Database\Seeders\CustomerSeeder;
-use Database\Seeders\DriverSeeder;
 use Database\Seeders\MaterialSeeder;
 use Database\Seeders\MaterialVariantSeeder;
 
@@ -25,8 +23,6 @@ class DatabaseSeeder extends Seeder
         //     'password' => Hash::make('Test@123'),  // Password, hashed
         // ]);
         
-        // $this->call(CustomerSeeder::class);
-        // $this->call(DriverSeeder::class);
         $this->call(MaterialSeeder::class);
         $this->call(MaterialVariantSeeder::class);
     }
