@@ -155,7 +155,7 @@ class StockProductionController extends BaseController
                             'dispatched_quantity'  => 0,
                             'receiving_quantity'  => 0,
                             'log_id'              => null,
-                            'log_date'            => optional($order->date)->format('Y-m-d'),
+                            'date'                => Carbon::parse($order->date)->format('d-m-Y'),
                             'jarTransportationId' => $order->id,
                         ]);
                     } elseif ($dispatchedQty > 0) {
@@ -170,7 +170,7 @@ class StockProductionController extends BaseController
                             'dispatched_quantity'  => $receivedQtyTotal,
                             'receiving_quantity'  => $receivingQtyTotal,
                             'log_id'              => null,
-                            'log_date'            => optional($order->date)->format('Y-m-d'),
+                            'date'                => Carbon::parse($order->date)->format('d-m-Y'),
                             'jarTransportationId' => $order->id,
                         ]);
                     }
@@ -185,11 +185,9 @@ class StockProductionController extends BaseController
                             'driver_id' => $order->driver_id,
                             'driver_name' => $order->Driver->name ?? 'Unknown',
                             'total_quantity'      => $totalQty,
-                            'dispatching_quantity'=> $dispatchedQty,
                             'receiving_quantity' => $log->quantity ?? 0,
-                            'received_quantity'   => $receivedQtyTotal,
                             'log_id' => $log->id,
-                            'log_date' => Carbon::parse($log->date)->format('Y-m-d'),
+                            'date'                => Carbon::parse($order->date)->format('d-m-Y'),
                             'jarTransportationId' => $order->id
                         ]);
                     }
@@ -204,7 +202,7 @@ class StockProductionController extends BaseController
                             'driver_name' => $order->Driver->name ?? 'Unknown',
                             'received_quantity' => $log->quantity ?? 0,
                             'log_id' => $log->id,
-                            'log_date' => Carbon::parse($log->date)->format('Y-m-d'),
+                            'date'                => Carbon::parse($order->date)->format('d-m-Y'),
                             'jarTransportationId' => $order->id
                         ]);
                     }
@@ -220,7 +218,7 @@ class StockProductionController extends BaseController
                             'driver_name' => $order->Driver->name ?? 'Unknown',
                             'dispatched_quantity' => $log->quantity ?? 0,
                             'log_id' => $log->id,
-                            'log_date' => Carbon::parse($log->date)->format('Y-m-d'),
+                            'date'                => Carbon::parse($order->date)->format('d-m-Y'),
                             'jarTransportationId' => $order->id
                         ]);
                     }
