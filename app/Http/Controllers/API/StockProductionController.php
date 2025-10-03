@@ -139,87 +139,43 @@ class StockProductionController extends BaseController
 
                 // DISPATCHING: no logs or dispatchedQty > 0
                 if ($status === 'dispatching') {
+                    $receivingQtyTotal = $receivingLogs->sum('quantity');
+                    $receivedQtyTotal  = $receivedLogs->sum('quantity');
+                    $dispatchedQty     = $totalQty - ($receivingQtyTotal + $receivedQtyTotal);
+
                     if ($logs->isEmpty()) {
+                        // No logs at all → everything is dispatching
                         $filteredDrivers->push([
-                            'status' => 'dispatching',
-                            'driver_id' => $order->driver_id,
-                            'driver_name' => $order->Driver->name ?? 'Unknown',
-                            'total_quantity' => $totalQty,
-                            'received_quantity' => 0,
-                            'receiving_quantity' => 0,
-                            'dispatching_quantity' => $totalQty,
-                            'log_id' => null,
-                            'log_date' => $order->date ? Carbon::parse($order->date)->format('Y-m-d') : null,
-                            'jarTransportationId' => $order->id
+                            'status'              => 'dispatching',
+                            'driver_id'           => $order->driver_id,
+                            'driver_name'         => $order->Driver->name ?? 'Unknown',
+                            'total_quantity'      => $totalQty,
+                            'dispatching_quantity'=> $totalQty,
+                            'received_quantity'   => 0,
+                            'dispatched_quantity'  => 0,
+                            'receiving_quantity'  => 0,
+                            'log_id'              => null,
+                            'log_date'            => optional($order->date)->format('Y-m-d'),
+                            'jarTransportationId' => $order->id,
                         ]);
-                    } else {
-                        $cumulativeReceivingQty = 0;
-                        $cumulativeReceivedQty = 0;
-
-                        foreach ($receivingLogs as $log) {
-                            $receivingQty = 0;
-                            $receivedQty = 0;
-
-                            if ($log->action === 'receiving') {
-                                $receivingQty = $log->quantity ?? 0;
-                            } elseif ($log->action === 'received') {
-                                $receivedQty = $log->quantity ?? 0;
-                            }
-                            // Calculate dispatching quantity after subtracting received and receiving quantities so far
-                            $dispatchingQty = max(0, $totalQty - ($cumulativeReceivingQty + $cumulativeReceivedQty + $receivingQty + $receivedQty));
-
-                            if ($dispatchingQty > 0) {
-                                $filteredDrivers->push([
-                                    'status' => 'dispatching',
-                                    'driver_id' => $order->driver_id,
-                                    'driver_name' => $order->Driver->name ?? 'Unknown',
-                                    'total_quantity' => $totalQty,
-                                    'received_quantity' => $cumulativeReceivedQty + $receivedQty,
-                                    'receiving_quantity' => $cumulativeReceivingQty + $receivingQty,
-                                    'dispatched_quantity' => $cumulativeReceivingQty + $receivingQty,
-                                    'dispatching_quantity' => $dispatchingQty,
-                                    'log_id' => $log->id,
-                                    'log_date' => Carbon::parse($log->date)->format('Y-m-d'),
-                                    'jarTransportationId' => $order->id
-                                ]);
-                            }
-
-                            $cumulativeReceivingQty += $receivingQty;
-                            $cumulativeReceivedQty += $receivedQty;
-                        }
-                        foreach ($receivedLogs as $log) {
-                            $receivingQty = 0;
-                            $receivedQty = 0;
-
-                            if ($log->action === 'receiving') {
-                                $receivingQty = $log->quantity ?? 0;
-                            } elseif ($log->action === 'received') {
-                                $receivedQty = $log->quantity ?? 0;
-                            }
-                            // Calculate dispatching quantity after subtracting received and receiving quantities so far
-                            $dispatchingQty = max(0, $totalQty - ($cumulativeReceivingQty + $cumulativeReceivedQty + $receivingQty + $receivedQty));
-
-                            if ($dispatchingQty > 0) {
-                                $filteredDrivers->push([
-                                    'status' => 'dispatching',
-                                    'driver_id' => $order->driver_id,
-                                    'driver_name' => $order->Driver->name ?? 'Unknown',
-                                    'total_quantity' => $totalQty,
-                                    'received_quantity' => $cumulativeReceivedQty + $receivedQty,
-                                    'receiving_quantity' => $cumulativeReceivingQty + $receivingQty,
-                                    'dispatched_quantity' => $cumulativeReceivingQty + $receivingQty,
-                                    'dispatching_quantity' => $dispatchingQty,
-                                    'log_id' => $log->id,
-                                    'log_date' => Carbon::parse($log->date)->format('Y-m-d'),
-                                    'jarTransportationId' => $order->id
-                                ]);
-                            }
-
-                            $cumulativeReceivingQty += $receivingQty;
-                            $cumulativeReceivedQty += $receivedQty;
-                        }
+                    } elseif ($dispatchedQty > 0) {
+                        // Logs exist but total still not completed → partial dispatching
+                        $filteredDrivers->push([
+                            'status'              => 'dispatching',
+                            'driver_id'           => $order->driver_id,
+                            'driver_name'         => $order->Driver->name ?? 'Unknown',
+                            'total_quantity'      => $totalQty,
+                            'dispatching_quantity'=> $dispatchedQty,
+                            'received_quantity'   => $receivedQtyTotal,
+                            'dispatched_quantity'  => $receivedQtyTotal,
+                            'receiving_quantity'  => $receivingQtyTotal,
+                            'log_id'              => null,
+                            'log_date'            => optional($order->date)->format('Y-m-d'),
+                            'jarTransportationId' => $order->id,
+                        ]);
                     }
                 }
+
 
                 // RECEIVING: one entry per receiving log
                 if ($status === 'receiving') {
@@ -228,7 +184,10 @@ class StockProductionController extends BaseController
                             'status' => 'receiving',
                             'driver_id' => $order->driver_id,
                             'driver_name' => $order->Driver->name ?? 'Unknown',
+                            'total_quantity'      => $totalQty,
+                            'dispatching_quantity'=> $dispatchedQty,
                             'receiving_quantity' => $log->quantity ?? 0,
+                            'received_quantity'   => $receivedQtyTotal,
                             'log_id' => $log->id,
                             'log_date' => Carbon::parse($log->date)->format('Y-m-d'),
                             'jarTransportationId' => $order->id
@@ -265,22 +224,6 @@ class StockProductionController extends BaseController
                             'jarTransportationId' => $order->id
                         ]);
                     }
-
-                    // Received summary row
-                    // if ($receivedQty > 0) {
-                    //     $filteredDrivers->push([
-                    //         'status' => 'received',
-                    //         'driver_id' => $order->driver_id,
-                    //         'driver_name' => $order->Driver->name ?? 'Unknown',
-                    //         'total_quantity' => $totalQty,
-                    //         'received_quantity' => $receivedQty,
-                    //         'receiving_quantity' => 0,
-                    //         'dispatching_quantity' => $totalQty - $receivedQty,
-                    //         'log_id' => null,
-                    //         'log_date' => $order->date ? Carbon::parse($order->date)->format('Y-m-d') : null,
-                    //         'jarTransportationId' => $order->id
-                    //     ]);
-                    // }
                 }
             }
 
@@ -624,14 +567,16 @@ class StockProductionController extends BaseController
                 'allocat_quantity' => DB::raw("allocat_quantity - $totalCount"),
                 'allocated_quantity' => DB::raw("allocated_quantity + $totalCount"),
             ]);
-
+            $stocks = [
+                'receiving' => $distribution
+            ];
             // Create log entry
             JarTransportLog::create([
                 'jar_transportation_id' => $jarTransportation->id,
                 'action' => 'receiving',
                 'date' => $jarTransportation->date,
                 'quantity' => $totalCount,
-                'stocks' => json_encode($distribution),
+                'stocks' => json_encode($stocks),
             ]);
             DB::commit();
 
@@ -668,8 +613,8 @@ class StockProductionController extends BaseController
             'maintance_jar_green.*' => 'nullable|numeric',
             'maintance_jar_leack' => 'nullable|array',
             'maintance_jar_leack.*' => 'nullable|numeric',
-            // 'jar_with_labels' => 'required|array',
-            // 'jar_with_labels.*' => 'required|numeric',
+            'jar_with_labels' => 'required|array',
+            'jar_with_labels.*' => 'required|numeric',
         ]);
 
         if ($validator->fails()) {
@@ -686,7 +631,7 @@ class StockProductionController extends BaseController
             $plantId = $this->plantManagerId;
             $status = $request->status;
             $totalCount = $request->total_count;
-            // $jarWithLabels = $request->jar_with_labels;
+            $jarWithLabels = $request->jar_with_labels;
             $fillJar = $request->fill_jar ?? [];
             $maintGreenJar = $request->maintance_jar_green ?? [];
             $maintLeakedJar = $request->maintance_jar_leack ?? [];
@@ -704,16 +649,16 @@ class StockProductionController extends BaseController
             }
 
             // ✅ Update stock: jars with labels (total stock)
-            // foreach ($jarWithLabels as $variantId => $qty) {
-            //     if ($qty > 0) {
-            //         $stock = RawStockForPlant::firstOrNew([
-            //             'plant_id' => $plantId,
-            //             'raw_material_variants_id' => $variantId
-            //         ]);
-            //         $stock->total_quantity += $qty;
-            //         $stock->save();
-            //     }
-            // }
+            foreach ($jarWithLabels as $variantId => $qty) {
+                if ($qty > 0) {
+                    $stock = RawStockForPlant::firstOrNew([
+                        'plant_id' => $plantId,
+                        'raw_material_variants_id' => $variantId
+                    ]);
+                    $stock->total_quantity += $qty;
+                    $stock->save();
+                }
+            }
 
             // ✅ Log maintenance: green jars
             foreach ($maintGreenJar as $variantId => $qty) {
@@ -747,7 +692,7 @@ class StockProductionController extends BaseController
             $log = JarTransportLog::findOrFail($request->jarTransportationId);
             $existingStocks = $log->stocks ? json_decode($log->stocks, true) : [];
             $existingStocks['received'] = [
-                // 'jar_with_labels' => $jarWithLabels,
+                'jar_with_labels' => $jarWithLabels,
                 'fill_jar' => $fillJar,
                 'maintance_green_jar' => $maintGreenJar,
                 'maintance_leack_jar' => $maintLeakedJar,
