@@ -530,7 +530,7 @@ class StockProductionController extends BaseController
                 $stock->decrement('total_production_quantity', $qty);
             }
 
-            // Step 2: Update jar transportation status
+            $jarTransportation = JarTransportation::findOrFail($request->jarTransportationId);
             $driver = Drivers::whereHas('jarTransportation', function ($query) use ($request) {
                 $query->where('id', $request->jarTransportationId);
             })->find($id);
@@ -539,7 +539,6 @@ class StockProductionController extends BaseController
                 throw new \Exception("Driver or transportation data not found.");
             }
 
-            $jarTransportation = $driver->jarTransportation;
             $currentStatus = $jarTransportation->status;
 
             // Determine next status
