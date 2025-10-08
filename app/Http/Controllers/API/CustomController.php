@@ -532,20 +532,46 @@ class CustomController extends BaseController
                         return [
                             'variant_name' => optional($item->rawMaterialVariant)->variant_name,
                             'full_name' => optional($item->rawMaterialVariant->rawMaterial)->name . ' - ' . optional($item->rawMaterialVariant)->variant_name,
-                            'quantity' => $For == 'raw' ? $item->total_quantity : $item->production_date ,
+                            'quantity' => $item->total_quantity,
                         ];
                     })->values(),
                 ];
             })->values();
 
+            $jarStocks = RawStockForPlant::whereHas('rawMaterialVariant.rawMaterial', function ($query) {
+                $query->where('name', 'Jar');
+            })
+            ->when(auth()->user()->plantManager->id, function ($q) {
+                $q->where('plant_id', auth()->user()->plantManager->id);
+            })
+            ->with('rawMaterialVariant.rawMaterial')
+            ->get()
+            ->groupBy(function ($item) {
+                return optional($item->rawMaterialVariant->rawMaterial)->name;
+            })
+            ->map(function ($items, $materialName) {
+                return [
+                    'material_name' => $materialName,
+                    'variants' => $items->map(function ($item) {
+                        return [
+                            'variant_name' => optional($item->rawMaterialVariant)->variant_name,
+                            'full_name' => optional($item->rawMaterialVariant->rawMaterial)->name . ' - ' . optional($item->rawMaterialVariant)->variant_name,
+                            'quantity' => $item->total_production_quantity,
+                        ];
+                    })->values(),
+                ];
+            })->values();
+
+            $finalStock = $For == 'raw' ? $rawStockPlant : $jarStocks;
+
         // Map labelled to required structure
-        $data = $labelled->map(function($item) use ($unlabelled, $rawStockPlant) {
+        $data = $labelled->map(function($item) use ($unlabelled, $finalStock, $For) {
             $labelName = trim(str_replace('with Label - ', '', $item->variant_name));
 
             // Get grouped material types
-            $labelGroup = $rawStockPlant->firstWhere('material_name', 'Label');
-            $jarGroup   = $rawStockPlant->firstWhere('material_name', 'Jar');
-            $capGroup   = $rawStockPlant->firstWhere('material_name', 'Cap');
+            $labelGroup = $finalStock->firstWhere('material_name', 'Label');
+            $jarGroup   = $finalStock->firstWhere('material_name', 'Jar');
+            $capGroup   = $finalStock->firstWhere('material_name', 'Cap');
 
             // Initialize quantities
             $labelQty = 0;
@@ -580,7 +606,7 @@ class CustomController extends BaseController
             // 1. Cap is 0 OR
             // 2. Jar without Label is 0 OR
             // 3. (Label is 0 AND Jar with Label is 0)
-            $disable = ($capQty == 0 || ($jarQty == 0 && $labeledJarQty == 0) || ($labelQty == 0 && $labeledJarQty == 0));
+            $disable = $For == 'raw' ? ($capQty == 0 || ($jarQty == 0 && $labeledJarQty == 0) || ($labelQty == 0 && $labeledJarQty == 0)) : ($labeledJarQty == 0) ;
 
             return [
                 'label_id' => $unlabelled[$labelName]->id ?? null,
