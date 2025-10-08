@@ -501,8 +501,9 @@ class CustomController extends BaseController
         ]);
     }
 
-    public function getLabels()
+    public function getLabels(Request $request)
     {
+        $For = $request->query('for');
         $rawStock = rawMaterialVariants::whereHas('rawMaterial', function ($query) {
             $query->whereIn('name', ['Label', 'Jar']);
         })
@@ -531,7 +532,7 @@ class CustomController extends BaseController
                         return [
                             'variant_name' => optional($item->rawMaterialVariant)->variant_name,
                             'full_name' => optional($item->rawMaterialVariant->rawMaterial)->name . ' - ' . optional($item->rawMaterialVariant)->variant_name,
-                            'quantity' => $item->total_quantity,
+                            'quantity' => $For == 'raw' ? $item->total_quantity : $item->production_date ,
                         ];
                     })->values(),
                 ];
@@ -579,7 +580,7 @@ class CustomController extends BaseController
             // 1. Cap is 0 OR
             // 2. Jar without Label is 0 OR
             // 3. (Label is 0 AND Jar with Label is 0)
-$disable = ($capQty == 0 || ($jarQty == 0 && $labeledJarQty == 0) || ($labelQty == 0 && $labeledJarQty == 0));
+            $disable = ($capQty == 0 || ($jarQty == 0 && $labeledJarQty == 0) || ($labelQty == 0 && $labeledJarQty == 0));
 
             return [
                 'label_id' => $unlabelled[$labelName]->id ?? null,
