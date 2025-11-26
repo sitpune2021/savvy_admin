@@ -21,6 +21,7 @@ use App\Models\rawStockTransactions;
 use App\Models\rawMaterialVariants;
 use App\Models\RawStockLogs;
 use App\Models\JarTransportation;
+use App\Models\JarMaintance;
 
 
 use Carbon\Carbon;
@@ -439,6 +440,26 @@ class CustomController extends BaseController
                 ];
             })->values();
 
+        $GjarQty = JarMaintance::where('type', 'green-jar')->sum('qty');
+        $LjarQty = JarMaintance::where('type', 'leacked-jar')->sum('qty');
+
+        $maintenanceData = [
+            'material_name' => 'Maintenance',
+            'variants' => [
+                [
+                    'variant_name' => 'Green Jar',
+                    'full_name' => 'Green Jar',
+                    'quantity' => $GjarQty,
+                ],
+                [
+                    'variant_name' => 'Leaked Jar',
+                    'full_name' => 'Leaked Jar',
+                    'quantity' => $LjarQty,
+                ],
+            ],
+        ];
+
+        $rawStock->push($maintenanceData);
         return response()->json([
             'status' => true,
             'message' => 'Stock List retrieved successfully.',
@@ -626,5 +647,98 @@ class CustomController extends BaseController
             'data' => $data,
         ]);
 
+    }
+
+    public function getJarMaintenanceList(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|string|in:green-jar,leacked-jar',
+        ]);
+
+        $type = $request->type;
+        $jars = JarMaintance::where('type', $type)->get(['id', 'type', 'qty', 'created_at']);
+        $formattedName = ucwords(str_replace('-', ' ', $type));
+
+        return response()->json([
+            'status' => true,
+            'message' => "{$formattedName} list retrieved successfully.",
+            'data' => $jars,
+        ]);
+    }
+
+    public function deductJarQuantity(Request $request)
+    {
+        // ✅ Validate input
+        $request->validate([
+            'type' => 'required|string|in:green-jar',
+            'qty' => 'required|numeric|min:1',
+            'addition' => 'nullable|array',
+            'addition.*' => 'nullable|numeric|min:0',
+        ]);
+
+        $type = $request->type;
+        $qtyToDeduct = $request->qty;
+        $plantId = $this->plantManagerId ?? null; // Ensure plantManagerId exists
+
+        if (!$plantId) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Plant Manager ID not found.',
+            ], 400);
+        }
+
+        // ✅ Get jars of the given type (oldest first)
+        $jars = JarMaintance::where('type', $type)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $remainingToDeduct = $qtyToDeduct;
+
+        foreach ($jars as $jar) {
+            if ($remainingToDeduct <= 0) {
+                break;
+            }
+
+            if ($jar->qty <= $remainingToDeduct) {
+                // Deduct full record amount and delete jar
+                $remainingToDeduct -= $jar->qty;
+                $jar->delete();
+            } else {
+                // Partial deduction
+                $jar->qty -= $remainingToDeduct;
+                $jar->status = 'in-prgress'; // ✅ fixed typo
+                $jar->save();
+                $remainingToDeduct = 0;
+            }
+        }
+
+        // ✅ Handle additions (RawStockForPlant updates)
+        $additions = $request->addition ?? [];
+
+        foreach ($additions as $variantId => $qty) {
+            if ($qty > 0) {
+                $stock = RawStockForPlant::firstOrNew([
+                    'plant_id' => $plantId,
+                    'raw_material_variants_id' => $variantId,
+                ]);
+
+                // Initialize total_quantity if null
+                $stock->total_quantity = ($stock->total_quantity ?? 0) + $qty;
+                $stock->save();
+            }
+        }
+
+        // ✅ Prepare response
+        if ($remainingToDeduct > 0) {
+            return response()->json([
+                'status' => false,
+                'message' => "Not enough {$type} quantity to deduct {$qtyToDeduct}. Only " . ($qtyToDeduct - $remainingToDeduct) . " was deducted.",
+            ], 400);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => "{$qtyToDeduct} quantity deducted successfully from {$type}.",
+        ]);
     }
 }

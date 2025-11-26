@@ -43,7 +43,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('accept-stock/{id}', [CustomController::class, 'acceptStock']);
     Route::get('labels', [CustomController::class, 'getLabels']);
-
+    Route::get('jar-maintenance', [CustomController::class, 'getJarMaintenanceList']);
+    Route::post('deduct-jar', [CustomController::class, 'deductJarQuantity']);
     Route::resource('production', StockProductionController::class);
 });
 
