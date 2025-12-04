@@ -497,7 +497,6 @@ class CustomController extends BaseController
 
         // Update global variant stock
         $variant->decrement('total_quantity', $distribution->quantity);
-        $variant->increment('remain_quantity', $distribution->quantity);
         $variant->save();
 
         // Update plant's stock
