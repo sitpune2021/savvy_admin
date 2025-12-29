@@ -403,19 +403,20 @@ class CustomerController extends BaseController
 
         
                 
-                if (isset($shippingData['shipping_contacts']) && is_array($shippingData['shipping_contacts'])) {
+               if (isset($shippingData['shipping_contacts']) && is_array($shippingData['shipping_contacts'])) {
                     // Get existing contacts linked to this shipping address
                     $existingContacts = ShippingContactsMultiple::where('shipping_id', $address->id)
                         ->with(['shippingContact:id'])
                         ->get();
 
-                    $existingIds = $existingContacts->pluck('shippingContact.id')->filter()->toArray();
-                    $existingMultiIds = $existingContacts->pluck('id')->filter()->toArray();
+                    $existingContactIds = $existingContacts->pluck('shippingContact.id')->filter()->toArray();
+                    $existingMultiIds = $existingContacts->pluck('id')->toArray();
 
-                    $receivedIds = [];
+                    $receivedContactIds = [];
                     $receivedMultiIds = [];
 
                     foreach ($shippingData['shipping_contacts'] as $contact) {
+
                         $mode = (isset($contact['exit']) && $contact['exit'] === 'on') ? 'exit' : 'main';
 
                         if (!empty($contact['id'])) {
@@ -434,29 +435,37 @@ class CustomerController extends BaseController
                         } else {
                             $contactModel = ShippingContact::create([
                                 'customer_id' => $customer->id,
-                                // 'shipping_id' => $address->id,
                                 'name' => $contact['name'],
                                 'phone' => $contact['phone'],
                             ]);
                         }
 
-                        $receivedIds[] = $contactModel->id;
+                        $receivedContactIds[] = $contactModel->id;
 
-                        $multipleEntry = ShippingContactsMultiple::updateOrCreate(
+                        $multiple = ShippingContactsMultiple::updateOrCreate(
                             [
-                                'shipping_id' => $address->id,
-                                'shipping_contacts_id' => $contactModel->id,
+                                'shipping_id'           => $address->id,
+                                'shipping_contacts_id'  => $contactModel->id,
                             ],
                             ['mode' => $mode]
                         );
 
-                        $receivedMultiIds[] = $multipleEntry->id;
+                        $receivedMultiIds[] = $multiple->id;
                     }
 
-                    $contactsToDelete = array_diff($existingIds, $receivedIds);
+                    $multiToDelete = array_diff($existingMultiIds, $receivedMultiIds);
+
+                    if (!empty($multiToDelete)) {
+                        ShippingContactsMultiple::whereIn('id', $multiToDelete)->delete();
+                    }
+                
+                    $contactsToDelete = array_diff($existingContactIds, $receivedContactIds);
 
                     if (!empty($contactsToDelete)) {
-                        $stillReferenced = ShippingContactsMultiple::whereIn('shipping_contacts_id', $contactsToDelete)
+                        $stillReferenced = ShippingContactsMultiple::whereIn(
+                                'shipping_contacts_id',
+                                $contactsToDelete
+                            )
                             ->pluck('shipping_contacts_id')
                             ->unique()
                             ->toArray();
@@ -466,11 +475,6 @@ class CustomerController extends BaseController
                         if (!empty($safeToDelete)) {
                             ShippingContact::whereIn('id', $safeToDelete)->delete();
                         }
-                    }
-
-                    $multiToDelete = array_diff($existingMultiIds, $receivedMultiIds);
-                    if (!empty($multiToDelete)) {
-                        ShippingContactsMultiple::whereIn('id', $multiToDelete)->delete();
                     }
                 }
 
