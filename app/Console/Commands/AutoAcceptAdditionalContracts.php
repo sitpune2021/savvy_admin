@@ -32,33 +32,43 @@ class AutoAcceptAdditionalContracts extends Command
         $now = Carbon::now();
         $oneHourAgo = $now->copy()->subHour();
         $tomorrow = $now->copy()->addDay();
-
         // ✅ Log start of scheduler
-        Log::channel('scheduler')->info("🟢 START Auto-accept contracts job at {$now}");
+        Log::channel('scheduler')->info(sprintf(
+            '🟢 START Auto-accept | now=%s | tomorrow=%s | oneHourAgo=%s',
+            $now->toDateTimeString(),
+            $tomorrow->toDateTimeString(),
+            $oneHourAgo->toDateTimeString()
+        ));
 
-        // Fetch contracts to auto-accept
-        $contracts = Contracts::where('type', 'addition')
-            ->whereBetween('date', [$now->toDateString(), $tomorrow->toDateString()])
+        $contracts = Contracts::query()
+            ->where('type', 'additional')
             ->where('accepted_status', 'pending')
             ->where('status', 'active')
-            ->where('created_at', '<=', $oneHourAgo)
+            ->where('created_at', '<=', $oneHourAgo)  // only older than 1 hour
+            ->whereDate('date', '>=', $now->toDateString())
+            ->whereDate('date', '<=', $tomorrow->toDateString())
             ->get();
 
+        Log::channel('scheduler')->info(
+            'Contracts found: ' . $contracts->count()
+        );
+        
         foreach ($contracts as $contract) {
-            $contract->accepted_status = 'accepted';
-            $contract->save();
+            $contract->update(['accepted_status' => 'accepted']);
 
-            Log::channel('scheduler')->info("✅ Auto-accepted contract ID {$contract->id} at {$now}");
+            Log::channel('scheduler')->info(
+                "✅ Auto-accepted contract ID {$contract->id}"
+            );
         }
 
         // Run generate-contract-orders AFTER processing all contracts
         if ($contracts->isNotEmpty()) {
             Artisan::call('app:generate-contract-orders');
-            Log::channel('scheduler')->info("🔄 Triggered: app:generate-contract-orders at {$now}");
+            Log::channel('scheduler')->info('🔄 Triggered: app:generate-contract-orders');
         }
 
         // ✅ Log end of scheduler
-        Log::channel('scheduler')->info("🔴 END Auto-accept contracts job at " . \Carbon\Carbon::now());
+        Log::channel('scheduler')->info('🔴 END Auto-accept contracts job');
     }
 
 
