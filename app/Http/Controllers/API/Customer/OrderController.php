@@ -346,13 +346,15 @@ class OrderController extends Controller
             $order->status = 'completed';
             $order->save();
 
-            DigitalCard::create([
-                'order_id'    => $order->id,
-                'balance'     => optional($order->contract)->quantity,
-                'accept_by'   => auth()->id(),
-                'created_at'  => $order->in_progress_at,
-                'updated_at'  => $order->updated_at,
-            ]);
+            DigitalCard::updateOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'balance'     => optional($order->contract)->quantity,
+                    'accept_by'   => auth()->id(),
+                    'created_at'  => $order->in_progress_at,
+                    'updated_at'  => $order->updated_at,
+                ]
+            );
 
             return response()->json([
                 'status' => true,
