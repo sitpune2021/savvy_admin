@@ -12,34 +12,34 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Schema::create('jar_transport_driver_logs', function (Blueprint $table) {
-        //     $table->id();
-        //     $table->unsignedBigInteger('driver_id');
-        //     $table->foreign('driver_id')
-        //         ->references('id')
-        //         ->on('drivers')
-        //         ->onDelete('cascade');
+        Schema::create('jar_transport_driver_logs', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('driver_id');
+            $table->foreign('driver_id')
+                ->references('id')
+                ->on('drivers')
+                ->onDelete('cascade');
 
-        //     $table->unsignedBigInteger('jar_transport_log_id');
-        //     $table->foreign('jar_transport_log_id')
-        //         ->references('id')
-        //         ->on('jar_transport_logs')
-        //         ->onDelete('cascade');
+            $table->unsignedBigInteger('jar_transport_log_id');
+            $table->foreign('jar_transport_log_id')
+                ->references('id')
+                ->on('jar_transport_logs')
+                ->onDelete('cascade');
 
-        //     $table->enum('action', ['receiving', 'received']);
+            $table->enum('action', ['receiving', 'received']);
 
-        //     $table->enum('status', ['pending', 'accept', 'cancle'])
-        //         ->default('pending');
+            $table->enum('status', ['pending', 'accept', 'cancle'])
+                ->default('pending');
 
-        //     $table->string('remark')->nullable();
+            $table->string('remark')->nullable();
 
-        //     $table->timestamps();
+            $table->timestamps();
 
-        //     $table->unique(
-        //         ['jar_transport_log_id', 'action'],
-        //         'unique_log_action'
-        //     );
-        // });
+            $table->unique(
+                ['jar_transport_log_id', 'action'],
+                'unique_log_action'
+            );
+        });
 
 
     }

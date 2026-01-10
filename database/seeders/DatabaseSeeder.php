@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         $this->call(AppVersionSeeder::class);
-        // $this->call(MaterialSeeder::class);
-        // $this->call(MaterialVariantSeeder::class);
+        $this->call(MaterialSeeder::class);
+        $this->call(MaterialVariantSeeder::class);
     }
 }
