@@ -42,30 +42,30 @@ return new class extends Migration
         });
 
 
-        $selectQuery = DB::table('jar_transport_logs as jtl')
-            ->join('jar_transportations as jt', 'jt.id', '=', 'jtl.jar_transportation_id')
-            ->leftJoin('jar_transport_driver_logs as jtdl', function ($join) {
-                $join->on('jtdl.jar_transport_log_id', '=', 'jtl.id')
-                    ->on('jtdl.action', '=', 'jtl.action');
-            })
-            ->whereNull('jtdl.id')
-            ->select([
-                'jt.driver_id',
-                'jtl.id as jar_transport_log_id',
-                'jtl.action',
-                DB::raw("'pending' as status"),
-            ]);
+        // $selectQuery = DB::table('jar_transport_logs as jtl')
+        //     ->join('jar_transportations as jt', 'jt.id', '=', 'jtl.jar_transportation_id')
+        //     ->leftJoin('jar_transport_driver_logs as jtdl', function ($join) {
+        //         $join->on('jtdl.jar_transport_log_id', '=', 'jtl.id')
+        //             ->on('jtdl.action', '=', 'jtl.action');
+        //     })
+        //     ->whereNull('jtdl.id')
+        //     ->select([
+        //         'jt.driver_id',
+        //         'jtl.id as jar_transport_log_id',
+        //         'jtl.action',
+        //         DB::raw("'pending' as status"),
+        //     ]);
 
-        DB::table('jar_transport_driver_logs')->insertUsing(
-            [
-                'driver_id',
-                'jar_transport_log_id',
-                'action',
-                'status',
-                'remark',
-            ],
-            $selectQuery
-        );
+        // DB::table('jar_transport_driver_logs')->insertUsing(
+        //     [
+        //         'driver_id',
+        //         'jar_transport_log_id',
+        //         'action',
+        //         'status',
+        //         'remark',
+        //     ],
+        //     $selectQuery
+        // );
 
 
     }
