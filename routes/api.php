@@ -20,6 +20,7 @@ Route::post('verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('login', [AuthController::class, 'login'])->name('login');
 Route::post('verify-account', [AuthController::class, 'verifyAccount']); 
 Route::post('reset-password', [AuthController::class, 'resetPassword']); 
+Route::get('app-versions', [AuthController::class, 'appVersion']); 
 
 Route::middleware('auth:sanctum')->group(function () {
      Route::post('password', [CustomerProfileController::class, 'updatePassword']);
@@ -45,7 +46,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('labels', [CustomController::class, 'getLabels']);
     Route::get('jar-maintenance', [CustomController::class, 'getJarMaintenanceList']);
     Route::post('deduct-jar', [CustomController::class, 'deductJarQuantity']);
-    Route::resource('production', StockProductionController::class);
+    Route::resource('production', StockProductionController::class)->except(['show']);
+    Route::get('scrab-jar', [StockProductionController::class, 'scrabJar']);
 });
 
 // 👤 Customer Routes
@@ -70,6 +72,9 @@ Route::middleware('auth:driver_api')->group(function () {
     Route::resource('maintenance', MaintenanceController::class)->except([
         'create', 'edit', 'destroy', 'update', 'show'
     ]);
+
+    Route::get('jar-transportion-list', [StockProductionController::class, 'accept']);
+    Route::get('jar-transportion/{id}', [StockProductionController::class, 'acceptId']);
 });
 
 

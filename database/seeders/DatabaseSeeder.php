@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use Database\Seeders\MaterialSeeder;
 use Database\Seeders\MaterialVariantSeeder;
+use Database\Seeders\AppVersionSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,8 +23,9 @@ class DatabaseSeeder extends Seeder
         //     'role' => 'admin',  // Email of the user
         //     'password' => Hash::make('Test@123'),  // Password, hashed
         // ]);
-        
-        $this->call(MaterialSeeder::class);
-        $this->call(MaterialVariantSeeder::class);
+
+        $this->call(AppVersionSeeder::class);
+        // $this->call(MaterialSeeder::class);
+        // $this->call(MaterialVariantSeeder::class);
     }
 }

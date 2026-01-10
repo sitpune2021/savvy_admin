@@ -18,6 +18,8 @@ use App\Models\Drivers;
 use App\Models\JarMaintance;
 use App\Models\JarTransportation;
 use App\Models\JarTransportLog;
+use App\Models\JarTransportDriverLog;
+use App\Models\ScrabJar;
 use Carbon\Carbon;
 
 class StockProductionController extends BaseController
@@ -25,7 +27,7 @@ class StockProductionController extends BaseController
     /**
      * Display a listing of the resource.
      */
-   public function index(Request $request)
+    public function index(Request $request)
     {
         $status = $request->status;
         $count = $request->count;
@@ -71,6 +73,7 @@ class StockProductionController extends BaseController
             $driverOrders = JarTransportation::with('JarLogs')
                 ->where('plant_id', $plantManagerId)
                 ->whereNotNull('driver_id')
+                ->orderBy('created_at', 'desc')
                 ->get();
 
             foreach ($driverOrders as $order) {
@@ -119,9 +122,10 @@ class StockProductionController extends BaseController
 
         // --- CASE 2: Status filter only ---
         if ($status) {
-            $driverOrders = JarTransportation::with(['JarLogs', 'Driver'])
+            $driverOrders = JarTransportation::with(['JarLogs', 'JarLogs.jarTransportList', 'Driver'])
                 ->where('plant_id', $plantManagerId)
                 ->whereNotNull('driver_id')
+                ->orderBy('created_at', 'desc')
                 ->get();
 
             $filteredDrivers = collect();
@@ -155,6 +159,7 @@ class StockProductionController extends BaseController
                             'dispatched_quantity'  => 0,
                             'receiving_quantity'  => 0,
                             'log_id'              => null,
+                            'driver_action'              => null,
                             'date'                => Carbon::parse($order->date)->format('d-m-Y'),
                             'jarTransportationId' => $order->id,
                         ]);
@@ -170,6 +175,7 @@ class StockProductionController extends BaseController
                             'dispatched_quantity'  => $receivedQtyTotal,
                             'receiving_quantity'  => $receivingQtyTotal,
                             'log_id'              => null,
+                            'driver_action'              => null,
                             'date'                => Carbon::parse($order->date)->format('d-m-Y'),
                             'jarTransportationId' => $order->id,
                         ]);
@@ -187,6 +193,7 @@ class StockProductionController extends BaseController
                             'total_quantity'      => $totalQty,
                             'receiving_quantity' => $log->quantity ?? 0,
                             'log_id' => $log->id,
+                            'driver_action'  => $log->jarTransportList()->where('action', 'receiving')->value('status'),
                             'date'                => Carbon::parse($order->date)->format('d-m-Y'),
                             'jarTransportationId' => $order->id
                         ]);
@@ -202,6 +209,7 @@ class StockProductionController extends BaseController
                             'driver_name' => $order->Driver->name ?? 'Unknown',
                             'received_quantity' => $log->quantity ?? 0,
                             'log_id' => $log->id,
+                            'driver_action'  => $log->jarTransportList()->where('action', 'received')->value('status'),
                             'date'                => Carbon::parse($order->date)->format('d-m-Y'),
                             'jarTransportationId' => $order->id
                         ]);
@@ -218,6 +226,7 @@ class StockProductionController extends BaseController
                             'driver_name' => $order->Driver->name ?? 'Unknown',
                             'dispatched_quantity' => $log->quantity ?? 0,
                             'log_id' => $log->id,
+                            'driver_action'  => $log->jarTransportList()->where('action', 'receiving')->value('status'),
                             'date'                => Carbon::parse($order->date)->format('d-m-Y'),
                             'jarTransportationId' => $order->id
                         ]);
@@ -238,7 +247,6 @@ class StockProductionController extends BaseController
             'message' => 'Please provide either a count flag or a status value.',
         ], 400);
     }
-
 
     /**
      * Show the form for creating a new resource.
@@ -460,16 +468,137 @@ class StockProductionController extends BaseController
         }
     }
 
-
-
-
-
     /**
      * Display the specified resource.
      */
     public function show(string $id)
     {
-        //
+      //   
+    }
+
+    public function accept(Request $request)
+    {
+        try {
+            // Validate request query parameters
+            $request->validate([
+                'action' => 'required|string',
+                'status' => 'required|string',
+            ]);
+
+            $action = $request->query('action');
+            $status = $request->query('status');
+
+            $record = JarTransportDriverLog::where('driver_id', $this->driverId)
+                ->where('action', $action)
+                ->where('status', $status)
+                ->get()
+                ->map(function ($item) {
+
+              $variantMap = rawMaterialVariants::pluck('variant_name', 'id')->toArray();
+                $stocksData = json_decode($item->jarTransportLog->stocks, true);
+                $action = $item->action;
+
+                $actionStocks = $stocksData[$action] ?? (object)[];
+
+                return [
+                    'id' => $item->id,
+                    'driver_id' => $item->driver_id,
+                    'jar_transport_log_id' => $item->jar_transport_log_id,
+                    'action' => $item->action,
+                    'status' => $item->status,
+                    'remark' => $item->remark,
+                    'stocks' => $this->transformStocks($actionStocks, $variantMap),
+                    'created_at' => $item->created_at,
+                    'updated_at' => $item->updated_at,
+                ];
+            });
+
+            return response()->json([
+                'status'  => true,
+                'data'    => $record,
+                'message' => 'Retrieved successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Something went wrong',
+                'error'   => $e->getMessage() // remove in production if needed
+            ], 500);
+        }
+    }
+
+    private function transformStocks(array $stocks, array $variantMap): array
+    {
+        $result = [];
+        foreach ($stocks as $key => $value) {
+            if (is_numeric($key) && is_numeric($value)) {
+                $variantName = trim(last(explode('-', $variantMap[$key]?? $key)));
+                $result[$variantName] = $value;
+            }
+
+            elseif (is_array($value)) {
+                foreach ($value as $variantId => $qty) {
+                    if ($qty > 0) {
+                        $variantName = trim(last(explode('-',$variantMap[$variantId] ?? $variantId)));
+                        $result[$key][$variantName] = $qty;
+                    }
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    public function acceptId($id)
+    {
+        try {
+            $driver = JarTransportDriverLog::where('driver_id', $this->driverId)
+                ->where('id', $id)
+                ->firstOrFail();
+
+            $driver->update([
+                'status' => 'accept'
+            ]);
+
+            return response()->json([
+                'status'  => true,
+                'data'    => $driver,
+                'message' => 'Status updated successfully'
+            ], 200);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Record not found'
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Something went wrong'
+            ], 500);
+        }
+    }
+
+    public function scrabJar()
+    {
+        try {
+            $record = ScrabJar::where('plant_id', $this->plantManagerId)->get();
+
+            return response()->json([
+                'status'  => true,
+                'data'    => $record,
+                'message' => 'Retrieved successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Something went wrong',
+                'error'   => $e->getMessage() // remove in production if needed
+            ], 500);
+        }
     }
 
     /**
@@ -568,12 +697,17 @@ class StockProductionController extends BaseController
                 'receiving' => $distribution
             ];
             // Create log entry
-            JarTransportLog::create([
+            $JarTransportLog = JarTransportLog::create([
                 'jar_transportation_id' => $jarTransportation->id,
                 'action' => 'receiving',
                 'date' => $jarTransportation->date,
                 'quantity' => $totalCount,
                 'stocks' => json_encode($stocks),
+            ]);
+            JarTransportDriverLog::create([
+                'driver_id' =>$id,
+                'jar_transport_log_id'=>$JarTransportLog->id,
+                'action' => 'receiving',
             ]);
             DB::commit();
 
@@ -701,6 +835,12 @@ class StockProductionController extends BaseController
                 'stocks' => json_encode($existingStocks),
             ]);
 
+            JarTransportDriverLog::create([
+                'driver_id' =>$id,
+                'jar_transport_log_id'=>$log->id,
+                'action' => 'received',
+            ]);
+
             DB::commit();
 
             return response()->json([
@@ -723,9 +863,6 @@ class StockProductionController extends BaseController
             ], 500);
         }
     }
-
-    
-
 
     /**
      * Remove the specified resource from storage.

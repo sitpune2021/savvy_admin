@@ -12,7 +12,7 @@ class rawMaterial extends Model
 
     public function variants()
     {
-        return $this->hasMany(RawMaterialVariant::class);
+        return $this->hasMany(rawMaterialVariants::class);
     }
 
 }

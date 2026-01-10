@@ -22,7 +22,8 @@ use App\Models\rawMaterialVariants;
 use App\Models\RawStockLogs;
 use App\Models\JarTransportation;
 use App\Models\JarMaintance;
-
+use App\Models\ScrabJar;
+use Illuminate\Support\Facades\DB;
 
 use Carbon\Carbon;
 use Exception;
@@ -668,76 +669,95 @@ class CustomController extends BaseController
     public function deductJarQuantity(Request $request)
     {
         // ✅ Validate input
-        $request->validate([
-            'type' => 'required|string|in:green-jar',
-            'qty' => 'required|numeric|min:1',
-            'addition' => 'nullable|array',
-            'addition.*' => 'nullable|numeric|min:0',
+        $validated = $request->validate([
+            'type'      => 'required|string|in:green-jar,leacked-jar',
+            'qty'       => 'required|numeric|min:1',
+            'amount'    => 'nullable|numeric|min:1',
+            'addition'  => 'nullable|array',
+            'addition.*'=> 'nullable|numeric|min:0',
         ]);
 
-        $type = $request->type;
-        $qtyToDeduct = $request->qty;
-        $plantId = $this->plantManagerId ?? null; // Ensure plantManagerId exists
+        $type         = $validated['type'];
+        $qtyToDeduct  = $validated['qty'];
+        $plantId      = $this->plantManagerId ?? null;
 
         if (!$plantId) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Plant Manager ID not found.',
             ], 400);
         }
 
-        // ✅ Get jars of the given type (oldest first)
-        $jars = JarMaintance::where('type', $type)
-            ->orderBy('created_at', 'asc')
-            ->get();
+        DB::beginTransaction();
+        try {
+            $jars = JarMaintance::where('type', $type)
+                ->orderBy('created_at', 'asc')
+                ->get();
 
-        $remainingToDeduct = $qtyToDeduct;
+            $remainingToDeduct = $qtyToDeduct;
 
-        foreach ($jars as $jar) {
-            if ($remainingToDeduct <= 0) {
-                break;
+            foreach ($jars as $jar) {
+                if ($remainingToDeduct <= 0) {
+                    break;
+                }
+
+                if ($jar->qty <= $remainingToDeduct) {
+
+                    $remainingToDeduct -= $jar->qty;
+                    $jar->delete();
+                } else {
+
+                    $jar->qty -= $remainingToDeduct;
+                    $jar->status = 'in-prgress';
+                    $jar->save();
+                    $remainingToDeduct = 0;
+                }
             }
 
-            if ($jar->qty <= $remainingToDeduct) {
-                // Deduct full record amount and delete jar
-                $remainingToDeduct -= $jar->qty;
-                $jar->delete();
-            } else {
-                // Partial deduction
-                $jar->qty -= $remainingToDeduct;
-                $jar->status = 'in-prgress'; // ✅ fixed typo
-                $jar->save();
-                $remainingToDeduct = 0;
+            if ($remainingToDeduct > 0) {
+                DB::rollBack();
+                return response()->json([
+                    'status'  => false,
+                    'message' => "Not enough {$type} quantity. Requested {$qtyToDeduct}, deducted " . ($qtyToDeduct - $remainingToDeduct) . ".",
+                ], 400);
             }
-        }
 
-        // ✅ Handle additions (RawStockForPlant updates)
-        $additions = $request->addition ?? [];
+            if ($type === 'green-jar' && !empty($validated['addition'])) {
+                $additions = $validated['addition'] ?? [];
+                
+                foreach ($additions as $variantId => $qty) {
+                    if ($qty > 0) {
+                        $stock = RawStockForPlant::firstOrNew([
+                            'plant_id' => $plantId,
+                            'raw_material_variants_id' => $variantId,
+                        ]);
 
-        foreach ($additions as $variantId => $qty) {
-            if ($qty > 0) {
-                $stock = RawStockForPlant::firstOrNew([
+
+                        $stock->total_quantity = ($stock->total_quantity ?? 0) + $qty;
+                        $stock->save();
+                    }
+                }
+            }
+            if ($type === 'leacked-jar') {
+                ScrabJar::create([
                     'plant_id' => $plantId,
-                    'raw_material_variants_id' => $variantId,
+                    'qty'      => $qtyToDeduct,
+                    'amount'   => $validated['amount'] ?? 0,
                 ]);
-
-                // Initialize total_quantity if null
-                $stock->total_quantity = ($stock->total_quantity ?? 0) + $qty;
-                $stock->save();
             }
-        }
-
-        // ✅ Prepare response
-        if ($remainingToDeduct > 0) {
+            DB::commit();
             return response()->json([
-                'status' => false,
-                'message' => "Not enough {$type} quantity to deduct {$qtyToDeduct}. Only " . ($qtyToDeduct - $remainingToDeduct) . " was deducted.",
-            ], 400);
-        }
+                'status'  => true,
+                'message' => "{$qtyToDeduct} quantity deducted successfully from {$type}.",
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
 
-        return response()->json([
-            'status' => true,
-            'message' => "{$qtyToDeduct} quantity deducted successfully from {$type}.",
-        ]);
+            return response()->json([
+                'status'  => false,
+                'message' => 'Something went wrong.',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
     }
 }

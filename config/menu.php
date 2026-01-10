@@ -111,5 +111,11 @@ return [
         'url' => 'reasons',
         'icon' => 'ri-dashboard-2-line',
         'roles' => ['admin'],
+    ],
+    [
+        'label' => 'Reports',
+        'url' => 'reports',
+        'icon' => 'ri-dashboard-2-line',
+        'roles' => ['admin'],
     ]
 ];

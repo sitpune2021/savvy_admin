@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\ShippingContact;
 use Illuminate\Support\Facades\Hash;
+use App\Models\AppVersion;
 
 class AuthController extends Controller
 {
@@ -484,5 +485,21 @@ class AuthController extends Controller
     protected function guard()
     {
         return Auth::guard(); // defaults to 'web'
+    }
+
+    
+    public function appVersion(Request $request)
+    {
+        $request->validate([
+            'for' => 'required|string|in:vendor,customer,driver,plant',
+            'platform' => 'required|string|in:android,ios',
+        ]);
+        $for = $request->for;
+        $platform = $request->platform;
+        $version = AppVersion::where('platform', $platform)->where('for', $for)->get();
+        return response()->json([
+            'status' => true,
+            'data' => $version,
+        ]);
     }
 }

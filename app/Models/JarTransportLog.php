@@ -23,6 +23,11 @@ class JarTransportLog extends Model
         return $this->belongsTo(JarTransportation::class, 'jar_transportation_id');
     }
 
+    public function jarTransportList()
+    {
+        return $this->hasMany(JarTransportDriverLog::class, 'jar_transport_log_id');
+    }
+
     protected $casts = [
         'stocks' => 'array', // Assuming stocks is stored as a JSON array
         'date' => 'date', // Cast date to Carbon instance

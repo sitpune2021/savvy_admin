@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\ReasonsController;
 use App\Http\Controllers\RawMaterialsStockController;
+use App\Http\Controllers\ReportsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -136,7 +137,10 @@ Route::get('/yesterday-pending-orders-data', [App\Http\Controllers\HomeControlle
         Route::resource('maintenance', MaintenanceController::class);
         Route::resource('vendor', VendorController::class);
         Route::resource('reasons', ReasonsController::class);
+Route::post('reports/export', [ReportsController::class, 'reports'])
+    ->name('reports.export');
 
+        Route::resource('reports', ReportsController::class);
         Route::put('/request-order/{id}/status', [RequestOrdersController::class, 'updateStatus'])->name('requestOrder.update.status');
         Route::put('/maintenance/{id}/status', [MaintenanceController::class, 'updateStatus'])->name('maintenance.update.status');
         Route::put('customer/{id}/shipping-address', [CustomerController::class, 'storeUpdateShippingAddress'])->name('customer.store-update-shipping-address');

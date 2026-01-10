@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Orders;
+use App\Models\Plant;
 
 
 class Drivers extends Authenticatable
@@ -42,6 +43,11 @@ class Drivers extends Authenticatable
         return $this->belongsTo(Routes::class, 'route_id');
     }
 
+     public function plants()
+    {
+        return $this->belongsTo(Plant::class, 'plant_id');
+    }
+
     public function orders()
     {
         return $this->hasMany(Orders::class, 'driver_id');
@@ -50,6 +56,11 @@ class Drivers extends Authenticatable
     public function jarTransportation()
     {
         return $this->hasOne(JarTransportation::class, 'driver_id');
+    }
+
+    public function jarTransportations()
+    {
+        return $this->hasmany(JarTransportation::class, 'driver_id');
     }
 
     
