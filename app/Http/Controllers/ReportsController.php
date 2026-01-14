@@ -27,17 +27,17 @@ class ReportsController extends Controller
             return $this->fuelReport($request);        
         }
         else{
- 
 
-    $startDate = Carbon::parse($request->start_date)->startOfDay();
-    $endDate   = Carbon::parse($request->end_date)->endOfDay();
 
-    $fileName = 'Delivery_MIS_Report_' . now()->format('Ymd_His') . '.xlsx';
+            $startDate = Carbon::parse($request->start_date)->startOfDay();
+            $endDate   = Carbon::parse($request->end_date)->endOfDay();
 
-    return Excel::download(
-        new DeliveryMisExport($startDate, $endDate),
-        $fileName
-    );
+            $fileName = 'Delivery_MIS_Report_' . now()->format('Ymd_His') . '.xlsx';
+            
+            return Excel::download(
+                new DeliveryMisExport($startDate, $endDate),
+                $fileName
+            );
         }
     }
 
