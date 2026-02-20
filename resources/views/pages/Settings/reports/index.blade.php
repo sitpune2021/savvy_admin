@@ -131,6 +131,11 @@
                             <select id="report_type" name="report_type" class="form-select" required>
                                 <option value="fuel">Fuel</option>
                                 <option value="mis">Delivery MIS</option>
+                                <option value="driver_wise_summery">Driver Wise Summery</option>
+                                <option value="date_wise_summery">Date Wise Summery</option>
+                                <option value="plant_wise_summery">Plant Wise Summery</option>
+                                <option value="customers_wise_summery">Customers Wise Summery</option>
+
                             </select>
                         </div>
 

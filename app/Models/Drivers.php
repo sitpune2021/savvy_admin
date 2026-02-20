@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Orders;
 use App\Models\Plant;
+use App\Models\JarMaintance;
 
 
 class Drivers extends Authenticatable
@@ -61,6 +62,11 @@ class Drivers extends Authenticatable
     public function jarTransportations()
     {
         return $this->hasmany(JarTransportation::class, 'driver_id');
+    }
+
+    public function jarMaintance()
+    {
+        return $this->hasmany(JarMaintance::class, 'driver_id');
     }
 
     

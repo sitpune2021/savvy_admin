@@ -8,6 +8,11 @@ use App\Models\Maintenance;
 use App\Models\Orders;
 use Carbon\Carbon;
 use App\Exports\DeliveryMisExport;
+use App\Exports\DriverWiseExport;
+use App\Exports\DateWiseExport;
+use App\Exports\PlantWiseExport;
+use App\Exports\CustomersWiseExport;
+
 use Maatwebsite\Excel\Facades\Excel;
 
 
@@ -23,23 +28,49 @@ class ReportsController extends Controller
 
     public function reports(Request $request)
     {
-        if($request->report_type == 'fuel'){
-            return $this->fuelReport($request);        
-        }
-        else{
+        $request->validate([
+            'report_type' => 'required|string',
+            'start_date'  => 'required|date',
+            'end_date'    => 'required|date',
+        ]);
 
+        $startDate = Carbon::parse($request->start_date)->startOfDay();
+        $endDate   = Carbon::parse($request->end_date)->endOfDay();
 
-            $startDate = Carbon::parse($request->start_date)->startOfDay();
-            $endDate   = Carbon::parse($request->end_date)->endOfDay();
+        return match ($request->report_type) {
 
-            $fileName = 'Delivery_MIS_Report_' . now()->format('Ymd_His') . '.xlsx';
-            
-            return Excel::download(
+            'fuel' => $this->fuelReport($request),
+
+            'mis' => Excel::download(
                 new DeliveryMisExport($startDate, $endDate),
-                $fileName
-            );
-        }
+                'Delivery_MIS_Report_' . now()->format('Ymd_His') . '.xlsx'
+            ),
+
+            'driver_wise_summery' => Excel::download(
+                new DriverWiseExport($startDate, $endDate),
+                'Driver_Wise_Summery_Report_' . now()->format('Ymd_His') . '.xlsx'
+            ),
+            
+            'date_wise_summery' => Excel::download(
+                new DateWiseExport($startDate, $endDate),
+                'Date_Wise_Summery_Report_' . now()->format('Ymd_His') . '.xlsx'
+            ),
+            'plant_wise_summery' => Excel::download(
+                new PlantWiseExport($startDate, $endDate),
+                'Plant_Wise_Summery_Report_' . now()->format('Ymd_His') . '.xlsx'
+            ),
+            'customers_wise_summery' => Excel::download(
+                new CustomersWiseExport($startDate, $endDate),
+                'Customers_Wise_Summery_Report_' . now()->format('Ymd_His') . '.xlsx'
+            ),
+            
+
+            default => response()->json([
+                'message' => 'Invalid report type'
+            ], 422),
+        };
     }
+
 
     private function fuelReport(Request $request)
     {
