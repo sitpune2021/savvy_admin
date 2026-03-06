@@ -346,14 +346,31 @@ class OrderController extends Controller
             $order->status = 'completed';
             $order->save();
 
+            $lastCard = DigitalCard::whereHas('order', function ($q) use ($order) {
+                $q->where('customer_id', $order->customer_id);
+            })->latest()->first();
+
+            $previousBalance = $lastCard
+                ? $lastCard->balance
+                : optional($order->contract)->quantity;
+
+            $delivered = $order->develivered_qty ?? 0;
+            $returned  = $order->return_qty ?? 0;
+
+            $newBalance = $previousBalance + $delivered - $returned;
+
+            if ($newBalance < 0) {
+                $newBalance = 0;
+            }
+
             DigitalCard::updateOrCreate(
                 ['order_id' => $order->id],
                 [
-                    'balance'     => optional($order->contract)->quantity,
-                    'accept_by'   => auth()->id(),
-                    'created_at'  => $order->in_progress_at,
-                    'updated_at'  => $order->updated_at,
-                ]
+                'balance'   => $newBalance,
+                'accept_by' => auth()->id(),
+                'created_at'  => $order->in_progress_at,
+                'updated_at'  => $order->updated_at,
+            ]
             );
 
             return response()->json([

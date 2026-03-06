@@ -203,11 +203,13 @@ class StockProductionController extends BaseController
                 // RECEIVED: grouped as one row
                 if ($status === 'received') {
                     foreach ($receivedLogs as $log) {
+                        $stocks = json_decode($log->stocks, true);
+                        $receivedQty = $stocks['received']['returned_total'] ?? 0;
                         $filteredDrivers->push([
                             'status' => 'received',
                             'driver_id' => $order->driver_id,
                             'driver_name' => $order->Driver->name ?? 'Unknown',
-                            'received_quantity' => $log->quantity ?? 0,
+                            'received_quantity' => $receivedQty,
                             'log_id' => $log->id,
                             'driver_action'  => $log->jarTransportList()->where('action', 'received')->value('status'),
                             'date'                => Carbon::parse($order->date)->format('d-m-Y'),
@@ -737,7 +739,7 @@ class StockProductionController extends BaseController
         $validator = Validator::make($request->all(), [
             'jarTransportationId' => 'required|exists:jar_transport_logs,id',
             'status' => 'required|in:receiving',
-            'total_count' => 'required|numeric|min:1',
+            'total_count' => 'required|numeric|min:0',
             'fill_jar' => 'nullable|array',
             'fill_jar.*' => 'nullable|numeric',
             'maintance_jar_green' => 'nullable|array',
@@ -767,7 +769,12 @@ class StockProductionController extends BaseController
             $maintGreenJar = $request->maintance_jar_green ?? [];
             $maintLeakedJar = $request->maintance_jar_leack ?? [];
 
-            // ✅ Update stock: filled jars (production quantity)
+            $returnedTotal =
+                array_sum($jarWithLabels) +
+                array_sum($fillJar) +
+                array_sum($maintGreenJar) +
+                array_sum($maintLeakedJar);
+
             foreach ($fillJar as $variantId => $qty) {
                 if ($qty > 0) {
                     $stock = RawStockForPlant::firstOrNew([
@@ -827,6 +834,8 @@ class StockProductionController extends BaseController
                 'fill_jar' => $fillJar,
                 'maintance_green_jar' => $maintGreenJar,
                 'maintance_leack_jar' => $maintLeakedJar,
+                'returned_total' => $returnedTotal,
+                'expected_total' => $request->total_count
             ];
 
             // Update with the new JSON
@@ -836,8 +845,8 @@ class StockProductionController extends BaseController
             ]);
 
             JarTransportDriverLog::create([
-                'driver_id' =>$id,
-                'jar_transport_log_id'=>$log->id,
+                'driver_id' => $id,
+                'jar_transport_log_id' => $log->id,
                 'action' => 'received',
             ]);
 
@@ -845,7 +854,7 @@ class StockProductionController extends BaseController
 
             return response()->json([
                 'status' => true,
-                'message' => "Updated successfully. Status moved from receiving to received.",
+                'message' => "Receiving completed successfully.",
             ], 200);
 
         } catch (\Throwable $e) {
