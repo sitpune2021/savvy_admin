@@ -467,59 +467,75 @@ class CustomController extends BaseController
             'data' => $rawStock,
         ]);
     }
-    
+
     public function acceptStock($id)
     {
-        $user = auth()->user();
-        $plantId = $user->plantManager->id;
+        try {
+            $user = auth()->user();
+            $plantId = $user->plantManager->id;
 
-        $distribution = RawDistributions::findOrFail($id);
+            $distribution = RawDistributions::findOrFail($id);
 
-        // ✅ Ensure the distribution belongs to the same plant
-        if ((int) $distribution->plant_id !== (int) $plantId) {
+            // ✅ Ensure the distribution belongs to the same plant
+            if ((int) $distribution->plant_id !== (int) $plantId) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'You are not authorized to accept this distribution.',
+                ], 403);
+            }
+
+            $transaction = rawStockTransactions::findOrFail((int) $distribution->raw_stock_transactions_id);
+            $variant = rawMaterialVariants::findOrFail((int) $transaction->raw_material_variant_id);
+
+            $plantStock = RawStockForPlant::where([
+                'plant_id' => $plantId,
+                'raw_material_variants_id' => $variant->id,
+            ])->firstOrFail();
+            // Mark distribution as accepted
+            $distribution->status = 'accepted';
+            $distribution->accepted_at = now();
+            $distribution->save();
+
+
+            // Update global variant stock
+            $variant->decrement('total_quantity', $distribution->quantity);        
+            $variant->save();
+
+            // Update plant's stock
+            $plantStock->increment('total_quantity', $distribution->quantity);
+            $plantStock->save();
+
+            // Log the stock acceptance
+            RawStockLogs::create([
+                'raw_material_id' => $variant->raw_material_id,
+                'user_id' => $user->id,
+                'plant_id' => $plantId,
+                'action' => 'acceptance',
+                'quantity' => $distribution->quantity,
+                'note' => 'Accepted distribution to plant',
+                'action_time' => now(),
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Stock accepted successfully.',
+                'data' => $distribution,
+            ]);
+
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'status' => false,
-                'message' => 'You are not authorized to accept this distribution.',
-            ], 403);
+                'message' => 'Record not found.',
+                'error' => $e->getMessage(),
+            ], 404);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong.',
+                'error' => $e->getMessage(), // remove in production if needed
+            ], 500);
         }
-
-        $transaction = rawStockTransactions::findOrFail((int) $distribution->raw_stock_transactions_id);
-        $variant = rawMaterialVariants::findOrFail((int) $transaction->raw_material_variant_id);
-
-        $plantStock = RawStockForPlant::where([
-            'plant_id' => $plantId,
-            'raw_material_variants_id' => $variant->id,
-        ])->firstOrFail();
-          // Mark distribution as accepted
-        $distribution->status = 'accepted';
-        $distribution->accepted_at = now();
-        $distribution->save();
-
-
-        // Update global variant stock
-        $variant->decrement('total_quantity', $distribution->quantity);
-        $variant->save();
-
-        // Update plant's stock
-        $plantStock->increment('total_quantity', $distribution->quantity);
-        $plantStock->save();
-
-        // Log the stock acceptance
-        RawStockLogs::create([
-            'raw_material_id' => $variant->raw_material_id,
-            'user_id' => $user->id,
-            'plant_id' => $plantId,
-            'action' => 'acceptance',
-            'quantity' => $distribution->quantity,
-            'note' => 'Accepted distribution to plant',
-            'action_time' => now(),
-        ]);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Stock accepted successfully.',
-            'data' => $distribution,
-        ]);
     }
 
     public function getLabels(Request $request)
