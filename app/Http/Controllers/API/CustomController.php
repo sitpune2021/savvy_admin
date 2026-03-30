@@ -474,10 +474,13 @@ class CustomController extends BaseController
             $user = auth()->user();
             $plantId = $user->plantManager->id;
 
-            $distribution = RawDistributions::findOrFail($id);
+            DB::beginTransaction();
+
+            $distribution = RawDistributions::lockForUpdate()->findOrFail($id);
 
             // ✅ Ensure the distribution belongs to the same plant
             if ((int) $distribution->plant_id !== (int) $plantId) {
+                DB::rollBack();
                 return response()->json([
                     'status' => false,
                     'message' => 'You are not authorized to accept this distribution.',
@@ -490,7 +493,7 @@ class CustomController extends BaseController
             $plantStock = RawStockForPlant::where([
                 'plant_id' => $plantId,
                 'raw_material_variants_id' => $variant->id,
-            ])->firstOrFail();
+            ])->lockForUpdate()->firstOrFail();
             // Mark distribution as accepted
             $distribution->status = 'accepted';
             $distribution->accepted_at = now();
@@ -498,11 +501,11 @@ class CustomController extends BaseController
 
 
             // Update global variant stock
-            $variant->decrement('total_quantity', $distribution->quantity);        
+            $variant->decrement('total_quantity', (int) $distribution->quantity);        
             $variant->save();
 
             // Update plant's stock
-            $plantStock->increment('total_quantity', $distribution->quantity);
+            $plantStock->increment('total_quantity', (int) $distribution->quantity);
             $plantStock->save();
 
             // Log the stock acceptance
@@ -516,6 +519,8 @@ class CustomController extends BaseController
                 'action_time' => now(),
             ]);
 
+            DB::commit();
+
             return response()->json([
                 'status' => true,
                 'message' => 'Stock accepted successfully.',
@@ -523,17 +528,18 @@ class CustomController extends BaseController
             ]);
 
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json([
                 'status' => false,
                 'message' => 'Record not found.',
-                'error' => $e->getMessage(),
             ], 404);
 
         } catch (Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong.',
-                'error' => $e->getMessage(), // remove in production if needed
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
