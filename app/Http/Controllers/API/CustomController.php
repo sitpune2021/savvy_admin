@@ -19,7 +19,7 @@ use App\Models\rawDistributions;
 use App\Models\RawStockForPlant;
 use App\Models\rawStockTransactions;
 use App\Models\rawMaterialVariants;
-use App\Models\RawStockLogs;
+use App\Models\rawStockLogs;
 use App\Models\JarTransportation;
 use App\Models\JarMaintance;
 use App\Models\ScrabJar;
@@ -509,7 +509,7 @@ class CustomController extends BaseController
             $plantStock->save();
 
             // Log the stock acceptance
-            RawStockLogs::create([
+            rawStockLogs::create([
                 'raw_material_id' => $variant->raw_material_id,
                 'user_id' => $user->id,
                 'plant_id' => $plantId,
