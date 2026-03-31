@@ -476,7 +476,7 @@ class CustomController extends BaseController
 
             DB::beginTransaction();
 
-            $distribution = RawDistributions::lockForUpdate()->findOrFail($id);
+            $distribution = RawDistributions::findOrFail($id);
 
             // ✅ Ensure the distribution belongs to the same plant
             if ((int) $distribution->plant_id !== (int) $plantId) {
@@ -493,7 +493,7 @@ class CustomController extends BaseController
             $plantStock = RawStockForPlant::where([
                 'plant_id' => $plantId,
                 'raw_material_variants_id' => $variant->id,
-            ])->lockForUpdate()->firstOrFail();
+            ])->firstOrFail();
             // Mark distribution as accepted
             $distribution->status = 'accepted';
             $distribution->accepted_at = now();
