@@ -60,6 +60,11 @@ class ShippingAddress extends Model
         return $this->belongsTo(Plant::class, 'plant_id');
     }
 
+    public function dispensary()
+    {
+        return $this->hasMany(MachineDispensary::class, 'shipping_id');
+    }
+
     protected $dates = ['deleted_at'];
 
 

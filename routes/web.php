@@ -17,6 +17,9 @@ use App\Http\Controllers\VendorController;
 use App\Http\Controllers\ReasonsController;
 use App\Http\Controllers\RawMaterialsStockController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\LabReportController;
+use App\Http\Controllers\DistributorController;
+                            
 
 /*
 |--------------------------------------------------------------------------
@@ -111,9 +114,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:admin|vendor|plant-manager')->group(function () {
         Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
         Route::get('/fetch-pending-orders', [App\Http\Controllers\HomeController::class, 'fetchPendingOrders'])->name('orders.fetch');
-Route::get('/yesterday-pending-orders-data', [App\Http\Controllers\HomeController::class, 'yesterdayPendingOrdersData'])
-    ->name('yesterday.pending.orders.data');
-
+        Route::get('/yesterday-pending-orders-data', [App\Http\Controllers\HomeController::class, 'yesterdayPendingOrdersData'])->name('yesterday.pending.orders.data');
         Route::resource('plant', PlantController::class);
         Route::resource('route', RouteController::class);
         Route::resource('driver', DriverController::class);
@@ -132,13 +133,14 @@ Route::get('/yesterday-pending-orders-data', [App\Http\Controllers\HomeControlle
         Route::get('customer/{id}/assign-route', [CustomerController::class, 'assignRoute'])->name('customer.assign-route');
 
         Route::resource('product', ProductController::class);
+        Route::resource('lab-reports', LabReportController::class);
         Route::resource('dispensary', DispensaryController::class);
         Route::resource('request-order', RequestOrdersController::class);
         Route::resource('maintenance', MaintenanceController::class);
         Route::resource('vendor', VendorController::class);
+        Route::resource('distributor', DistributorController::class);
         Route::resource('reasons', ReasonsController::class);
-Route::post('reports/export', [ReportsController::class, 'reports'])
-    ->name('reports.export');
+        Route::post('reports/export', [ReportsController::class, 'reports'])->name('reports.export');
 
         Route::resource('reports', ReportsController::class);
         Route::put('/request-order/{id}/status', [RequestOrdersController::class, 'updateStatus'])->name('requestOrder.update.status');

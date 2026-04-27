@@ -48,6 +48,10 @@ return [
             'driver' => 'sanctum',
             'provider' => 'ShippingContact',
         ],
+        'distributor_api' => [
+            'driver' => 'sanctum',
+            'provider' => 'distributor',
+        ],
     ],
 
     /*
@@ -81,6 +85,11 @@ return [
         'ShippingContact' => [
             'driver' => 'eloquent',
             'model' => App\Models\ShippingContact::class,
+        ],
+
+         'distributor' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Distributor::class,
         ],
 
         // 'users' => [

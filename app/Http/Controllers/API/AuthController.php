@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use App\Models\Drivers;
+use App\Models\Distributor;
 use App\Models\Vendor;
 use App\Models\User;
 use App\Models\Plant;
@@ -199,7 +200,7 @@ class AuthController extends Controller
             'phone_no' => 'nullable|digits:10',
             'email' => 'nullable|email',
             'password' => 'required|string|min:6',
-            'role' => 'required|string|in:customer,vendor,plant-manager',
+            'role' => 'required|string|in:customer,vendor,plant-manager,distributor',
         ]);
 
         if ($validator->fails()) {
@@ -278,6 +279,14 @@ class AuthController extends Controller
                 $plantUser->plant_id = $plant->id;
 
                 $user = $plantUser;
+            }elseif ($request->role === 'distributor') {
+                $user = Distributor::where('email', $request->email)->first();
+                if (!$user) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'User not found',
+                    ], 404);
+                }
             }
 
             if (!$user || !Hash::check($request->password, $user->password)) {
@@ -288,7 +297,6 @@ class AuthController extends Controller
             }
 
             $token = $user->createToken($request->role . '_token')->plainTextToken;
-            // $token = $user->createToken($request->role . '_token_' . now()->timestamp)->plainTextToken;
 
             return response()->json([
                 'status' => true,
@@ -296,7 +304,6 @@ class AuthController extends Controller
                 'data' => [
                     $request->role => $user,
                     'token' => $token,
-                    // 'token_type' => $user->tokens
                 ],
             ], 200);
 
@@ -314,7 +321,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'phone_no' => 'nullable|digits:10',
             'email' => 'nullable|email',
-            'role' => 'required|string|in:customer,vendor,plant-manager',
+            'role' => 'required|string|in:customer,vendor,plant-manager,distributor',
         ]);
 
         if ($validator->fails()) {
@@ -383,6 +390,15 @@ class AuthController extends Controller
 
                 $user = $plantUser;
             }
+            elseif ($request->role === 'distributor') {
+                $user = Distributor::where('email', $request->email)->first();
+                if (!$user) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'User not found',
+                    ], 404);
+                }
+            }
             return response()->json([
                 'status' => true,
                 'message' => 'customer verified successfully',
@@ -407,7 +423,7 @@ class AuthController extends Controller
             'phone_no' => 'nullable|digits:10',
              'email' => 'nullable|email',
             'password' => 'required|string|min:6',
-            'role' => 'required|string|in:customer,vendor,plant-manager',
+            'role' => 'required|string|in:customer,vendor,plant-manager,distributor',
         ]);
         
         if ($validator->fails()) {
@@ -464,6 +480,15 @@ class AuthController extends Controller
 
 
                 $user = $plantUser;
+            }
+            elseif ($request->role === 'distributor') {
+                $user = Distributor::where('email', $request->email)->first();
+                if (!$user) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'User not found',
+                    ], 404);
+                }
             }
             $user->password = Hash::make($request->password);
             $user->save();

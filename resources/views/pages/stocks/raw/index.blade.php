@@ -25,6 +25,27 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
     <script src="{{ asset('/assets/js/pages/datatables.init.js') }}"></script>
     <script src="{{ asset('/assets/js/app.js') }}"></script>
+    <script>
+        $('#addLabelForm').submit(function(e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: "{{ route('raw-materials.store') }}",
+                method: "POST",
+                data: $(this).serialize(),
+                success: function(response) {
+                    alert('Label created successfully');
+
+                    $('#addLabelModal').modal('hide');
+
+                    location.reload(); // reload table
+                },
+                error: function(err) {
+                    alert('Error creating label');
+                }
+            });
+        });
+    </script>
 @endpush
 
 @section('content')
@@ -47,6 +68,28 @@
                     </ol>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-sm-auto ms-auto">
+                    <div class="list-grid-nav hstack gap-1">
+                        {{-- <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink1">
+                            <li><a class="dropdown-item" href="#">All</a></li>
+                            <li><a class="dropdown-item" href="#">Last Week</a></li>
+                            <li>
+                                <a class="dropdown-item" href="#">Last Month</a>
+                            </li>
+                            <li><a class="dropdown-item" href="#">Last Year</a></li>
+                        </ul> --}}
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addLabelModal">
+                            <i class="ri-add-fill me-1"></i> Add Label
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -77,7 +120,7 @@
                                             <div class="hstack gap-3 flex-wrap">
                                                 <a href="{{ route('raw-materials.purches-distribute', $materialVariant->id) }}"
                                                     class="link-success fs-15"><i class="ri-menu-add-line"></i></a>
-                                                    <a href="{{ route('raw-materials.distribute', $materialVariant->id) }}"
+                                                <a href="{{ route('raw-materials.distribute', $materialVariant->id) }}"
                                                     class="link-success fs-15"><i class="ri-folder-shared-fill"></i></a>
                                                 <a href="{{ route('raw-materials.show', $materialVariant->id) }}"
                                                     class="link-primary fs-15"><i class="ri-eye-line"></i></a>
@@ -90,6 +133,39 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+    <!-- Add Label Modal -->
+    <div class="modal fade" id="addLabelModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form id="addLabelForm">
+                @csrf
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Label</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label>Label Name</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="type" value="distributor">
+                            <label class="form-check-label">Distributor</label>
+                        </div>
+                    </div>
+
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+
+                </div>
+            </form>
         </div>
     </div>
 @endsection

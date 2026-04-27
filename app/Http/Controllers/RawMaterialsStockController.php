@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\{rawMaterialVariants, rawStockTransactions, rawDistributions, rawStockLogs, Plant};
+use App\Models\{rawMaterialVariants, rawStockTransactions, rawDistributions, rawStockLogs, Plant, RawStockForPlant};
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class RawMaterialsStockController extends Controller
 {
@@ -32,9 +33,84 @@ class RawMaterialsStockController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
     public function store(Request $request)
     {
-        //
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|unique:raw_material_variants,variant_name',
+                'type' => 'nullable|in:main,distributor',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            $type = $request->input('type', 'main');
+
+            DB::beginTransaction();
+
+            // ✅ Create variants
+            $variant1 = rawMaterialVariants::create([
+                'raw_material_id' => 2,
+                'variant_name' => $request->name,
+                'total_quantity' => 0,
+                'remain_quantity' => 0,
+                'type' => $type,
+            ]);
+
+            $variant2 = rawMaterialVariants::create([
+                'raw_material_id' => 1,
+                'variant_name' => 'with Label - ' . $request->name,
+                'total_quantity' => 0,
+                'remain_quantity' => 0,
+                'type' => $type,
+            ]);
+
+            // 🔥 Get all plants
+            $plants = Plant::all();
+
+            // 🔥 Insert plant-wise stock
+            foreach ($plants as $plant) {
+
+                // for variant 1
+                RawStockForPlant::create([
+                    'plant_id' => $plant->id,
+                    'raw_material_variants_id' => $variant1->id,
+                    'total_quantity' => 0,
+                    'total_production_quantity' => 0,
+                ]);
+
+                // for variant 2
+                RawStockForPlant::create([
+                    'plant_id' => $plant->id,
+                    'raw_material_variants_id' => $variant2->id,
+                    'total_quantity' => 0,
+                    'total_production_quantity' => 0,
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Label + plant stock created successfully'
+            ]);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            Log::error('Label Store Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong',
+            ], 500);
+        }
     }
 
     /**

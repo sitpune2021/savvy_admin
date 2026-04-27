@@ -23,6 +23,7 @@ use App\Models\rawStockLogs;
 use App\Models\JarTransportation;
 use App\Models\JarMaintance;
 use App\Models\ScrabJar;
+use App\Models\DistributorPlantInventory;
 use Illuminate\Support\Facades\DB;
 
 use Carbon\Carbon;
@@ -34,13 +35,35 @@ class CustomController extends BaseController
     public function plants()
     {
         $query = Plant::orderBy('created_at', 'desc');
-            if ($this->vendorId !== null) {
-                $query->where('vendor_id', $this->vendorId);
+        if ($this->vendorId !== null) {
+            $query->where('vendor_id', $this->vendorId);
+        }
+        $plants = $query->select('id', 'name')->get();
+
+        $inventories = collect();
+
+        if ($this->distributorId !== null) {
+            $inventories = DistributorPlantInventory::where('distributor_id', $this->distributorId)
+                ->get()
+                ->keyBy('plant_id');
+        }
+
+        $plantsWithStock = $plants->map(function ($plant) use ($inventories) {
+            $data = [
+                'id' => $plant->id,
+                'name' => $plant->name,
+            ];
+
+            if ($this->distributorId !== null) {
+                $inventory = $inventories[$plant->id] ?? null;
+
+                $data['remaining_empty_jars'] = $inventory->empty_jars ?? 0;
             }
-            $plants = $query->select('id', 'name')->get();    
+            return $data;
+        });
         return response()->json([
             'status' => true,
-            'data' => $plants
+            'data' => $plantsWithStock
         ], 200);
     }
 
@@ -547,11 +570,15 @@ class CustomController extends BaseController
     public function getLabels(Request $request)
     {
         $For = $request->query('for');
+        $type = $request->query('type');
         $rawStock = rawMaterialVariants::whereHas('rawMaterial', function ($query) {
-            $query->whereIn('name', ['Label', 'Jar']);
-        })
-        ->select('id', 'variant_name')
-        ->get();
+                $query->whereIn('name', ['Label', 'Jar']);
+            })
+            ->when(!empty($type), function ($q) use ($type) {
+                $q->where('type', $type);
+            })
+            ->select('id', 'variant_name')
+            ->get();
 
         $unlabelled = $rawStock->filter(function($item) {
             return !str_starts_with($item->variant_name, 'with Label - ');
@@ -561,7 +588,9 @@ class CustomController extends BaseController
             return str_starts_with($item->variant_name, 'with Label - ');
         });
 
-        $rawStockPlant = RawStockForPlant::where('plant_id', auth()->user()->plantManager->id)
+        $rawStockPlant = RawStockForPlant::when(empty($type), function ($q) {
+                $q->where('plant_id', auth()->user()->plantManager->id);
+            })
             ->with(['plant', 'rawMaterialVariant', 'rawMaterialVariant.rawMaterial'])
             ->orderBy('created_at', 'desc')
             ->get()
@@ -584,9 +613,13 @@ class CustomController extends BaseController
             $jarStocks = RawStockForPlant::whereHas('rawMaterialVariant.rawMaterial', function ($query) {
                 $query->where('name', 'Jar');
             })
-            ->when(auth()->user()->plantManager->id, function ($q) {
+            ->when(empty($type), function ($q) {
+                // ✅ Apply plant filter ONLY if type NOT passed
                 $q->where('plant_id', auth()->user()->plantManager->id);
             })
+            // ->when(auth()->user()->plantManager->id, function ($q) {
+            //     $q->where('plant_id', auth()->user()->plantManager->id);
+            // })
             ->with('rawMaterialVariant.rawMaterial')
             ->get()
             ->groupBy(function ($item) {

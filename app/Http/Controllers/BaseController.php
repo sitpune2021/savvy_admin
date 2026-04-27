@@ -31,6 +31,10 @@ class BaseController extends Controller
                     {
                             $this->driverId = $user->id ?? null;
                     }
+                    if($tableName === 'distributors')
+                    {
+                            $this->distributorId = $user->id ?? null;
+                    }
                 }
 
                 return $next($request);

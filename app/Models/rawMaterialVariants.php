@@ -11,7 +11,7 @@ use App\Models\rawMaterial;
 class rawMaterialVariants extends Model
 {
     use HasFactory;
-    protected $fillable = ['raw_material_id', 'variant_name', 'total_quantity'];
+    protected $fillable = ['raw_material_id', 'variant_name', 'total_quantity', 'remain_quantity', 'type'];
 
     public function rawMaterial()
     {

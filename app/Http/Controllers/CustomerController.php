@@ -224,6 +224,7 @@ class CustomerController extends BaseController
                                 $query->where('type', 'pan_india')
                                     ->where('vendor_id', $this->vendorId);
                             }
+                            $query->with(['dispensary']);
                         }
                     ])->findOrFail($id);
         $query = Plant::orderBy('created_at', 'desc');
@@ -239,7 +240,7 @@ class CustomerController extends BaseController
         $drivers = Drivers::with('routes')->get();
         $vendors = Vendor::with('user:id,name')->get();
         $contacts = ShippingContact::where('customer_id', $id)->get();
-
+        
         return view('pages.customer.add-edit',compact('show', 'Customer', 'plants', 'products', 'routes', 'drivers', 'vendors', 'contacts'));
     }
 
@@ -255,6 +256,7 @@ class CustomerController extends BaseController
                                     ->where('vendor_id', $this->vendorId);
                             }
                            $query->with(['contacts.shippingContact']);
+                           $query->withCount(['dispensary']);
                         }
                     ])->findOrFail($id);
             $query = Plant::orderBy('created_at', 'desc');

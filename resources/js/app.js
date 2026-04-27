@@ -7,15 +7,16 @@ const formConfigs = [
 	{ selector: '#orderForm', url: '/order' },
 	{ selector: '#dispensaryForm', url: '/dispensary' },
 	{ selector: '#customerForm', url: '/customer' },
+	{ selector: '#distributorForm', url: '/distributor' },
 	{ selector: '#driverForm', url: '/driver' },
 	{ selector: '#vendorForm', url: '/vendor' },
 	{ selector: '#plantForm', url: '/plant' },
 	{ selector: '#productForm', url: '/product' },
+	{ selector: '#labReportForm', url: '/lab-reports' },
 	{ selector: '#routeForm', url: '/route' },
 	{ selector: '#assignRoutesForm', url: '/assign-route' },
 	{ selector: '#reasonForm', url: '/reasons' },
 	{ selector: '#stockPurches', url: '/raw-materials' },
-
 	{
 		selector: '#shippingForm',
 		url: '/customer',
@@ -682,6 +683,25 @@ $(document).ready(function () {
 						</div>
 					</div>
 
+					${data?.address?.dispensary_count > 0 ? `
+						<div class="col-lg-4 col-md-6 col-sm-12" id="machine_count">
+							<div class="input-block mb-3">
+								<label>Dispensary Count</label>
+								<span class="dispensary-count">
+									${data.address.dispensary_count} 
+									${data.address.dispensary_count === 1 ? 'dispensary' : 'dispensaries'}
+								</span>
+							</div>
+						</div>
+					` : `<div class="col-lg-4 col-md-6 col-sm-12" id="machine_count">
+							<div class="input-block mb-3">
+								<label>Dispensary Count</label>
+								<span class="dispensary-count">
+									0 dispensary
+								</span>
+							</div>
+						</div>`}
+
 				</div>
 			</div>
 		`);
@@ -1214,7 +1234,7 @@ $(document).ready(function () {
 
 $(document).ready(function () {
 	function getSuffixFromId(id) {
-		// If ID is like "frequency" return "", if "frequency_1" return "_1"
+				// If ID is like "frequency" return "", if "frequency_1" return "_1"
 		const match = id.match(/^frequency_enum(?:_(\d+))?$/);
 		return match && match[1] !== undefined ? '_' + match[1] : '';
 	}
@@ -1225,8 +1245,8 @@ $(document).ready(function () {
 		const $daysBlock = $('#days_select' + suffix);
 
 		if ($daysBlock.length) {
-			if (frequency === 'weekly') {
-				$daysBlock.show();
+		if (frequency === 'weekly') {
+			$daysBlock.show();
 				$daysBlock2.find('input, select').val(null).prop('checked', false);
 			} else {
 				$daysBlock.hide();
@@ -1415,7 +1435,7 @@ $(document).ready(function () {
 			$.ajax({
 				url: this.$form.attr('action'),
 				method: 'POST',
-				data: { start_date: startDate,end_date: EndDate, customer_id: customerId },
+				data: { start_date: startDate, end_date: EndDate, customer_id: customerId },
 				xhrFields: { responseType: 'blob' },
 				success: (data, status, xhr) => this.handleSuccess(data, xhr),
 				error: xhr => this.handleError(xhr),

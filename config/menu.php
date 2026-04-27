@@ -12,7 +12,6 @@ return [
         'icon' => 'ri-dashboard-2-line',
         'roles' => ['admin', 'vendor', 'plant-manager'],
     ],
-
     [
         'type' => 'section',
         'label' => 'Customers',
@@ -78,7 +77,6 @@ return [
         'icon' => 'ri-dashboard-2-line',
         'roles' => ['admin'],
     ],
-
     [
         'type' => 'section',
         'label' => 'Vendors',
@@ -113,9 +111,31 @@ return [
         'roles' => ['admin'],
     ],
     [
+        'type' => 'section',
         'label' => 'Reports',
+        'roles' => ['admin'],
+    ],
+    [
+        'label' => 'Overall Reports',
         'url' => 'reports',
         'icon' => 'ri-dashboard-2-line',
         'roles' => ['admin'],
-    ]
+    ],
+    [
+        'label' => 'Lab Reports',
+        'url' => 'lab-reports',
+        'icon' => 'ri-dashboard-2-line',
+        'roles' => ['admin'],
+    ],
+    [
+        'type' => 'section',
+        'label' => 'Distributors',
+        'roles' => ['admin'],
+    ],
+    [
+        'label' => 'Distributor',
+        'url' => 'distributor',
+        'icon' => 'ri-dashboard-2-line',
+        'roles' => ['admin'],
+    ],
 ];
