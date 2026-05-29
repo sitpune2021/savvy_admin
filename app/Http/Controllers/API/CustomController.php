@@ -574,9 +574,9 @@ class CustomController extends BaseController
         $rawStock = rawMaterialVariants::whereHas('rawMaterial', function ($query) {
                 $query->whereIn('name', ['Label', 'Jar']);
             })
-            ->when(!empty($type), function ($q) use ($type) {
-                $q->where('type', $type);
-            })
+            // ->when(!empty($type), function ($q) use ($type) {
+            //     $q->where('type', $type);
+            // })
             ->select('id', 'variant_name')
             ->get();
 
@@ -588,7 +588,7 @@ class CustomController extends BaseController
             return str_starts_with($item->variant_name, 'with Label - ');
         });
 
-        $rawStockPlant = RawStockForPlant::when(empty($type), function ($q) {
+        $rawStockPlant = RawStockForPlant::when(function ($q) {
                 $q->where('plant_id', auth()->user()->plantManager->id);
             })
             ->with(['plant', 'rawMaterialVariant', 'rawMaterialVariant.rawMaterial'])
@@ -613,10 +613,10 @@ class CustomController extends BaseController
             $jarStocks = RawStockForPlant::whereHas('rawMaterialVariant.rawMaterial', function ($query) {
                 $query->where('name', 'Jar');
             })
-            ->when(empty($type), function ($q) {
-                // ✅ Apply plant filter ONLY if type NOT passed
-                $q->where('plant_id', auth()->user()->plantManager->id);
-            })
+            // ->when(empty($type), function ($q) {
+            //     // ✅ Apply plant filter ONLY if type NOT passed
+            //     $q->where('plant_id', auth()->user()->plantManager->id);
+            // })
             // ->when(auth()->user()->plantManager->id, function ($q) {
             //     $q->where('plant_id', auth()->user()->plantManager->id);
             // })
