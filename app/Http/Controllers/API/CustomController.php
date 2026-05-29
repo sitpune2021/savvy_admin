@@ -588,14 +588,14 @@ class CustomController extends BaseController
             return str_starts_with($item->variant_name, 'with Label - ');
         });
 
-        $rawStockPlant = RawStockForPlant::when(function ($q) {
-                $q->where('plant_id', auth()->user()->plantManager->id);
+        $rawStockPlant = RawStockForPlant::when(auth()->user()?->plantManager, function ($q) {
+                    $q->where('plant_id', auth()->user()->plantManager->id);
             })
             ->with(['plant', 'rawMaterialVariant', 'rawMaterialVariant.rawMaterial'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->groupBy(function ($item) {
-                return optional($item->rawMaterialVariant->rawMaterial)->name ?? 'N/A';
+                return optional($item->rawMaterialVariant?->rawMaterial)->name ?? 'N/A';
             })
             ->map(function ($items, $materialName) {
                 return [
@@ -603,7 +603,7 @@ class CustomController extends BaseController
                     'variants' => $items->map(function ($item) {
                         return [
                             'variant_name' => optional($item->rawMaterialVariant)->variant_name,
-                            'full_name' => optional($item->rawMaterialVariant->rawMaterial)->name . ' - ' . optional($item->rawMaterialVariant)->variant_name,
+                            'full_name' => optional($item->rawMaterialVariant?->rawMaterial)->name . ' - ' . optional($item->rawMaterialVariant)->variant_name,
                             'quantity' => $item->total_quantity,
                         ];
                     })->values(),
