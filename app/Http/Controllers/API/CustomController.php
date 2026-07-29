@@ -24,6 +24,7 @@ use App\Models\JarTransportation;
 use App\Models\JarMaintance;
 use App\Models\ScrabJar;
 use App\Models\DistributorPlantInventory;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
 use Carbon\Carbon;
@@ -500,11 +501,27 @@ class CustomController extends BaseController
     {
         try {
             $user = auth()->user();
+
+            if (!$user || !$user->plantManager) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Plant manager is not assigned.',
+                ], 403);
+            }
+
             $plantId = $user->plantManager->id;
 
             DB::beginTransaction();
 
-            $distribution = RawDistributions::findOrFail($id);
+            $distribution = rawDistributions::query()->lockForUpdate()->findOrFail($id);
+
+            if ($distribution->status !== 'pending') {
+                DB::rollBack();
+                return response()->json([
+                    'status' => false,
+                    'message' => 'This distribution has already been processed.',
+                ], 422);
+            }
 
             // ✅ Ensure the distribution belongs to the same plant
             if ((int) $distribution->plant_id !== (int) $plantId) {
@@ -516,12 +533,34 @@ class CustomController extends BaseController
             }
 
             $transaction = rawStockTransactions::findOrFail((int) $distribution->raw_stock_transactions_id);
-            $variant = rawMaterialVariants::findOrFail((int) $transaction->raw_material_variant_id);
+            $variant = rawMaterialVariants::query()->lockForUpdate()->findOrFail((int) $transaction->raw_material_variant_id);
 
-            $plantStock = RawStockForPlant::where([
-                'plant_id' => $plantId,
-                'raw_material_variants_id' => $variant->id,
-            ])->firstOrFail();
+            if ((float) $distribution->quantity <= 0) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Distribution quantity must be greater than zero.',
+                ], 422);
+            }
+
+            if ((float) $variant->total_quantity < (float) $distribution->quantity) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Insufficient global stock.',
+                ], 422);
+            }
+
+            $plantStock = RawStockForPlant::firstOrCreate(
+                [
+                    'plant_id' => $plantId,
+                    'raw_material_variants_id' => $variant->id,
+                ],
+                [
+                    'total_quantity' => 0,
+                    'total_production_quantity' => 0,
+                ]
+            );
             // Mark distribution as accepted
             $distribution->status = 'accepted';
             $distribution->accepted_at = now();
@@ -529,12 +568,10 @@ class CustomController extends BaseController
 
 
             // Update global variant stock
-            $variant->decrement('total_quantity', (int) $distribution->quantity);        
-            $variant->save();
+            $variant->decrement('total_quantity', $distribution->quantity);
 
             // Update plant's stock
-            $plantStock->increment('total_quantity', (int) $distribution->quantity);
-            $plantStock->save();
+            $plantStock->increment('total_quantity', $distribution->quantity);
 
             // Log the stock acceptance
             rawStockLogs::create([
