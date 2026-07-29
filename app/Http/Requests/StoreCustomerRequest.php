@@ -60,6 +60,7 @@ class StoreCustomerRequest extends FormRequest
             'shipping.*.route_id' => 'nullable|exists:routes,id',
             'shipping.*.driver_id' => 'nullable|exists:drivers,id',
             'shipping.*.shipping_address' => 'required|string|max:255',
+            'shipping.*.email' => 'nullable|email|max:255',
             'shipping.*.shipping_country' => 'required|string|max:255',
             'shipping.*.shipping_state' => 'required|string|max:255',
             'shipping.*.shipping_city' => 'required|string|max:255',
@@ -104,6 +105,8 @@ class StoreCustomerRequest extends FormRequest
             'shipping.*.shipping_address.required' => 'The shipping address is required.',
             'shipping.*.shipping_address.string' => 'The shipping address must be a string.',
             'shipping.*.shipping_address.max' => 'The shipping address may not be greater than 255 characters.',
+            'shipping.*.email.email' => 'The shipping address email must be a valid email address.',
+            'shipping.*.email.max' => 'The shipping address email may not be greater than 255 characters.',
     
             'shipping.*.shipping_country.required' => 'The shipping country is required.',
             'shipping.*.shipping_country.string' => 'The shipping country must be a string.',

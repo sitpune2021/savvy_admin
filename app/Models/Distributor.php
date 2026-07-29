@@ -43,5 +43,14 @@ class Distributor extends Authenticatable
         return $this->hasMany(DistributorPlantOrder::class);
     }
 
+    public function plants()
+    {
+        return $this->belongsToMany(
+            Plant::class,
+            'distributor_plant_allocations',
+            'distributor_id',
+            'plant_id'
+        )->withTimestamps();
+    }
 
 }

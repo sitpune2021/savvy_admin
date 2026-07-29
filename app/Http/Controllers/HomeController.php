@@ -16,6 +16,8 @@ use Symfony\Component\Filesystem\Filesystem;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
+use App\Models\RawStockForPlant;
+use App\Models\JarMaintance;
 
 
 class HomeController extends BaseController
@@ -26,6 +28,20 @@ class HomeController extends BaseController
         $userRole = auth()->user()->role;
         $isAdmin = ($userRole === 'admin');
         $type = $request->query('value', 'all');
+
+        $dashboardPlants = Plant::when($this->plantManagerId, fn($query) =>
+                $query->where('id', $this->plantManagerId)
+            )
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $defaultPlant = $dashboardPlants->first(fn($plant) =>
+            strcasecmp(trim($plant->name), 'Warje') === 0
+        ) ?? $dashboardPlants->first();
+
+        $requestedPlantId = (int) $request->query('plant_id', $defaultPlant?->id);
+        $selectedPlant = $dashboardPlants->firstWhere('id', $requestedPlantId) ?? $defaultPlant;
+        $selectedPlantId = $selectedPlant?->id;
 
         $baseQuery = $this->plantManagerId
             ? Orders::forPlantManager($this->plantManagerId)
@@ -128,6 +144,73 @@ class HomeController extends BaseController
             ];
         }
 
+        $rawMaterialStock = collect([
+            'labels' => collect(),
+            'caps' => collect(),
+            'jars' => collect(),
+            'maintenance' => collect([
+                [
+                    'name' => 'Green Jar',
+                    'quantity' => (float) JarMaintance::where('type', 'green-jar')->sum('qty'),
+                ],
+                [
+                    'name' => 'Leaked Jar',
+                    'quantity' => (float) JarMaintance::where('type', 'leacked-jar')->sum('qty'),
+                ],
+            ]),
+        ]);
+
+        if ($selectedPlantId) {
+            $plantStock = RawStockForPlant::query()
+                ->where('plant_id', $selectedPlantId)
+                ->whereHas('rawMaterialVariant.rawMaterial', fn($query) =>
+                    $query->whereIn('name', ['Label', 'Cap', 'Jar'])
+                )
+                ->with('rawMaterialVariant.rawMaterial')
+                ->get();
+
+            $rawMaterialStock = collect([
+                'labels' => $plantStock
+                    ->filter(fn($stock) => $stock->rawMaterialVariant?->rawMaterial?->name === 'Label')
+                    ->map(fn($stock) => [
+                        'name' => $stock->rawMaterialVariant?->variant_name ?? '-',
+                        'quantity' => (float) $stock->total_quantity,
+                    ])->values(),
+                'caps' => $plantStock
+                    ->filter(fn($stock) => $stock->rawMaterialVariant?->rawMaterial?->name === 'Cap')
+                    ->map(fn($stock) => [
+                        'name' => $stock->rawMaterialVariant?->variant_name ?? '-',
+                        'quantity' => (float) $stock->total_quantity,
+                    ])->values(),
+                'jars' => $plantStock
+                    ->filter(fn($stock) => $stock->rawMaterialVariant?->rawMaterial?->name === 'Jar')
+                    ->map(function ($stock) {
+                        $variantName = $stock->rawMaterialVariant?->variant_name ?? '-';
+
+                        return [
+                            'name' => $variantName === 'without Label'
+                                ? 'Empty Jar'
+                                : (str_starts_with($variantName, 'with Label - ')
+                                    ? 'Jar with ' . str_replace('with Label - ', '', $variantName) . ' Label'
+                                    : $variantName),
+                            // Keep this identical to getRawStock(), which reports
+                            // the plant's current raw stock from total_quantity.
+                            'quantity' => (float) $stock->total_quantity,
+                        ];
+                    })->values(),
+                'maintenance' => collect([
+                    [
+                        'name' => 'Green Jar',
+                        'quantity' => (float) JarMaintance::where('type', 'green-jar')->sum('qty'),
+                    ],
+                    [
+                        'name' => 'Leaked Jar',
+                        'quantity' => (float) JarMaintance::where('type', 'leacked-jar')->sum('qty'),
+                    ],
+                ]),
+            ]);
+        }
+
 
         list($ordersCountByPlant, $plants) = $this->getPlantOrderData($isAdmin, $type);
 
@@ -146,6 +229,12 @@ class HomeController extends BaseController
             $record = $this->getOrdersSummary($dates, $isAdmin);
             $data = compact('record', 'allPendingOrdersCount', 'ordersCountByPlant', 'plants', 'plantWiseStats');
         }
+
+        $data = array_merge($data, compact(
+            'dashboardPlants',
+            'selectedPlant',
+            'rawMaterialStock'
+        ));
 
         return  view('home', $data);
     }

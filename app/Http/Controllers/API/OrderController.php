@@ -289,7 +289,17 @@ class OrderController extends BaseController
             if (!empty($order->customers?->email)) {
                 if ($order->develivered_qty > 0) {
                     $pdf = Pdf::loadView('pdf.delivery_challan', $data)->output();
-                    Mail::to($order->customers->email)->send(new DeliveryChallanMail($data, $pdf));
+                    $mail = Mail::to($order->customers->email);
+                    $shippingEmail = $order->shipping?->email;
+
+                    if (
+                        !empty($shippingEmail)
+                        && strcasecmp($shippingEmail, $order->customers->email) !== 0
+                    ) {
+                        $mail->cc($shippingEmail);
+                    }
+
+                    $mail->send(new DeliveryChallanMail($data, $pdf));
                 }
             } else {
                 Log::channel('challan')->warning('Delivery challan not sent: Missing email for customer', [

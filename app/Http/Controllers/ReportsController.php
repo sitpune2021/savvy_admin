@@ -12,6 +12,7 @@ use App\Exports\DriverWiseExport;
 use App\Exports\DateWiseExport;
 use App\Exports\PlantWiseExport;
 use App\Exports\CustomersWiseExport;
+use App\Exports\FailedOrdersExport;
 
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -62,6 +63,10 @@ class ReportsController extends Controller
             'customers_wise_summery' => Excel::download(
                 new CustomersWiseExport($startDate, $endDate),
                 'Customers_Wise_Summery_Report_' . now()->format('Ymd_His') . '.xlsx'
+            ),
+            'failed_orders' => Excel::download(
+                new FailedOrdersExport($startDate, $endDate),
+                'Failed_Order_Generation_Report_' . now()->format('Ymd_His') . '.xlsx'
             ),
             
 

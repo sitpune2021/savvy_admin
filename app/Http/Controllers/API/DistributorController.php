@@ -18,8 +18,8 @@ class DistributorController extends BaseController
         $query = Distributor::orderBy('created_at', 'desc');
 
         if($this->plantManagerId){
-            $query->whereHas('orders', function($q){
-                $q->where('plant_id', $this->plantManagerId);
+            $query->whereHas('plants', function($q){
+                $q->where('plants.id', $this->plantManagerId);
             });
         }
         $distributors = $this->plantManagerId ? $query->paginate($perPage, ['*'], 'page', $page) : $query->get();

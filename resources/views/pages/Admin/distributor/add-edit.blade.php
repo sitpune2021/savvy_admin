@@ -110,6 +110,32 @@
                             <div class="row align-item-center">
                                 <div class="col-sm-12">
                                     <div class="input-block mb-3">
+                                        <label>Allocated Plants</label>
+                                        <select name="plant_ids[]" class="form-select js-example-basic-single"
+                                            multiple data-placeholder="Select plants for this distributor"
+                                            @if ($show) disabled @endif>
+                                            @php
+                                                $allocatedPlantIds = old(
+                                                    'plant_ids',
+                                                    isset($distributor)
+                                                        ? $distributor->plants->pluck('id')->all()
+                                                        : [],
+                                                );
+                                            @endphp
+                                            @foreach ($plants as $plant)
+                                                <option value="{{ $plant->id }}"
+                                                    @selected(in_array($plant->id, $allocatedPlantIds))>
+                                                    {{ $plant->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <small class="text-muted">
+                                            Only selected plants will be visible in the Distributor App.
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-sm-12">
+                                    <div class="input-block mb-3">
                                         <label>Address</label>
                                         <input name="full_address" type="text" class="form-control"
                                             placeholder="Enter Address"

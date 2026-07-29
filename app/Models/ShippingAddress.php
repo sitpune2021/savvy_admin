@@ -24,6 +24,7 @@ class ShippingAddress extends Model
         'route_id',
         'driver_id',
         'shipping_address',
+        'email',
         'shipping_country',
         'shipping_state',
         'shipping_city',

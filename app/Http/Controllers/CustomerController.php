@@ -22,6 +22,7 @@ use Illuminate\Support\Arr;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
 use App\Http\Requests\StoreUpdateCustomerShippingRequest;
@@ -29,9 +30,31 @@ use App\Http\Requests\StoreUpdateCustomerShippingRequest;
 
 class CustomerController extends BaseController
 {
-    public function index()
+    public function index(Request $request)
     {
-        $query = Customers::orderBy('created_at', 'desc');
+        $contractScope = function ($query) {
+            if ($this->plantManagerId) {
+                $query->whereHas('shippingAddress', fn($shippingQuery) =>
+                    $shippingQuery->where('plant_id', $this->plantManagerId)
+                );
+            } elseif ($this->vendorId !== null) {
+                $query->whereHas('shippingAddress', fn($shippingQuery) =>
+                    $shippingQuery->where('type', 'pan_india')
+                        ->where('vendor_id', $this->vendorId)
+                );
+            }
+        };
+
+        $query = Customers::withCount([
+            'contracts as active_contracts_count' => function ($query) use ($contractScope) {
+                $query->where('type', 'contracts')->where('status', 'active');
+                $contractScope($query);
+            },
+            'contracts as expired_contracts_count' => function ($query) use ($contractScope) {
+                $query->where('type', 'contracts')->where('status', 'expired');
+                $contractScope($query);
+            },
+        ])->orderBy('created_at', 'desc');
         if($this->plantManagerId){
             $query->whereHas('shippingAddresses', function($query) {
                 $query->where('plant_id', $this->plantManagerId);
@@ -43,12 +66,36 @@ class CustomerController extends BaseController
                     $query->where('type', 'pan_india')
                         ->where('vendor_id', $this->vendorId);
                 });
-            }
+           }
         }
+
+        $allCustomersCount = (clone $query)->count();
+
+        $activeContractsQuery = Contracts::where('type', 'contracts')->where('status', 'active');
+        $contractScope($activeContractsQuery);
+        $activeContractsCount = $activeContractsQuery->count();
+
+        $expiredContractsQuery = Contracts::where('type', 'contracts')->where('status', 'expired');
+        $contractScope($expiredContractsQuery);
+        $expiredContractsCount = $expiredContractsQuery->count();
+
+        if (in_array($request->contract_status, ['active', 'expired'], true)) {
+            $query->whereHas('contracts', function ($contractQuery) use ($request, $contractScope) {
+                $contractQuery->where('type', 'contracts')
+                    ->where('status', $request->contract_status);
+                $contractScope($contractQuery);
+            });
+        }
+
         $customers = $query->get();
 
 
-        return view('pages.customer.index', compact('customers'));
+        return view('pages.customer.index', compact(
+            'customers',
+            'allCustomersCount',
+            'activeContractsCount',
+            'expiredContractsCount'
+        ));
     }
 
     public function create()
@@ -353,6 +400,29 @@ class CustomerController extends BaseController
                 // 1. Handle Contract
                 if (!empty($contractData['id'])) {
                     $contract = Contracts::findOrFail($contractData['id']);
+                    $updatedDays = is_array($contractData['days'] ?? null)
+                        ? implode('|', $contractData['days'])
+                        : null;
+
+                    if (!empty($contractData['reactivate'])) {
+                        if ($contract->type !== 'contracts') {
+                            throw ValidationException::withMessages([
+                                "contract.$key.frequency" => 'Only regular contracts can be reactivated.',
+                            ]);
+                        }
+
+                        $frequencyChanged =
+                            $contract->frequency !== $contractData['frequency']
+                            || (string) $contract->frequency_count !== (string) ($contractData['frequency_count'] ?? '')
+                            || (string) $contract->days !== (string) $updatedDays;
+
+                        if (!$frequencyChanged) {
+                            throw ValidationException::withMessages([
+                                "contract.$key.frequency" => 'Change the delivery frequency, frequency count, or delivery days before reactivating this contract.',
+                            ]);
+                        }
+                    }
+
                     $contract->update([
                         'product_id'      => $contractData['product_id'],
                         'quantity'        => $contractData['quantity'],
@@ -361,9 +431,10 @@ class CustomerController extends BaseController
                         'duration_type'   => $contractData['duration_type'],
                         'frequency'       => $contractData['frequency'],
                         'frequency_count' => $contractData['frequency_count'],
-                        'days'            => is_array($contractData['days'] ?? null)
-                                                    ? implode('|', $contractData['days'])
-                                                    : null,
+                        'days'            => $updatedDays,
+                        'status'          => !empty($contractData['reactivate'])
+                                                    ? 'active'
+                                                    : $contract->status,
                     ]);
                 } else {
                     $contract = Contracts::create([
@@ -565,8 +636,10 @@ class CustomerController extends BaseController
                 'message' => 'Shipping addresses updated successfully!',
             ]);
         
-        }
-         catch (\Exception $e) {
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            throw $e;
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'error' => 'Something went wrong.',
@@ -574,6 +647,15 @@ class CustomerController extends BaseController
             ], 500);
         }
 
+    }
+
+    public function expireContract(Contracts $contract)
+    {
+        abort_unless($contract->type === 'contracts', 404);
+
+        $contract->update(['status' => 'expired']);
+
+        return back()->with('success', 'Contract marked as expired successfully.');
     }
 
     public function updateShippingAddressForVendor(Request $request){

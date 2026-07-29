@@ -77,6 +77,7 @@
                                     <th>Sr. No</th>
                                     <th>Name</th>
                                     <th>Phone No.</th>
+                                    <th>Allocated Plants</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -86,6 +87,15 @@
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $distributor->name }}</td>
                                         <td>{{ $distributor->phone_no }}</td>
+                                        <td>
+                                            @forelse ($distributor->plants as $plant)
+                                                <span class="badge bg-primary-subtle text-primary me-1">
+                                                    {{ $plant->name }}
+                                                </span>
+                                            @empty
+                                                <span class="text-muted">Not allocated</span>
+                                            @endforelse
+                                        </td>
                                         <td>
                                             <div class="hstack gap-3 flex-wrap">
                                                 <a href="{{ route('distributor.edit', $distributor->id) }}" class="link-success fs-15"><i class="ri-edit-2-line"></i></a>

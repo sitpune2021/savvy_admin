@@ -187,6 +187,13 @@
                                                 class="form-control" placeholder="Enter Shipping Address">
                                         </div>
                                     </div>
+                                    <div class="col-sm-12">
+                                        <div class="input-block mb-3">
+                                            <label>Shipping Address Email (DC CC)</label>
+                                            <input name="shipping[0][email]" type="email" class="form-control"
+                                                placeholder="Enter email to receive Delivery Challan in CC">
+                                        </div>
+                                    </div>
                                     <div class="col-lg-6 col-md-6 col-sm-12">
                                         <div class="input-block mb-3">
                                             <label>Country</label>
@@ -472,6 +479,8 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>Address</th>
+                                        <th>DC CC Email</th>
+                                        <th>Contract Status</th>
                                         <th>Name</th>
                                         <th>Phone</th>
                                         @if (!$show)
@@ -488,6 +497,20 @@
                                         <tr data-index="{{ $index }}">
                                             <td class="fw-medium" rowspan="{{ $rowspan }}">{{ $index + 1 }}</td>
                                             <td rowspan="{{ $rowspan }}">{{ $shippingAddress->shipping_address }}
+                                            </td>
+                                            <td rowspan="{{ $rowspan }}">{{ $shippingAddress->email ?: '-' }}</td>
+                                            <td rowspan="{{ $rowspan }}">
+                                                @if ($shippingAddress->Contract?->type !== 'contracts')
+                                                    <span class="badge bg-info">Additional</span>
+                                                @elseif ($shippingAddress->Contract?->status === 'active')
+                                                    <span class="badge bg-success">Active</span>
+                                                @elseif ($shippingAddress->Contract?->status === 'expired')
+                                                    <span class="badge bg-danger">Expired</span>
+                                                @else
+                                                    <span class="badge bg-secondary">
+                                                        {{ ucfirst($shippingAddress->Contract?->status ?? 'N/A') }}
+                                                    </span>
+                                                @endif
                                             </td>
                                             @if ($contactCount > 0)
                                                 @foreach ($shippingAddress->contacts as $i => $contact)
@@ -506,6 +529,27 @@
                                                     data-contract='@json($shippingAddress->Contract)'>
                                                     <i class="ri-edit-2-line"></i>
                                                 </a>
+                                                @if (auth()->user()->role === 'admin' && $shippingAddress->Contract?->type === 'contracts' && $shippingAddress->Contract?->status === 'expired')
+                                                    <a href="javascript:void(0);"
+                                                        class="btn btn-sm btn-success edit-address"
+                                                        data-shipping-id="{{ $shippingAddress->id }}"
+                                                        data-address='@json($shippingAddress)'
+                                                        data-available-contacts='@json($contacts)'
+                                                        data-contract='@json($shippingAddress->Contract)'
+                                                        data-reactivate="1">
+                                                        Edit & Activate
+                                                    </a>
+                                                @elseif (auth()->user()->role === 'admin' && $shippingAddress->Contract?->type === 'contracts' && $shippingAddress->Contract?->status === 'active')
+                                                    <form method="POST"
+                                                        action="{{ route('customer.contract.expire', $shippingAddress->Contract) }}"
+                                                        onsubmit="return confirm('Expire this shipping-address contract?')">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <button type="submit" class="btn btn-sm btn-danger">
+                                                            Expire
+                                                        </button>
+                                                    </form>
+                                                @endif
                                                 <a href="javascript:void(0);" class="link-danger fs-15 remove-address">
                                                     <i class="ri-delete-bin-line"></i>
                                                 </a>
@@ -522,9 +566,28 @@
         <td>
             <div class="hstack gap-2">
                 <a href="javascript:void(0);" class="link-success fs-15 edit-address"
+                    data-shipping-id="{{ $shippingAddress->id }}"
                     data-address='@json($shippingAddress)' data-contract='@json($shippingAddress->Contract)'>
                     <i class="ri-edit-2-line"></i>
                 </a>
+                @if (auth()->user()->role === 'admin' && $shippingAddress->Contract?->type === 'contracts' && $shippingAddress->Contract?->status === 'expired')
+                    <a href="javascript:void(0);" class="btn btn-sm btn-success edit-address"
+                        data-shipping-id="{{ $shippingAddress->id }}"
+                        data-address='@json($shippingAddress)'
+                        data-available-contacts='@json($contacts)'
+                        data-contract='@json($shippingAddress->Contract)'
+                        data-reactivate="1">
+                        Edit & Activate
+                    </a>
+                @elseif (auth()->user()->role === 'admin' && $shippingAddress->Contract?->type === 'contracts' && $shippingAddress->Contract?->status === 'active')
+                    <form method="POST"
+                        action="{{ route('customer.contract.expire', $shippingAddress->Contract) }}"
+                        onsubmit="return confirm('Expire this shipping-address contract?')">
+                        @csrf
+                        @method('PUT')
+                        <button type="submit" class="btn btn-sm btn-danger">Expire</button>
+                    </form>
+                @endif
                 <a href="javascript:void(0);" class="link-danger fs-15 remove-address">
                     <i class="ri-delete-bin-line"></i>
                 </a>

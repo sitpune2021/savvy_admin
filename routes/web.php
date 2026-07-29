@@ -146,6 +146,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/request-order/{id}/status', [RequestOrdersController::class, 'updateStatus'])->name('requestOrder.update.status');
         Route::put('/maintenance/{id}/status', [MaintenanceController::class, 'updateStatus'])->name('maintenance.update.status');
         Route::put('customer/{id}/shipping-address', [CustomerController::class, 'storeUpdateShippingAddress'])->name('customer.store-update-shipping-address');
+        Route::put('customer-contract/{contract}/expire', [CustomerController::class, 'expireContract'])->name('customer.contract.expire');
         
         Route::post('assign-route', [OrderController::class, 'storeRoute'])->name('order.store-route');
     });

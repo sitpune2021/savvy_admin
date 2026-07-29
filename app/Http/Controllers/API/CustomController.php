@@ -38,6 +38,11 @@ class CustomController extends BaseController
         if ($this->vendorId !== null) {
             $query->where('vendor_id', $this->vendorId);
         }
+        if ($this->distributorId !== null) {
+            $query->whereHas('distributors', function ($allocationQuery) {
+                $allocationQuery->where('distributors.id', $this->distributorId);
+            });
+        }
         $plants = $query->select('id', 'name')->get();
 
         $inventories = collect();

@@ -26,6 +26,16 @@ class Plant extends Model
         return $this->belongsTo(User::class, 'manager_id');
     }
 
+    public function distributors()
+    {
+        return $this->belongsToMany(
+            Distributor::class,
+            'distributor_plant_allocations',
+            'plant_id',
+            'distributor_id'
+        )->withTimestamps();
+    }
+
     protected $dates = ['deleted_at'];
 
 }

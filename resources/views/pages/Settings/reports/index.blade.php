@@ -135,6 +135,7 @@
                                 <option value="date_wise_summery">Date Wise Summery</option>
                                 <option value="plant_wise_summery">Plant Wise Summery</option>
                                 <option value="customers_wise_summery">Customers Wise Summery</option>
+                                <option value="failed_orders">Failed Order Generation</option>
 
                             </select>
                         </div>
@@ -154,7 +155,7 @@
 
                         <div class="col-md-3 text-end">
                             <button type="submit" id="export-btn" class="btn btn-primary">
-                                <i class="ri-download-line me-1"></i> Export PDF
+                                <i class="ri-download-line me-1"></i> Export Report
                             </button>
                         </div>
                     </div>

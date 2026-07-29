@@ -34,15 +34,20 @@ class CustomersWiseExport implements FromCollection,WithHeadings, WithMapping, S
     {
         return Orders::query()
         ->join('customers', 'orders.customer_id', '=', 'customers.id')
+            ->leftJoin('shipping_addresses', 'orders.shipping_id', '=', 'shipping_addresses.id')
             ->whereBetween('orders.created_at', [$this->startDate, $this->endDate])
             ->selectRaw('
+                customers.id as customer_id,
                 customers.name as customer_name,
+                shipping_addresses.id as shipping_id,
+                shipping_addresses.shipping_address as shipping_address,
                 COUNT(orders.id) as total_orders,
                 SUM(orders.develivered_qty) as total_delivered,
                 SUM(orders.return_qty) as total_empty
             ')
-            ->groupBy('customers.name')
+            ->groupBy('customers.id', 'customers.name', 'shipping_addresses.id', 'shipping_addresses.shipping_address')
             ->orderBy('customers.name')
+            ->orderBy('shipping_addresses.shipping_address')
             ->get();
     }
 
@@ -51,6 +56,7 @@ class CustomersWiseExport implements FromCollection,WithHeadings, WithMapping, S
         return [
           'Sr.No',
         'Customer Name',
+        'Shipping Address',
         'Total Orders',
         'Total Jars Delivered',
         'Empty Jars',
@@ -62,6 +68,7 @@ class CustomersWiseExport implements FromCollection,WithHeadings, WithMapping, S
         return [
         $this->srNo++,
         $order->customer_name,
+        $order->shipping_address ?? '-',
         (int) $order->total_orders,
         (int) $order->total_delivered,
         (int) $order->total_empty,

@@ -397,6 +397,14 @@ $(document).ready(function () {
 				<div class="row align-item-center card-body">
 					<input type="hidden" name="shipping[${index}][id]" value="${data?.address?.id || ''}">
 					<input type="hidden" name="contract[${index}][id]" value="${data?.contract?.id || ''}">
+					<input type="hidden" name="contract[${index}][reactivate]" value="${data?.reactivate ? '1' : '0'}">
+					${data?.reactivate ? `
+						<div class="col-12">
+							<div class="alert alert-warning">
+								Update the delivery frequency below and save to reactivate this contract.
+							</div>
+						</div>
+					` : ''}
 					${isVender === null ? `
 					<div class="col-sm-12">
 						<div class="input-block mb-3">
@@ -420,6 +428,14 @@ $(document).ready(function () {
 							<label>Address</label>
 							<input name="shipping[${index}][shipping_address]" type="text" class="form-control"
 								placeholder="Enter Shipping Address" value="${data?.address?.shipping_address || ''}" ${isVender !== null ? 'disabled' : ''}>
+						</div>
+					</div>
+					<div class="col-sm-12">
+						<div class="input-block mb-3">
+							<label>Shipping Address Email (DC CC)</label>
+							<input name="shipping[${index}][email]" type="email" class="form-control"
+								placeholder="Enter email to receive Delivery Challan in CC"
+								value="${data?.address?.email || ''}" ${isVender !== null ? 'disabled' : ''}>
 						</div>
 					</div>
 					<div class="col-lg-6 col-md-6 col-sm-12">
@@ -1028,6 +1044,7 @@ $(document).ready(function () {
 			available_contacts: $(this).data('available-contacts') || [],
 			contract: $(this).data('contract'),
 			shippingId: $(this).data('shipping-id'),
+			reactivate: String($(this).data('reactivate')) === '1',
 		};
 		const block = generateAddressBlock(addressIndex++, addressContractIndex++, data, true);
 		$('#address-container').append(block);
@@ -1625,5 +1642,3 @@ $(document).ready(function () {
 		prevTab.show();
 	});
 });
-
-

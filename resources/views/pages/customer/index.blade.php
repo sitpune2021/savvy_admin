@@ -88,6 +88,30 @@
         </div>
     @endif
 
+    @php
+        $selectedContractStatus = request('contract_status', 'all');
+    @endphp
+    <div class="row mb-3">
+        <div class="col-md-4 mb-2">
+            <a href="{{ route('customer.index') }}"
+                class="btn {{ $selectedContractStatus === 'all' ? 'btn-primary' : 'btn-outline-primary' }} w-100">
+                All Customers ({{ $allCustomersCount }})
+            </a>
+        </div>
+        <div class="col-md-4 mb-2">
+            <a href="{{ route('customer.index', ['contract_status' => 'active']) }}"
+                class="btn {{ $selectedContractStatus === 'active' ? 'btn-success' : 'btn-outline-success' }} w-100">
+                Active Contracts ({{ $activeContractsCount }})
+            </a>
+        </div>
+        <div class="col-md-4 mb-2">
+            <a href="{{ route('customer.index', ['contract_status' => 'expired']) }}"
+                class="btn {{ $selectedContractStatus === 'expired' ? 'btn-danger' : 'btn-outline-danger' }} w-100">
+                Expired Contracts ({{ $expiredContractsCount }})
+            </a>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-lg-12">
             <div class="card">
@@ -105,6 +129,8 @@
                                     <th>Customer Zohi Id</th>
                                     <th>Name</th>
                                     <th>Phone No.</th>
+                                    <th>Active Contracts</th>
+                                    <th>Expired Contracts</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -121,6 +147,12 @@
                                         <td>{{ $customer->customer_zohi_id }}</td>
                                         <td>{{ $customer->name }}</td>
                                         <td>{{ $customer->phone_no }}</td>
+                                        <td>
+                                            <span class="badge bg-success">{{ $customer->active_contracts_count }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-danger">{{ $customer->expired_contracts_count }}</span>
+                                        </td>
                                         <td>
                                             <div class="hstack gap-3 flex-wrap">
                                                 @if (auth()->user()?->plantManager?->id == null)

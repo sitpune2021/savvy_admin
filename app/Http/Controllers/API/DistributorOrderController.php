@@ -622,6 +622,21 @@ class DistributorOrderController extends BaseController
                 'allow_remaining_stock' => 'required|boolean',
             ]);
 
+            // This controller is also exposed through shared authenticated routes.
+            // Apply allocation restrictions only when the authenticated account is
+            // a distributor; driver, customer, vendor, user and plant-manager
+            // behavior must remain unchanged.
+            if (
+                $this->distributorId !== null
+                && !$user->plants()->whereKey($request->plant_id)->exists()
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'message' => 'The selected plant is not allocated to this distributor.'
+                ], 403);
+            }
+
             $labeled = $request->required_labeled_jars ?? 0;
             $unlabeled = $request->required_unlabeled_jars ?? 0;
 

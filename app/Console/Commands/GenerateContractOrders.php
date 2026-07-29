@@ -8,6 +8,7 @@ use App\Models\ShippingAddress;
 use App\Models\Contracts;
 use App\Models\Orders;
 use App\Models\JarTransportation;
+use App\Models\OrderGenerationFailure;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -49,6 +50,12 @@ class GenerateContractOrders extends Command
             Log::channel('scheduler')->info("Contract ID {$contract->id} | Start: {$startDate}, End: {$endDate}, Today: {$today}");
 
             if ($today->greaterThan($endDate)) {
+                $this->recordFailure(
+                    $contract,
+                    null,
+                    'Contract expired',
+                    "Contract ended on {$endDate->toDateString()} before this generation run"
+                );
                 $contract->status = 'expired';
                 $contract->save();
                 Log::channel('scheduler')->info("❌ Contract ID {$contract->id} expired and updated.");
@@ -75,6 +82,14 @@ class GenerateContractOrders extends Command
                     Log::channel('scheduler')->info("Contract ID {$contract->id} frequency: monthly");
                     $this->handleMonthly($contract, $today);
                     break;
+                default:
+                    $this->recordFailure(
+                        $contract,
+                        null,
+                        'Unsupported contract frequency',
+                        "Frequency: " . ($contract->frequency ?: 'empty')
+                    );
+                    break;
             }
         }
 
@@ -90,6 +105,11 @@ class GenerateContractOrders extends Command
             $contractAdditional->refresh();
 
             if (!$contractAdditional->sender || !$contractAdditional->shippingAddress) {
+                $this->recordFailure(
+                    $contractAdditional,
+                    $contractAdditional->shippingAddress,
+                    'Missing sender or shipping address'
+                );
                 Log::warning("⚠️ Skipped additional contract ID {$contractAdditional->id} due to missing sender or shipping address.");
                 continue;
             }
@@ -98,6 +118,12 @@ class GenerateContractOrders extends Command
             Log::channel('scheduler')->info("Additional contract ID {$contractAdditional->id} end date: {$endDate}");
 
             if ($today->greaterThan($endDate)) {
+                $this->recordFailure(
+                    $contractAdditional,
+                    $contractAdditional->shippingAddress,
+                    'Contract expired',
+                    "Additional contract ended on {$endDate->toDateString()} before this generation run"
+                );
                 $contractAdditional->status = 'expired';
                 $contractAdditional->save();
                 Log::channel('scheduler')->info("❌ Additional contract ID {$contractAdditional->id} expired.");
@@ -110,15 +136,26 @@ class GenerateContractOrders extends Command
                 $shipping = $contractAdditional->shippingAddress;
 
                 if ($shipping->route_id && $shipping->driver_id) {
-                    Orders::create([
-                        'customer_id' => $contractAdditional->customer_id,
-                        'contract_id' => $contractAdditional->id,
-                        'shipping_id' => $shipping->id,
-                        'route_id' => $shipping->route_id,
-                        'driver_id' => $shipping->driver_id,
-                        'status' => 'pending',
-                        'type' => 'additional',
-                    ]);
+                    try {
+                        Orders::create([
+                            'customer_id' => $contractAdditional->customer_id,
+                            'contract_id' => $contractAdditional->id,
+                            'shipping_id' => $shipping->id,
+                            'route_id' => $shipping->route_id,
+                            'driver_id' => $shipping->driver_id,
+                            'status' => 'pending',
+                            'type' => 'additional',
+                        ]);
+                    } catch (\Throwable $exception) {
+                        $this->recordFailure(
+                            $contractAdditional,
+                            $shipping,
+                            'Order creation error',
+                            $exception->getMessage()
+                        );
+                        Log::error("Order creation failed for additional contract ID {$contractAdditional->id}: {$exception->getMessage()}");
+                        continue;
+                    }
                     
                      $jar = JarTransportation::where('date',  $today)
                         ->where('driver_id', $shipping->driver_id)
@@ -154,6 +191,12 @@ class GenerateContractOrders extends Command
 
                     Log::channel('scheduler')->info("✅ Created order for additional contract ID {$contractAdditional->id}");
                 } else {
+                    $this->recordFailure(
+                        $contractAdditional,
+                        $shipping,
+                        'Missing route or driver',
+                        $this->missingAssignmentDetails($shipping)
+                    );
                     Log::warning("⚠️ Skipped additional contract ID {$contractAdditional->id} due to missing route/driver.");
                 }
             } else {
@@ -171,6 +214,7 @@ class GenerateContractOrders extends Command
             ->get();
 
         if ($shippings->isEmpty()) {
+            $this->recordFailure($contract, null, 'No shipping address configured');
             Log::warning("⚠️ No shipping addresses found for contract ID {$contract->id}");
             return;
         }
@@ -183,14 +227,25 @@ class GenerateContractOrders extends Command
 
             if (!$exists) {
                 if($shipping->route_id != null && $shipping->driver_id != null){
-                    Orders::create([
-                        'customer_id' => $contract->customer_id,
-                        'contract_id' => $contract->id,
-                        'shipping_id' => $shipping->id,
-                        'route_id' => $shipping->route_id,
-                        'driver_id' => $shipping->driver_id,
-                        'status' => 'pending',
-                    ]);
+                    try {
+                        Orders::create([
+                            'customer_id' => $contract->customer_id,
+                            'contract_id' => $contract->id,
+                            'shipping_id' => $shipping->id,
+                            'route_id' => $shipping->route_id,
+                            'driver_id' => $shipping->driver_id,
+                            'status' => 'pending',
+                        ]);
+                    } catch (\Throwable $exception) {
+                        $this->recordFailure(
+                            $contract,
+                            $shipping,
+                            'Order creation error',
+                            $exception->getMessage()
+                        );
+                        Log::error("Order creation failed for contract ID {$contract->id}, shipping ID {$shipping->id}: {$exception->getMessage()}");
+                        continue;
+                    }
                     $jar = JarTransportation::where('date',  $today)
                         ->where('driver_id', $shipping->driver_id)
                         ->where('plant_id', $shipping->plant_id)
@@ -222,6 +277,12 @@ class GenerateContractOrders extends Command
                     }
                     Log::channel('scheduler')->info("✅ Order created for contract ID {$contract->id}, shipping ID {$shipping->id}");
                 } else {
+                    $this->recordFailure(
+                        $contract,
+                        $shipping,
+                        'Missing route or driver',
+                        $this->missingAssignmentDetails($shipping)
+                    );
                     Log::warning("⚠️ Order not created for contract ID {$contract->id}, shipping ID {$shipping->id} due to missing route/driver.");
                 }
             } else {
@@ -310,6 +371,48 @@ class GenerateContractOrders extends Command
         } else {
             Log::channel('scheduler')->info("⏸️ Today is not a valid order day for monthly contract ID {$contract->id}");
         }
+    }
+
+    protected function recordFailure($contract, $shipping, string $reason, ?string $details = null): void
+    {
+        $failure = OrderGenerationFailure::updateOrCreate(
+            [
+                'contract_id' => $contract->id,
+                'shipping_id' => $contract?->shipping_addresses_id,
+                'failure_date' => Carbon::today()->toDateString(),
+                'source' => 'contract_scheduler',
+            ],
+            [
+                'customer_id' => $contract->customer_id,
+                'reason' => $reason,
+                'details' => $details,
+                'attempted_at' => now(),
+            ]
+        );
+
+        Log::channel('scheduler')->warning('Order generation not completed', [
+            'failure_id' => $failure->id,
+            'contract_id' => $contract->id,
+            'customer_id' => $contract->customer_id,
+            'shipping_id' => $contract->shipping_addresses_id,
+            'reason' => $reason,
+            'details' => $details,
+        ]);
+    }
+
+    protected function missingAssignmentDetails($shipping): string
+    {
+        $missing = [];
+
+        if (!$shipping->route_id) {
+            $missing[] = 'route';
+        }
+
+        if (!$shipping->driver_id) {
+            $missing[] = 'driver';
+        }
+
+        return 'Missing: ' . implode(', ', $missing);
     }
 
 }

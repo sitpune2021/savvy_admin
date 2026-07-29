@@ -27,7 +27,7 @@ class DeliveryMisExport implements FromCollection, WithHeadings, WithMapping, Sh
     public function collection()
     {
         return Orders::whereHas('drivers')
-            ->with(['customers', 'drivers.plants'])
+            ->with(['customers', 'drivers.plants', 'shipping'])
             ->whereBetween('created_at', [$this->startDate, $this->endDate])
             ->orderBy('created_at')
             ->get();
@@ -43,6 +43,7 @@ class DeliveryMisExport implements FromCollection, WithHeadings, WithMapping, Sh
             'Vehicle No',
             'Customer Name',
             'Customer Code',
+            'Shipping Address',
             'Order ID',
             'Jar Quantity',
             'Empty Jars Collected',
@@ -62,6 +63,7 @@ class DeliveryMisExport implements FromCollection, WithHeadings, WithMapping, Sh
             $order->drivers->vehicle_no ?? '-',
             $order->customers->name ?? '-',
             $order->customers->code ?? '-',
+            $order->shipping?->shipping_address ?? '-',
             $order->id,
             $order->develivered_qty,
             $order->return_qty,

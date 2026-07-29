@@ -239,6 +239,101 @@
                     </div>
                     <!-- end col -->
                 </div>
+
+                @if ($isAdmin || auth()->user()->role === 'plant-manager')
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-header border-0 align-items-center d-flex flex-wrap gap-3">
+                            <div class="flex-grow-1">
+                                <h4 class="card-title mb-1">Raw Material Stock</h4>
+                                <p class="text-muted mb-0">
+                                    Label-wise stock and jar availability for the selected plant
+                                </p>
+                            </div>
+
+                            <form method="GET" action="{{ route('home') }}" class="d-flex align-items-end gap-2 flex-wrap">
+                                <div>
+                                    <label for="plant-search" class="form-label fw-semibold mb-1">Search Plant</label>
+                                    <input id="plant-search" type="search" class="form-control"
+                                        placeholder="Type plant name" autocomplete="off">
+                                </div>
+                                <div>
+                                    <label for="raw-material-plant" class="form-label fw-semibold mb-1">Plant</label>
+                                    <select id="raw-material-plant" name="plant_id" class="form-select"
+                                        onchange="this.form.submit()">
+                                        @foreach ($dashboardPlants as $plant)
+                                            <option value="{{ $plant->id }}" @selected($selectedPlant?->id === $plant->id)>
+                                                {{ ucfirst($plant->name) }} Plant
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @if (request()->filled('value'))
+                                    <input type="hidden" name="value" value="{{ request('value') }}">
+                                @endif
+                            </form>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="row g-4">
+                                @foreach ([
+                                    ['key' => 'labels', 'title' => 'Labels', 'color' => 'primary'],
+                                    ['key' => 'caps', 'title' => 'Caps', 'color' => 'success'],
+                                    ['key' => 'jars', 'title' => 'Jars', 'color' => 'warning'],
+                                    ['key' => 'maintenance', 'title' => 'Maintenance', 'color' => 'danger'],
+                                ] as $materialGroup)
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="border rounded h-100 overflow-hidden"
+                                            data-material-group="{{ $materialGroup['key'] }}">
+                                            <div class="bg-{{ $materialGroup['color'] }}-subtle p-3">
+                                                <h5 class="text-{{ $materialGroup['color'] }} mb-0">
+                                                    {{ $materialGroup['title'] }}
+                                                </h5>
+                                                @if (in_array($materialGroup['key'], ['labels', 'jars']))
+                                                    <input type="search"
+                                                        class="form-control form-control-sm mt-2 material-stock-search"
+                                                        data-search-group="{{ $materialGroup['key'] }}"
+                                                        placeholder="Search {{ strtolower($materialGroup['title']) }}..."
+                                                        autocomplete="off">
+                                                @endif
+                                            </div>
+                                            <div class="table-responsive"
+                                                @if ($rawMaterialStock[$materialGroup['key']]->count() > 10)
+                                                    style="max-height: 455px; overflow-y: auto;"
+                                                @endif>
+                                                <table class="table table-hover align-middle mb-0">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>Type</th>
+                                                            <th class="text-end">Quantity</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @forelse ($rawMaterialStock[$materialGroup['key']] as $stock)
+                                                            <tr class="stock-row"
+                                                                data-stock-name="{{ strtolower($stock['name']) }}">
+                                                                <td>{{ $stock['name'] }}</td>
+                                                                <td class="text-end fw-semibold">
+                                                                    {{ number_format($stock['quantity']) }}
+                                                                </td>
+                                                            </tr>
+                                                        @empty
+                                                            <tr>
+                                                                <td colspan="2" class="text-center text-muted py-4">
+                                                                    No stock available
+                                                                </td>
+                                                            </tr>
+                                                        @endforelse
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 @if ($allPendingOrdersCount > 0)
                     @include('components.dashbordTable')
                 @endif
@@ -253,5 +348,55 @@
         window.labels = @json(collect($ordersCountByPlant->keys())->map(function ($id) use ($plants) {
                     return $plants[$id] ?? 'Unknown';
                 })->values());
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const plantSearch = document.getElementById('plant-search');
+            const plantSelect = document.getElementById('raw-material-plant');
+
+            if (plantSearch && plantSelect) {
+                const plantOptions = Array.from(plantSelect.options);
+
+                plantSearch.addEventListener('input', function () {
+                    const searchTerm = this.value.trim().toLowerCase();
+
+                    plantOptions.forEach(function (option) {
+                        option.hidden = searchTerm !== '' &&
+                            !option.text.toLowerCase().includes(searchTerm);
+                    });
+
+                    const firstMatch = plantOptions.find(option => !option.hidden);
+                    if (firstMatch && searchTerm !== '') {
+                        plantSelect.value = firstMatch.value;
+                    }
+                });
+
+                plantSearch.addEventListener('keydown', function (event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        const matchingOption = plantOptions.find(option => !option.hidden);
+                        if (matchingOption) {
+                            plantSelect.value = matchingOption.value;
+                            plantSelect.form.submit();
+                        }
+                    }
+                });
+            }
+
+            document.querySelectorAll('.material-stock-search').forEach(function (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    const searchTerm = this.value.trim().toLowerCase();
+                    const group = document.querySelector(
+                        '[data-material-group="' + this.dataset.searchGroup + '"]'
+                    );
+
+                    group?.querySelectorAll('.stock-row').forEach(function (row) {
+                        row.classList.toggle(
+                            'd-none',
+                            !row.dataset.stockName.includes(searchTerm)
+                        );
+                    });
+                });
+            });
+        });
     </script>
 @endsection

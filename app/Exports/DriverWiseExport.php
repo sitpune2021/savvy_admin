@@ -36,6 +36,7 @@ class DriverWiseExport implements FromCollection, WithHeadings, WithMapping, Sho
             'plants',
             'orders' => function ($q) {
                 $q->whereBetween('created_at', [$this->startDate, $this->endDate])
+                ->with('shipping')
                 ->orderBy('created_at');
             },
             'jarMaintance' => function ($q) {
@@ -59,6 +60,7 @@ class DriverWiseExport implements FromCollection, WithHeadings, WithMapping, Sho
             'Plant Name',
             'Driver Name',
             'Vehicle Name',
+            'Shipping Address',
             'Total Order',
             'Total Jar  Delivered',
             'Empty Jars',
@@ -82,6 +84,12 @@ class DriverWiseExport implements FromCollection, WithHeadings, WithMapping, Sho
         $greenJarQty = $greenJarQty === null ? 0 : (int) $greenJarQty;
         $leackJarQty = $leackJarQty === null ? 0 : (int) $leackJarQty;
 
+        $shippingAddresses = $driver->orders
+            ->pluck('shipping.shipping_address')
+            ->filter()
+            ->unique()
+            ->implode(', ');
+
        
         return [
             $index++,
@@ -89,6 +97,7 @@ class DriverWiseExport implements FromCollection, WithHeadings, WithMapping, Sho
             $driver->plants->name ?? '-',
             $driver->name ?? '-',
             $driver->vehicle_name ?? '-',
+            $shippingAddresses ?: '-',
             $driver->orders->count(),
             $driver->orders->sum('develivered_qty'),
             $driver->orders->sum('return_qty'),

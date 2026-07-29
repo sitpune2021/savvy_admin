@@ -10,6 +10,7 @@ class BaseController extends Controller
          protected $vendorId = null;
          protected $driverId = null;
          protected $plantManagerId = null;
+         protected $distributorId = null;
 
         public function __construct()
         {

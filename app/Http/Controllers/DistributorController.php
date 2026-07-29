@@ -9,6 +9,9 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use App\Models\Plant;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
 
 
@@ -19,7 +22,7 @@ class DistributorController extends Controller
      */
     public function index()
     {
-        $distributors = Distributor::orderBy('created_at', 'desc')->get();
+        $distributors = Distributor::with('plants:id,name')->orderBy('created_at', 'desc')->get();
         return view('pages.Admin.distributor.index', compact('distributors'));
     }
 
@@ -28,8 +31,9 @@ class DistributorController extends Controller
      */
     public function create()
     {
-        $show = false;  
-        return view('pages.Admin.distributor.add-edit',compact('show'));  
+        $show = false;
+        $plants = Plant::orderBy('name')->get(['id', 'name']);
+        return view('pages.Admin.distributor.add-edit',compact('show', 'plants'));
     }
 
     /**
@@ -76,13 +80,16 @@ class DistributorController extends Controller
             'aadhar_card' => 'nullable|string|max:255|regex:/^[0-9]{12}$/',
             'pan_card_FILE' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'aadhar_card_FILE' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'plant_ids' => 'required|array|min:1',
+            'plant_ids.*' => 'required|integer|distinct|exists:plants,id',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
         try {
-            $data = $request->all();
+            DB::beginTransaction();
+            $data = $request->except('plant_ids');
             $pan_card_FILE = null;
             $aadhar_card_FILE = null;
 
@@ -98,15 +105,18 @@ class DistributorController extends Controller
                 $aadharCard->storeAs('public/distributor', $aadharCardFile);
                 $aadhar_card_FILE = $aadharCardFile;
             }
-            $data = $request->all();
+            $data = $request->except('plant_ids');
             $data['pan_card_FILE'] = $pan_card_FILE;
             $data['aadhar_card_FILE'] = $aadhar_card_FILE;
             $data['password'] = Hash::make('Distributor@123');
-            Distributor::create($data);
+            $distributor = Distributor::create($data);
+            $distributor->plants()->sync($request->plant_ids);
+            DB::commit();
             return response()->json([
                 'message' => 'Distributor created successfully',
             ], 201);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
         }
 
@@ -118,8 +128,9 @@ class DistributorController extends Controller
     public function show(string $id)
     {
         $show = true;
-        $distributor = Distributor::findOrFail($id);
-        return view('pages.Admin.distributor.add-edit',compact('show', 'distributor'));
+        $distributor = Distributor::with('plants:id,name')->findOrFail($id);
+        $plants = Plant::orderBy('name')->get(['id', 'name']);
+        return view('pages.Admin.distributor.add-edit',compact('show', 'distributor', 'plants'));
     }
 
     /**
@@ -129,8 +140,9 @@ class DistributorController extends Controller
     {
         try {
             $show = false;
-            $distributor = Distributor::findOrFail($id);
-            return view('pages.Admin.distributor.add-edit',compact('show', 'distributor'));
+            $distributor = Distributor::with('plants:id,name')->findOrFail($id);
+            $plants = Plant::orderBy('name')->get(['id', 'name']);
+            return view('pages.Admin.distributor.add-edit',compact('show', 'distributor', 'plants'));
         } catch (ModelNotFoundException $e) {
             return back()->withErrors(['error' => 'Distributor not found.']);
         } catch (Exception $e) {
@@ -183,14 +195,17 @@ class DistributorController extends Controller
             'aadhar_card' => 'nullable|string|max:255|regex:/^[0-9]{12}$/',
             'pan_card_FILE' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'aadhar_card_FILE' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'plant_ids' => 'required|array|min:1',
+            'plant_ids.*' => 'required|integer|distinct|exists:plants,id',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
         try {
+            DB::beginTransaction();
             $distributor = Distributor::findOrFail($id);
-            $data = $request->except('pan_card_FILE', 'aadhar_card_FILE');
+            $data = $request->except('pan_card_FILE', 'aadhar_card_FILE', 'plant_ids');
             $distributor->update($data);
 
         
@@ -214,13 +229,17 @@ class DistributorController extends Controller
                 $distributor->aadhar_card_FILE = $aadharCardFile;
             }
         
-            $distributor->update($request->except('aadhar_card_FILE', 'pan_card_FILE'));
+            $distributor->update($request->except('aadhar_card_FILE', 'pan_card_FILE', 'plant_ids'));
+            $distributor->plants()->sync($request->plant_ids);
+            DB::commit();
             return response()->json([
                 'message' => 'Distributor updated successfully',
             ], 200);
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json(['error' => 'Distributor not found'], 404);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }

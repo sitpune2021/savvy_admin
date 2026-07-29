@@ -34,6 +34,7 @@ class StoreUpdateCustomerShippingRequest extends FormRequest
             'shipping.*.route_id' => 'nullable|exists:routes,id',
             'shipping.*.driver_id' => 'nullable|exists:drivers,id',
             'shipping.*.shipping_address' => 'required|string|max:255',
+            'shipping.*.email' => 'nullable|email|max:255',
             'shipping.*.shipping_country' => 'required|string|max:255',
             'shipping.*.shipping_state' => 'nullable|string|max:255',
             'shipping.*.shipping_city' => 'required|string|max:255',
@@ -53,6 +54,7 @@ class StoreUpdateCustomerShippingRequest extends FormRequest
             'contract.*.frequency_count' => 'nullable|integer|min:1',
             'contract.*.days' => 'nullable|array',
             'contract.*.days.*' => 'in:sunday,monday,tuesday,wednesday,thursday,friday,saturday,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31',
+            'contract.*.reactivate' => 'nullable|boolean',
         ];
     }
 
@@ -71,6 +73,8 @@ class StoreUpdateCustomerShippingRequest extends FormRequest
             'shipping.*.shipping_address.required' => 'The shipping address is required.',
             'shipping.*.shipping_address.string' => 'The shipping address must be a string.',
             'shipping.*.shipping_address.max' => 'The shipping address may not be greater than 255 characters.',
+            'shipping.*.email.email' => 'The shipping address email must be a valid email address.',
+            'shipping.*.email.max' => 'The shipping address email may not be greater than 255 characters.',
     
             'shipping.*.shipping_country.required' => 'The shipping country is required.',
             'shipping.*.shipping_country.string' => 'The shipping country must be a string.',
